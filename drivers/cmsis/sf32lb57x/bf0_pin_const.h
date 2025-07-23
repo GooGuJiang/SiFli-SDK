@@ -136,6 +136,8 @@ typedef enum
     MPI4_CLK,
     /** MPI4_CS */
     MPI4_CS,
+    /** MPI4_CS2 */
+    MPI4_CS2,
     /** MPI4_DQS */
     MPI4_DQS,
     /** MPI4_DIO0 */
@@ -368,6 +370,134 @@ typedef enum
     GPIO_A94,
     /** GPIO_A95 */
     GPIO_A95,
+    /** GPIO_B0 */
+    GPIO_B0,
+    /** GPIO_B1 */
+    GPIO_B1,
+    /** GPIO_B2 */
+    GPIO_B2,
+    /** GPIO_B3 */
+    GPIO_B3,
+    /** GPIO_B4 */
+    GPIO_B4,
+    /** GPIO_B5 */
+    GPIO_B5,
+    /** GPIO_B6 */
+    GPIO_B6,
+    /** GPIO_B7 */
+    GPIO_B7,
+    /** GPIO_B8 */
+    GPIO_B8,
+    /** GPIO_B9 */
+    GPIO_B9,
+    /** GPIO_B10 */
+    GPIO_B10,
+    /** GPIO_B11 */
+    GPIO_B11,
+    /** GPIO_B12 */
+    GPIO_B12,
+    /** GPIO_B13 */
+    GPIO_B13,
+    /** GPIO_B14 */
+    GPIO_B14,
+    /** GPIO_B15 */
+    GPIO_B15,
+    /** GPIO_B16 */
+    GPIO_B16,
+    /** GPIO_B17 */
+    GPIO_B17,
+    /** GPIO_B18 */
+    GPIO_B18,
+    /** GPIO_B19 */
+    GPIO_B19,
+    /** GPIO_B20 */
+    GPIO_B20,
+    /** GPIO_B21 */
+    GPIO_B21,
+    /** GPIO_B22 */
+    GPIO_B22,
+    /** GPIO_B23 */
+    GPIO_B23,
+    /** GPIO_B24 */
+    GPIO_B24,
+    /** GPIO_B25 */
+    GPIO_B25,
+    /** GPIO_B26 */
+    GPIO_B26,
+    /** GPIO_B27 */
+    GPIO_B27,
+    /** GPIO_B28 */
+    GPIO_B28,
+    /** GPIO_B29 */
+    GPIO_B29,
+    /** GPIO_B30 */
+    GPIO_B30,
+    /** GPIO_B31 */
+    GPIO_B31,
+    /** GPIO_B32 */
+    GPIO_B32,
+    /** GPIO_B33 */
+    GPIO_B33,
+    /** GPIO_B34 */
+    GPIO_B34,
+    /** GPIO_B35 */
+    GPIO_B35,
+    /** GPIO_B36 */
+    GPIO_B36,
+    /** GPIO_B37 */
+    GPIO_B37,
+    /** GPIO_B38 */
+    GPIO_B38,
+    /** GPIO_B39 */
+    GPIO_B39,
+    /** GPIO_B40 */
+    GPIO_B40,
+    /** GPIO_B41 */
+    GPIO_B41,
+    /** GPIO_B42 */
+    GPIO_B42,
+    /** GPIO_B43 */
+    GPIO_B43,
+    /** GPIO_B44 */
+    GPIO_B44,
+    /** GPIO_B45 */
+    GPIO_B45,
+    /** GPIO_B46 */
+    GPIO_B46,
+    /** GPIO_B47 */
+    GPIO_B47,
+    /** GPIO_B48 */
+    GPIO_B48,
+    /** GPIO_B49 */
+    GPIO_B49,
+    /** GPIO_B50 */
+    GPIO_B50,
+    /** GPIO_B51 */
+    GPIO_B51,
+    /** GPIO_B52 */
+    GPIO_B52,
+    /** GPIO_B53 */
+    GPIO_B53,
+    /** GPIO_B54 */
+    GPIO_B54,
+    /** GPIO_B55 */
+    GPIO_B55,
+    /** GPIO_B56 */
+    GPIO_B56,
+    /** GPIO_B57 */
+    GPIO_B57,
+    /** GPIO_B58 */
+    GPIO_B58,
+    /** GPIO_B59 */
+    GPIO_B59,
+    /** GPIO_B60 */
+    GPIO_B60,
+    /** GPIO_B61 */
+    GPIO_B61,
+    /** GPIO_B62 */
+    GPIO_B62,
+    /** GPIO_B63 */
+    GPIO_B63,
     /** SAIO_D0 */
     SAIO_D0,
     /** SAIO_D1 */
@@ -1683,6 +1813,24 @@ typedef enum
     PAD_SA11,
     /** PAD_SA12 */
     PAD_SA12,
+    /** PAD_SA13 */
+    PAD_SA13,
+    /** PAD_SA14 */
+    PAD_SA14,
+    /** PAD_SA15 */
+    PAD_SA15,
+    /** PAD_SA16 */
+    PAD_SA16,
+    /** PAD_SA17 */
+    PAD_SA17,
+    /** PAD_SA18 */
+    PAD_SA18,
+    /** PAD_SA19 */
+    PAD_SA19,
+    /** PAD_SA20 */
+    PAD_SA20,
+    /** PAD_SA21 */
+    PAD_SA21,
     /** PAD_SB00 */
     PAD_SB00,
     /** PAD_SB01 */
@@ -1695,6 +1843,20 @@ typedef enum
     PAD_SB04,
     /** PAD_SB05 */
     PAD_SB05,
+    /** PAD_SB06 */
+    PAD_SB06,
+    /** PAD_SB07 */
+    PAD_SB07,
+    /** PAD_SB08 */
+    PAD_SB08,
+    /** PAD_SB09 */
+    PAD_SB09,
+    /** PAD_SB10 */
+    PAD_SB10,
+    /** PAD_SB11 */
+    PAD_SB11,
+    /** PAD_SB12 */
+    PAD_SB12,
     /** PAD_PA00 */
     PAD_PA00,
     /** PAD_PA01 */

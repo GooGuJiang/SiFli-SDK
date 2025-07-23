@@ -148,6 +148,37 @@ extern "C" {
 #endif /*#if ((BSP_QSPI3_MODE == SPI_MODE_NOR)||(BSP_QSPI3_MODE == SPI_MODE_NAND))*/
 #endif  /* BSP_ENABLE_QSPI3 */
 
+#ifdef BSP_ENABLE_QSPI4
+#if ((BSP_QSPI4_MODE == SPI_MODE_NOR)||(BSP_QSPI4_MODE == SPI_MODE_NAND))
+
+#ifndef FLASH4_CONFIG
+#define FLASH4_CONFIG                                  \
+    {                                                  \
+        .Instance = FLASH4,                            \
+        .line = 2,                                     \
+        .base = FLASH4_BASE_ADDR,                      \
+        .msize = BSP_QSPI4_MEM_SIZE,                   \
+        .SpiMode = BSP_QSPI4_MODE,                     \
+    }
+
+#endif  /* FLASH_CONFIG2 */
+
+#ifdef BSP_QSPI4_USING_DMA
+#ifndef FLASH4_DMA_CONFIG
+#define FLASH4_DMA_CONFIG                              \
+    {                                                  \
+        .dma_irq_prio = FLASH4_DMA_IRQ_PRIO,           \
+        .Instance = FLASH4_DMA_INSTANCE,               \
+        .dma_irq = FLASH4_DMA_IRQ,                     \
+        .request = FLASH4_DMA_REQUEST,                 \
+    }
+
+#endif  /* FLASH4_DMA_CONFIG */
+#endif  /* BSP_QSPI4_USING_DMA */
+
+#endif /*#if ((BSP_QSPI4_MODE == SPI_MODE_NOR)||(BSP_QSPI4_MODE == SPI_MODE_NAND))*/
+#endif  /* BSP_ENABLE_QSPI4 */
+
 #endif  /* BSP_USING_QSPI */
 
 #ifdef __cplusplus

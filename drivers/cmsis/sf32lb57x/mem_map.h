@@ -117,18 +117,20 @@
 
     #define QSPI1_MEM_BASE   (0x10000000)
     #define QSPI2_MEM_BASE   (0x14000000)
-    #define QSPI3_MEM_BASE   (0x18000000)
+    #define QSPI3_MEM_BASE   (0x16000000)
+    #define QSPI4_MEM_BASE   (0x18000000)
 
     #define MPI1_MEM_BASE   QSPI1_MEM_BASE
     #define MPI2_MEM_BASE   QSPI2_MEM_BASE
     #define MPI3_MEM_BASE   QSPI3_MEM_BASE
+    #define MPI4_MEM_BASE   QSPI4_MEM_BASE
 
     #define HPSYS_MPI_MEM_CBUS_2_SBUS_OFFSET   (0x50000000)
 
-    #define QSPI1_MAX_SIZE      (0x2000000)
-    #define QSPI2_MAX_SIZE      (0x4000000)     // D-BUS max size is 0x30000000
-    #define QSPI3_MAX_SIZE      (0x8000000)     // D-BUS max size is 0x30000000
-
+    #define QSPI1_MAX_SIZE      (0x4000000)
+    #define QSPI2_MAX_SIZE      (0x2000000)
+    #define QSPI3_MAX_SIZE      (0x2000000)
+    #define QSPI4_MAX_SIZE      (0x8000000)
 
     // Size
     #define FLASH_TABLE_SIZE            (20*1024)
@@ -163,6 +165,14 @@
         #define FLASH3_SIZE                 (BSP_QSPI3_MEM_SIZE*1024*1024)
     #else
         #define FLASH3_SIZE                 (0)
+    #endif
+
+    //================== Flash 4 ==================
+    #define FLASH4_BASE_ADDR            (QSPI4_MEM_BASE)
+    #ifdef BSP_QSPI4_MEM_SIZE
+        #define FLASH4_SIZE                 (BSP_QSPI4_MEM_SIZE*1024*1024)
+    #else
+        #define FLASH4_SIZE                 (0)
     #endif
 
     //================== MPI-PSRAM  ==================

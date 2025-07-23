@@ -57,10 +57,10 @@ extern "C" {
 
 
 //---------------------------- MPI3 ----------------------------
-#define FLASH3_IRQHandler              DMAC1_CH2_IRQHandler
-#define FLASH3_DMA_INSTANCE            DMA1_Channel2
-#define FLASH3_DMA_REQUEST             DMA_REQUEST_2
-#define FLASH3_DMA_IRQ                 DMAC1_CH2_IRQn
+#define FLASH3_IRQHandler              DMAC1_CH1_IRQHandler
+#define FLASH3_DMA_INSTANCE            DMA1_Channel1
+#define FLASH3_DMA_REQUEST             DMA_REQUEST_1
+#define FLASH3_DMA_IRQ                 DMAC1_CH1_IRQn
 
 #define FLASH3_CONFIG                                  \
     {                                                  \
@@ -80,6 +80,29 @@ extern "C" {
         .request = FLASH3_DMA_REQUEST,                 \
     }
 
+//---------------------------- MPI4 ----------------------------
+#define FLASH4_IRQHandler              DMAC1_CH2_IRQHandler
+#define FLASH4_DMA_INSTANCE            DMA1_Channel2
+#define FLASH4_DMA_REQUEST             DMA_REQUEST_2
+#define FLASH4_DMA_IRQ                 DMAC1_CH2_IRQn
+
+#define FLASH4_CONFIG                                  \
+    {                                                  \
+        .Instance = FLASH4,                            \
+        .line = 2,                                     \
+        .base = FLASH4_BASE_ADDR,                      \
+        .msize = 4,                                    \
+        .SpiMode = 0,                                  \
+    }
+
+
+#define FLASH4_DMA_CONFIG                              \
+    {                                                  \
+        .dma_irq_prio = 0,                             \
+        .Instance = FLASH4_DMA_INSTANCE,               \
+        .dma_irq = FLASH4_DMA_IRQ,                     \
+        .request = FLASH4_DMA_REQUEST,                 \
+    }
 //---------------------------- SD-NAND ----------------------------
 #define SDNAND_MEM_ADDR (MPI2_MEM_BASE+HPSYS_MPI_MEM_CBUS_2_SBUS_OFFSET)
 #define SDNAND_START_OFFSET     (0X1000)

@@ -93,9 +93,14 @@ extern "C" {
 #define FLASH3_IRQHandler              DMAC1_CH2_IRQHandler
 #define FLASH3_DMA_IRQ_PRIO            0
 #define FLASH3_DMA_INSTANCE            DMA1_Channel2
-#define FLASH3_DMA_REQUEST             DMA_REQUEST_2
+#define FLASH3_DMA_REQUEST             DMA_REQUEST_1
 #define FLASH3_DMA_IRQ                 DMAC1_CH2_IRQn
 
+#define FLASH4_IRQHandler              DMAC1_CH2_IRQHandler
+#define FLASH4_DMA_IRQ_PRIO            0
+#define FLASH4_DMA_INSTANCE            DMA1_Channel2
+#define FLASH4_DMA_REQUEST             DMA_REQUEST_2
+#define FLASH4_DMA_IRQ                 DMAC1_CH2_IRQn
 
 /* DMA1 channel3 */
 #define FLASH1_IRQHandler              DMAC1_CH3_IRQHandler

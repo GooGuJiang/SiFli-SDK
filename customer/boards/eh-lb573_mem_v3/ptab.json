@@ -1,6 +1,6 @@
 [
     {
-        "mem": "flash3", 
+        "mem": "flash4", 
         "base": "0x18000000", 
         "regions": [
             {

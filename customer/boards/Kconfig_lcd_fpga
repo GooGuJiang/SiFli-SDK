@@ -1,11 +1,4 @@
 if BSP_USING_LCD
-    config BSP_LCDC_USING_DBI
-        bool "IS DBI(8080) interface"
-        def_bool n 
-
-    config BSP_LCDC_USING_JDI_PARALLEL
-        bool "IS JDI PARALLEL interface"
-        def_bool n 
 
     choice
         prompt "Select LCD Module"

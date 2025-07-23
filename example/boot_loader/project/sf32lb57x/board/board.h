@@ -13,7 +13,9 @@
 
 #include "rtconfig.h"
 #include <register.h>
-#include "drv_io.h"
+#ifndef CFG_BOOTROM
+    #include "drv_io.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,6 +50,7 @@ extern void board_pinmux_mpi1_puya_ext(int is64Mb);
 extern void board_pinmux_mpi1_gd();
 extern void board_pinmux_mpi2();
 extern void board_pinmux_mpi3();
+extern void board_pinmux_mpi4();
 extern void board_pinmux_sd();
 extern void boot_error(unsigned char code);
 

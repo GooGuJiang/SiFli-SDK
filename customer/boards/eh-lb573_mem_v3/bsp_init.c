@@ -53,7 +53,7 @@
 static uint16_t mpi1_div = 1;
 static uint16_t mpi2_div = 1;
 static uint16_t mpi3_div = 1;
-
+static uint16_t mpi4_div = 1;
 
 static uint32_t otp_flash_addr = AUTO_FLASH_MAC_ADDRESS;
 
@@ -72,10 +72,12 @@ void BSP_SetFlash##i##DIV(uint16_t div) \
 FUNC_BSP_FLASH_DIV_GET(1);
 FUNC_BSP_FLASH_DIV_GET(2);
 FUNC_BSP_FLASH_DIV_GET(3);
+FUNC_BSP_FLASH_DIV_GET(4);
 
 FUNC_BSP_FLASH_DIV_SET(1)
 FUNC_BSP_FLASH_DIV_SET(2)
 FUNC_BSP_FLASH_DIV_SET(3)
+FUNC_BSP_FLASH_DIV_SET(4)
 
 
 int rt_psram_init(void);

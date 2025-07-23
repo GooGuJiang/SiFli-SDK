@@ -592,6 +592,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define MPI1_BASE           0x50041000
 #define MPI2_BASE           0x50042000
 #define MPI3_BASE           0x50043000
+#define MPI4_BASE           0x50044000
 #define SDMMC1_BASE         0x50045000
 #define SDMMC2_BASE         0x50046000
 #define CRC1_BASE           0x50048000
@@ -702,6 +703,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_mpi1        ((MPI_TypeDef           *)    MPI1_BASE)
 #define hwp_mpi2        ((MPI_TypeDef           *)    MPI2_BASE)
 #define hwp_mpi3        ((MPI_TypeDef           *)    MPI3_BASE)
+#define hwp_mpi4        ((MPI_TypeDef           *)    MPI4_BASE)
 #define hwp_lptim1      ((LPTIM_TypeDef         *)    LPTIM1_BASE)
 #define hwp_lptim2      ((LPTIM_TypeDef         *)    LPTIM2_BASE)
 #define hwp_lptim3      ((LPTIM_TypeDef         *)    LPTIM3_BASE)
@@ -742,6 +744,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_qspi1       hwp_mpi1
 #define hwp_qspi2       hwp_mpi2
 #define hwp_qspi3       hwp_mpi3
+#define hwp_qspi4       hwp_mpi4
 
 #define hwp_hmailbox    ((MAILBOX1_TypeDef       *)    MAILBOX1_BASE)
 #define hwp_lmailbox    ((MAILBOX2_TypeDef       *)    MAILBOX2_BASE)
@@ -767,6 +770,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define FLASH1        hwp_qspi1
 #define FLASH2        hwp_qspi2
 #define FLASH3        hwp_qspi3
+#define FLASH4        hwp_qspi4
 
 #define SDIO1          hwp_sdmmc1
 
