@@ -983,14 +983,18 @@ static void lcd_driver_print_error_info(void)
               drv_lcd.hlcdc.Instance->IRQ
              );
 
-        LOG_E("LCDC LAYER0 CFG=%x,TL=%x,BR=%x,SRC=%x,DEC=%x",
+        LOG_E("LCDC LAYER0 CFG=%x,TL=%x,BR=%x,SRC=%x",
               drv_lcd.hlcdc.Instance->LAYER0_CONFIG,
               drv_lcd.hlcdc.Instance->LAYER0_TL_POS,
               drv_lcd.hlcdc.Instance->LAYER0_BR_POS,
-              drv_lcd.hlcdc.Instance->LAYER0_SRC,
-              drv_lcd.hlcdc.Instance->LAYER0_DECOMP
+              drv_lcd.hlcdc.Instance->LAYER0_SRC
              );
 
+#ifdef LCD_IF_LAYER0_DECOMP_ENABLE
+        LOG_E("LAYER0_DECOMP=%x", drv_lcd.hlcdc.Instance->LAYER0_DECOMP);
+#else
+        LOG_E("COENG_CFG=%x", drv_lcd.hlcdc.Instance->COENG_CFG);
+#endif
         LOG_E("LCDC LAYER1 CFG=%x,TL=%x,BR=%x,SRC=%x",
               drv_lcd.hlcdc.Instance->LAYER1_CONFIG,
               drv_lcd.hlcdc.Instance->LAYER1_TL_POS,

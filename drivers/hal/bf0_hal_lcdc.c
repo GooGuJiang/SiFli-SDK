@@ -1375,6 +1375,9 @@ static HAL_StatusTypeDef LayerUpdate(LCDC_HandleTypeDef *lcdc)
 
 
     /*** 2. setup layer ***/
+#if defined(LCD_IF_COENG_CFG_JPEG_EN)||defined(LCD_IF_COENG_CFG_DECOMP_EN)
+    lcdc->Instance->COENG_CFG = 0; //Clear coeng config first
+#endif /* defined(LCD_IF_COENG_CFG_JPEG_EN)||defined(LCD_IF_COENG_CFG_DECOMP_EN) */
     for (HAL_LCDC_LayerDef layeridx = HAL_LCDC_LAYER_0; layeridx < HAL_LCDC_LAYER_MAX; layeridx++)
     {
 #ifndef SF32LB55X
@@ -1440,11 +1443,14 @@ static HAL_StatusTypeDef LayerUpdate(LCDC_HandleTypeDef *lcdc)
 
 
         //a.2 Layer alpha,chroma,
-        reg |= (cfg->layer_alpha_en   << LCD_IF_LAYER0_CONFIG_ALPHA_SEL_Pos) |     // use layer alpha
-               (cfg->alpha            << LCD_IF_LAYER0_CONFIG_ALPHA_Pos) |         // layer alpha value is 255
-               (cfg->chroma_key_en    << LCD_IF_LAYER0_CONFIG_FILTER_EN_Pos) |     // disable filter
-               (1                     << LCD_IF_LAYER0_CONFIG_ACTIVE_Pos) |        // Enable layer
-               (1                     << LCD_IF_LAYER0_CONFIG_PREFETCH_EN_Pos);    // prefetch enable
+        reg |= (cfg->layer_alpha_en   << LCD_IF_LAYER0_CONFIG_ALPHA_SEL_Pos)      // use layer alpha
+               | (cfg->alpha            << LCD_IF_LAYER0_CONFIG_ALPHA_Pos)         // layer alpha value is 255
+               | (cfg->chroma_key_en    << LCD_IF_LAYER0_CONFIG_FILTER_EN_Pos)     // disable filter
+               | LCD_IF_LAYER0_CONFIG_ACTIVE        // Enable layer
+#ifdef LCD_IF_LAYER0_CONFIG_PREFETCH_EN
+               | LCD_IF_LAYER0_CONFIG_PREFETCH_EN   // prefetch enable
+#endif
+               ;
 
 
         //a.3 line fetch mode & h,v mirror
@@ -1479,6 +1485,7 @@ static HAL_StatusTypeDef LayerUpdate(LCDC_HandleTypeDef *lcdc)
 
 
         // a.5 setup compressed buffer info
+#ifdef LCD_IF_LAYER0_DECOMP_ENABLE
         if (HAL_LCDC_LAYER_0 == layeridx)
         {
 #ifdef SF32LB58X
@@ -1514,7 +1521,35 @@ static HAL_StatusTypeDef LayerUpdate(LCDC_HandleTypeDef *lcdc)
                 lcdc->Instance->LAYER0_DECOMP = 0;
             }
         }
+#else
+#ifdef LCDC_SUPPORTED_COMPRESSED_LAYER
+        if (cfg->cmpr_en)
+        {
+            uint32_t cfg0;
+            uint32_t cfg1;
+            uint32_t compressed_size;
+            uint32_t target_size;
+            uint32_t col_size = data_w;
+            uint32_t chunks = 1;
 
+            HAL_EXT_DMA_CalcCompressedSize(data_w * 1 * bytes_per_pixel / 4, cfg->cmpr_rate,
+                                           1, bytes_per_pixel, &compressed_size, &target_size);
+            HAL_EXT_DMA_GetConfig(target_size, &cfg0, &cfg1);
+            layer_1line_total_bytes = compressed_size * 4 / 1;
+
+            HAL_LCDC_ASSERT(0 == (lcdc->Instance->COENG_CFG & LCD_IF_COENG_CFG_DECOMP_EN)); //Make sure no layer is using decompression
+
+
+            lcdc->Instance->DECOMP_CFG0 = MAKE_REG_VAL(target_size, LCD_IF_DECOMP_CFG0_TARGET_WORDS_Msk, LCD_IF_DECOMP_CFG0_TARGET_WORDS_Pos)
+                                          | MAKE_REG_VAL(col_size, LCD_IF_DECOMP_CFG0_COL_SIZE_Msk, LCD_IF_DECOMP_CFG0_COL_SIZE_Pos)
+                                          | MAKE_REG_VAL(chunks, LCD_IF_DECOMP_CFG0_CHUNK_CNT_Msk, LCD_IF_DECOMP_CFG0_CHUNK_CNT_Pos)
+                                          ;
+            lcdc->Instance->DECOMP_CFG1 = cfg1;
+            lcdc->Instance->DECOMP_CFG2 = cfg0;
+            lcdc->Instance->COENG_CFG |= LCD_IF_COENG_CFG_DECOMP_EN;
+        }
+#endif /* LCDC_SUPPORTED_COMPRESSED_LAYER */
+#endif
 
         reg |= (layer_1line_total_bytes << LCD_IF_LAYER0_CONFIG_WIDTH_Pos); // layer line width
         pHwLayerx->CONFIG = reg;
