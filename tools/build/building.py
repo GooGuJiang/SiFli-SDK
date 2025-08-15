@@ -2375,6 +2375,8 @@ def SifliGccEnv(cpu):
     else:
         rtconfig.CFLAGS = DEVICE + ' -mfloat-abi=soft'
     rtconfig.CFLAGS += ' -funsigned-char -fshort-enums -fshort-wchar'
+    # We don't need to delete the SDK prefix now, as this would make debugging inconvenient.
+    # rtconfig.CFLAGS += f' -ffile-prefix-map={SIFLI_SDK}=./'
     rtconfig.CFLAGS += ' -mlittle-endian -gdwarf-3 -Wno-packed -Wno-missing-noreturn -Wno-sign-conversion -Wno-unused-macros -Wnull-dereference'
     rtconfig.CFLAGS += ' -fno-unwind-tables -fno-exceptions'
     rtconfig.CFLAGS += ' -fno-common -fno-strict-aliasing'
