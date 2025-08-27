@@ -80,5 +80,8 @@ typedef struct
 #define WDT_WDT_FG_SYNC_FG_Pos          (3U)
 #define WDT_WDT_FG_SYNC_FG_Msk          (0x1UL << WDT_WDT_FG_SYNC_FG_Pos)
 #define WDT_WDT_FG_SYNC_FG              WDT_WDT_FG_SYNC_FG_Msk
+#define WDT_WDT_FG_BUSY_FG_Pos          (4U)
+#define WDT_WDT_FG_BUSY_FG_Msk          (0x1UL << WDT_WDT_FG_BUSY_FG_Pos)
+#define WDT_WDT_FG_BUSY_FG              WDT_WDT_FG_BUSY_FG_Msk
 
 #endif

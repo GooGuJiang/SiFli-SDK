@@ -375,6 +375,8 @@ __HAL_ROM_USED bool HAL_FLASH_IS_TX_FULL(FLASH_HandleTypeDef *hflash)
 
     return (hflash->Instance->FIFOCR & MPI_FIFOCR_TXF);
 }
+
+#ifdef MPI_SR_FUF
 __HAL_ROM_USED bool HAL_FLASH_IS_TX_EMPTY(FLASH_HandleTypeDef *hflash)
 {
     if (hflash == NULL)
@@ -382,6 +384,7 @@ __HAL_ROM_USED bool HAL_FLASH_IS_TX_EMPTY(FLASH_HandleTypeDef *hflash)
 
     return (hflash->Instance->SR & MPI_SR_FUF);
 }
+#endif /* MPI_SR_FUF */
 
 __HAL_ROM_USED bool HAL_FLASH_IS_PROG_DONE(FLASH_HandleTypeDef *hflash)
 {
@@ -644,6 +647,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_ENABLE_HYPER(FLASH_HandleTypeDef *hfl
     if (hflash == NULL)
         return HAL_ERROR;
 
+//TODO:
+#ifdef MPI_DCR_HYPER
     if (en)
     {
         hflash->Instance->DCR |= MPI_DCR_HYPER;
@@ -652,6 +657,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_ENABLE_HYPER(FLASH_HandleTypeDef *hfl
     {
         hflash->Instance->DCR &= (~MPI_DCR_HYPER);
     }
+#endif /* MPI_DCR_HYPER */
 
     return HAL_OK;
 }
@@ -722,10 +728,13 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_SET_LEGACY(FLASH_HandleTypeDef *hflas
     if (hflash == NULL)
         return HAL_ERROR;
 
+//TODO:
+#ifdef MPI_DCR_XLEGACY
     if (en)
         hflash->Instance->DCR |= MPI_DCR_XLEGACY;
     else
         hflash->Instance->DCR &= ~MPI_DCR_XLEGACY;
+#endif /* MPI_DCR_XLEGACY */
 
     return HAL_OK;
 }
@@ -770,6 +779,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_SET_X16_MODE(FLASH_HandleTypeDef *hfl
 
 __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_EN_FIXLAT(FLASH_HandleTypeDef *hflash, uint8_t fix)
 {
+#ifdef MPI_DCR_FIXLAT
+//TODO: 
     if (hflash == NULL)
         return HAL_ERROR;
 
@@ -777,6 +788,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_EN_FIXLAT(FLASH_HandleTypeDef *hflash, 
         hflash->Instance->DCR |= MPI_DCR_FIXLAT;
     else
         hflash->Instance->DCR &= ~MPI_DCR_FIXLAT;
+#endif /* MPI_DCR_FIXLAT */
 
     return HAL_OK;
 }
@@ -786,10 +798,13 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_SET_HYPER(FLASH_HandleTypeDef *hflash, 
     if (hflash == NULL)
         return HAL_ERROR;
 
+//TODO:
+#ifdef MPI_DCR_HYPER
     if (hyper)
         hflash->Instance->DCR |= MPI_DCR_HYPER;
     else
         hflash->Instance->DCR &= ~MPI_DCR_HYPER;
+#endif /* MPI_DCR_HYPER */
 
     return HAL_OK;
 }
@@ -799,10 +814,13 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_ENABLE_DQS(FLASH_HandleTypeDef *hflash,
     if (hflash == NULL)
         return HAL_ERROR;
 
+//TODO:
+#ifdef MPI_DCR_DQSE    
     if (dqs)
         hflash->Instance->DCR |= MPI_DCR_DQSE;
     else
         hflash->Instance->DCR &= ~MPI_DCR_DQSE;
+#endif /* MPI_DCR_DQSE */
 
     return HAL_OK;
 }
@@ -835,6 +853,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_SET_SCK(FLASH_HandleTypeDef *hflash, ui
 
 __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_CFG_DTR(FLASH_HandleTypeDef *hflash, uint8_t en, uint8_t rclk_inv_delay)
 {
+#ifdef MPI_MISCR_DTRPRE	
+	//TODO:
     uint32_t value;
     if (hflash == NULL)
         return HAL_ERROR;
@@ -860,6 +880,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_CFG_DTR(FLASH_HandleTypeDef *hflash, ui
         value |= (MPI_MISCR_SCKINV);
     }
     hflash->Instance->MISCR = value;
+#endif
 
     return HAL_OK;
 }
@@ -1469,6 +1490,8 @@ __HAL_ROM_USED void HAL_QSPI_SET_RXDELAY(uint8_t qspi_id, uint8_t clk_inv, uint8
         break;
     }
 
+//TODO:
+#ifdef MPI_MISCR_RXCLKDLY
     if (handle != NULL)
     {
         value = handle->MISCR & (~(MPI_MISCR_RXCLKDLY | MPI_MISCR_RXCLKINV));
@@ -1476,6 +1499,7 @@ __HAL_ROM_USED void HAL_QSPI_SET_RXDELAY(uint8_t qspi_id, uint8_t clk_inv, uint8
                  | ((clk_inv << MPI_MISCR_RXCLKINV_Pos)& MPI_MISCR_RXCLKINV_Msk);
         handle->MISCR = value;
     }
+#endif /* MPI_MISCR_RXCLKDLY */		
 }
 
 __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t clk_inv, uint8_t clk_delay)
@@ -1484,6 +1508,9 @@ __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t cl
     if (hflash == NULL)
         return;
 
+//TODO:	
+#ifdef MPI_MISCR_RXCLKDLY
+
     if (hflash->Instance != NULL)
     {
         value = hflash->Instance->MISCR & (~(MPI_MISCR_RXCLKDLY | MPI_MISCR_RXCLKINV));
@@ -1491,6 +1518,9 @@ __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t cl
                  | ((clk_inv << MPI_MISCR_RXCLKINV_Pos)& MPI_MISCR_RXCLKINV_Msk);
         hflash->Instance->MISCR = value;
     }
+#else
+	hflash->Instance->MISCR |= MPI_MISCR_SCKINV;		
+#endif /* MPI_MISCR_RXCLKDLY */		
 }
 
 
@@ -1743,9 +1773,12 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_CFG_PREFETCH(FLASH_HandleTypeDef *hflas
     if (((start & 0x3ff) != 0) || ((len & 0x3ff) != 0))
         return HAL_ERROR;
 
+#ifdef MPI_PRSAR_SA
+//TODO：		
     hflash->Instance->PRSAR = start;
     hflash->Instance->PREAR = start + len;
-
+#endif /* MPI_PRSAR_SA */
+		
     return HAL_OK;
 }
 
@@ -1754,11 +1787,14 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_EN_PREFETCH(FLASH_HandleTypeDef *hflash
     if (hflash == NULL)
         return HAL_ERROR;
 
+#ifdef MPI_PRSAR_SA
+//TODO：				
     if (en)
         hflash->Instance->CR |= MPI_CR_PREFE;
     else
         hflash->Instance->CR &= (~MPI_CR_PREFE);
-
+#endif /* MPI_PRSAR_SA */
+		
     return HAL_OK;
 }
 

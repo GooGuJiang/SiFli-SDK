@@ -11,7 +11,9 @@ typedef struct
     __IO uint32_t ISC;
     __IO uint32_t ESCR;
     __IO uint32_t ESUR;
-    __IO uint32_t RSVD2[6];
+    __IO uint32_t CWSTRT;
+    __IO uint32_t CWSIZE;
+    __IO uint32_t RSVD2[4];
     __IO uint32_t DR;
     __IO uint32_t RSVD1[16];
     __IO uint32_t SPI_CR;
@@ -24,6 +26,8 @@ typedef struct
     __IO uint32_t YUV2RGB_CR1;
     __IO uint32_t YUV2RGB_CR2;
     __IO uint32_t JPEG_BYTE;
+    __IO uint32_t IPI_CR;
+    __IO uint32_t CONV_CR;
 } DCMI_TypeDef;
 
 
@@ -34,9 +38,9 @@ typedef struct
 #define DCMI_CR_CM_Pos                  (1U)
 #define DCMI_CR_CM_Msk                  (0x1UL << DCMI_CR_CM_Pos)
 #define DCMI_CR_CM                      DCMI_CR_CM_Msk
-#define DCMI_CR_IF_SEL_Pos              (2U)
-#define DCMI_CR_IF_SEL_Msk              (0x1UL << DCMI_CR_IF_SEL_Pos)
-#define DCMI_CR_IF_SEL                  DCMI_CR_IF_SEL_Msk
+#define DCMI_CR_CROP_Pos                (2U)
+#define DCMI_CR_CROP_Msk                (0x1UL << DCMI_CR_CROP_Pos)
+#define DCMI_CR_CROP                    DCMI_CR_CROP_Msk
 #define DCMI_CR_JPEG_Pos                (3U)
 #define DCMI_CR_JPEG_Msk                (0x1UL << DCMI_CR_JPEG_Pos)
 #define DCMI_CR_JPEG                    DCMI_CR_JPEG_Msk
@@ -82,6 +86,12 @@ typedef struct
 #define DCMI_CR_RSTB_S_Pos              (23U)
 #define DCMI_CR_RSTB_S_Msk              (0x1UL << DCMI_CR_RSTB_S_Pos)
 #define DCMI_CR_RSTB_S                  DCMI_CR_RSTB_S_Msk
+#define DCMI_CR_IF_SEL_Pos              (24U)
+#define DCMI_CR_IF_SEL_Msk              (0x1UL << DCMI_CR_IF_SEL_Pos)
+#define DCMI_CR_IF_SEL                  DCMI_CR_IF_SEL_Msk
+#define DCMI_CR_IPI_EN_Pos              (25U)
+#define DCMI_CR_IPI_EN_Msk              (0x1UL << DCMI_CR_IPI_EN_Pos)
+#define DCMI_CR_IPI_EN                  DCMI_CR_IPI_EN_Msk
 
 /******************** Bit definition for DCMI_SR register *********************/
 #define DCMI_SR_HSYNC_Pos               (0U)
@@ -202,6 +212,22 @@ typedef struct
 #define DCMI_ESUR_FEU_Msk               (0xFFUL << DCMI_ESUR_FEU_Pos)
 #define DCMI_ESUR_FEU                   DCMI_ESUR_FEU_Msk
 
+/****************** Bit definition for DCMI_CWSTRT register *******************/
+#define DCMI_CWSTRT_HOFFCNT_Pos         (0U)
+#define DCMI_CWSTRT_HOFFCNT_Msk         (0x3FFFUL << DCMI_CWSTRT_HOFFCNT_Pos)
+#define DCMI_CWSTRT_HOFFCNT             DCMI_CWSTRT_HOFFCNT_Msk
+#define DCMI_CWSTRT_VST_Pos             (16U)
+#define DCMI_CWSTRT_VST_Msk             (0x1FFFUL << DCMI_CWSTRT_VST_Pos)
+#define DCMI_CWSTRT_VST                 DCMI_CWSTRT_VST_Msk
+
+/****************** Bit definition for DCMI_CWSIZE register *******************/
+#define DCMI_CWSIZE_CAPCNT_Pos          (0U)
+#define DCMI_CWSIZE_CAPCNT_Msk          (0x3FFFUL << DCMI_CWSIZE_CAPCNT_Pos)
+#define DCMI_CWSIZE_CAPCNT              DCMI_CWSIZE_CAPCNT_Msk
+#define DCMI_CWSIZE_VLINE_Pos           (16U)
+#define DCMI_CWSIZE_VLINE_Msk           (0x3FFFUL << DCMI_CWSIZE_VLINE_Pos)
+#define DCMI_CWSIZE_VLINE               DCMI_CWSIZE_VLINE_Msk
+
 /******************** Bit definition for DCMI_DR register *********************/
 #define DCMI_DR_DATA_Pos                (0U)
 #define DCMI_DR_DATA_Msk                (0xFFFFFFFFUL << DCMI_DR_DATA_Pos)
@@ -316,5 +342,21 @@ typedef struct
 #define DCMI_JPEG_BYTE_COUNT_Pos        (0U)
 #define DCMI_JPEG_BYTE_COUNT_Msk        (0xFFFFFFFFUL << DCMI_JPEG_BYTE_COUNT_Pos)
 #define DCMI_JPEG_BYTE_COUNT            DCMI_JPEG_BYTE_COUNT_Msk
+
+/****************** Bit definition for DCMI_IPI_CR register *******************/
+#define DCMI_IPI_CR_DATA_TYPE_Pos       (0U)
+#define DCMI_IPI_CR_DATA_TYPE_Msk       (0xFUL << DCMI_IPI_CR_DATA_TYPE_Pos)
+#define DCMI_IPI_CR_DATA_TYPE           DCMI_IPI_CR_DATA_TYPE_Msk
+#define DCMI_IPI_CR_EMBEDDED_BYPASS_Pos  (4U)
+#define DCMI_IPI_CR_EMBEDDED_BYPASS_Msk  (0x1UL << DCMI_IPI_CR_EMBEDDED_BYPASS_Pos)
+#define DCMI_IPI_CR_EMBEDDED_BYPASS     DCMI_IPI_CR_EMBEDDED_BYPASS_Msk
+
+/****************** Bit definition for DCMI_CONV_CR register ******************/
+#define DCMI_CONV_CR_CON_TO888_Pos      (0U)
+#define DCMI_CONV_CR_CON_TO888_Msk      (0x1UL << DCMI_CONV_CR_CON_TO888_Pos)
+#define DCMI_CONV_CR_CON_TO888          DCMI_CONV_CR_CON_TO888_Msk
+#define DCMI_CONV_CR_CON_TO565_Pos      (1U)
+#define DCMI_CONV_CR_CON_TO565_Msk      (0x1UL << DCMI_CONV_CR_CON_TO565_Pos)
+#define DCMI_CONV_CR_CON_TO565          DCMI_CONV_CR_CON_TO565_Msk
 
 #endif

@@ -17,9 +17,9 @@ typedef struct
 #define LPSYS_RCC_RSTR1_LCPU_Pos        (0U)
 #define LPSYS_RCC_RSTR1_LCPU_Msk        (0x1UL << LPSYS_RCC_RSTR1_LCPU_Pos)
 #define LPSYS_RCC_RSTR1_LCPU            LPSYS_RCC_RSTR1_LCPU_Msk
-#define LPSYS_RCC_RSTR1_DMAC2_Pos       (1U)
-#define LPSYS_RCC_RSTR1_DMAC2_Msk       (0x1UL << LPSYS_RCC_RSTR1_DMAC2_Pos)
-#define LPSYS_RCC_RSTR1_DMAC2           LPSYS_RCC_RSTR1_DMAC2_Msk
+#define LPSYS_RCC_RSTR1_DMAC3_Pos       (1U)
+#define LPSYS_RCC_RSTR1_DMAC3_Msk       (0x1UL << LPSYS_RCC_RSTR1_DMAC3_Pos)
+#define LPSYS_RCC_RSTR1_DMAC3           LPSYS_RCC_RSTR1_DMAC3_Msk
 #define LPSYS_RCC_RSTR1_MAILBOX2_Pos    (2U)
 #define LPSYS_RCC_RSTR1_MAILBOX2_Msk    (0x1UL << LPSYS_RCC_RSTR1_MAILBOX2_Pos)
 #define LPSYS_RCC_RSTR1_MAILBOX2        LPSYS_RCC_RSTR1_MAILBOX2_Msk
@@ -58,9 +58,9 @@ typedef struct
 #define LPSYS_RCC_RSTR1_CRC2            LPSYS_RCC_RSTR1_CRC2_Msk
 
 /***************** Bit definition for LPSYS_RCC_ENR1 register *****************/
-#define LPSYS_RCC_ENR1_DMAC2_Pos        (1U)
-#define LPSYS_RCC_ENR1_DMAC2_Msk        (0x1UL << LPSYS_RCC_ENR1_DMAC2_Pos)
-#define LPSYS_RCC_ENR1_DMAC2            LPSYS_RCC_ENR1_DMAC2_Msk
+#define LPSYS_RCC_ENR1_DMAC3_Pos        (1U)
+#define LPSYS_RCC_ENR1_DMAC3_Msk        (0x1UL << LPSYS_RCC_ENR1_DMAC3_Pos)
+#define LPSYS_RCC_ENR1_DMAC3            LPSYS_RCC_ENR1_DMAC3_Msk
 #define LPSYS_RCC_ENR1_MAILBOX2_Pos     (2U)
 #define LPSYS_RCC_ENR1_MAILBOX2_Msk     (0x1UL << LPSYS_RCC_ENR1_MAILBOX2_Pos)
 #define LPSYS_RCC_ENR1_MAILBOX2         LPSYS_RCC_ENR1_MAILBOX2_Msk
@@ -102,9 +102,9 @@ typedef struct
 #define LPSYS_RCC_ENR1_CRC2             LPSYS_RCC_ENR1_CRC2_Msk
 
 /***************** Bit definition for LPSYS_RCC_ESR1 register *****************/
-#define LPSYS_RCC_ESR1_DMAC2_Pos        (1U)
-#define LPSYS_RCC_ESR1_DMAC2_Msk        (0x1UL << LPSYS_RCC_ESR1_DMAC2_Pos)
-#define LPSYS_RCC_ESR1_DMAC2            LPSYS_RCC_ESR1_DMAC2_Msk
+#define LPSYS_RCC_ESR1_DMAC3_Pos        (1U)
+#define LPSYS_RCC_ESR1_DMAC3_Msk        (0x1UL << LPSYS_RCC_ESR1_DMAC3_Pos)
+#define LPSYS_RCC_ESR1_DMAC3            LPSYS_RCC_ESR1_DMAC3_Msk
 #define LPSYS_RCC_ESR1_MAILBOX2_Pos     (2U)
 #define LPSYS_RCC_ESR1_MAILBOX2_Msk     (0x1UL << LPSYS_RCC_ESR1_MAILBOX2_Pos)
 #define LPSYS_RCC_ESR1_MAILBOX2         LPSYS_RCC_ESR1_MAILBOX2_Msk
@@ -146,9 +146,9 @@ typedef struct
 #define LPSYS_RCC_ESR1_CRC2             LPSYS_RCC_ESR1_CRC2_Msk
 
 /***************** Bit definition for LPSYS_RCC_ECR1 register *****************/
-#define LPSYS_RCC_ECR1_DMAC2_Pos        (1U)
-#define LPSYS_RCC_ECR1_DMAC2_Msk        (0x1UL << LPSYS_RCC_ECR1_DMAC2_Pos)
-#define LPSYS_RCC_ECR1_DMAC2            LPSYS_RCC_ECR1_DMAC2_Msk
+#define LPSYS_RCC_ECR1_DMAC3_Pos        (1U)
+#define LPSYS_RCC_ECR1_DMAC3_Msk        (0x1UL << LPSYS_RCC_ECR1_DMAC3_Pos)
+#define LPSYS_RCC_ECR1_DMAC3            LPSYS_RCC_ECR1_DMAC3_Msk
 #define LPSYS_RCC_ECR1_MAILBOX2_Pos     (2U)
 #define LPSYS_RCC_ECR1_MAILBOX2_Msk     (0x1UL << LPSYS_RCC_ECR1_MAILBOX2_Pos)
 #define LPSYS_RCC_ECR1_MAILBOX2         LPSYS_RCC_ECR1_MAILBOX2_Msk

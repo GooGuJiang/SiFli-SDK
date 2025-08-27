@@ -16,7 +16,6 @@ typedef struct
     __IO uint32_t END_POINT;
     __IO uint32_t INT_EN;
     __IO uint32_t INT_STA;
-    __IO uint32_t RELOAD;
     __IO uint32_t STATUS0;
     __IO uint32_t STATUS1;
     __IO uint32_t STATUS2;
@@ -31,7 +30,16 @@ typedef struct
     __IO uint32_t STATUS11;
     __IO uint32_t STATUS12;
     __IO uint32_t STATUS13;
+    __IO uint32_t SOI_TIME;
+    __IO uint32_t ACT_TIME;
+    __IO uint32_t MJPEG_STA;
+    __IO uint32_t MJPEG_FRM;
+    __IO uint32_t MJPEG_START;
     __IO uint32_t DB_DATA0;
+    __IO uint32_t DB_DATA1;
+    __IO uint32_t DB_DATA2;
+    __IO uint32_t DB_DATA3;
+    __IO uint32_t DB_DATA4;
 } JPEGD_TypeDef;
 
 

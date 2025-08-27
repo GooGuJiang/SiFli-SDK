@@ -129,6 +129,9 @@ typedef struct
 #define HPSYS_CFG_RTC_DR_CB_Pos         (24U)
 #define HPSYS_CFG_RTC_DR_CB_Msk         (0x1UL << HPSYS_CFG_RTC_DR_CB_Pos)
 #define HPSYS_CFG_RTC_DR_CB             HPSYS_CFG_RTC_DR_CB_Msk
+#define HPSYS_CFG_RTC_DR_RSF_Pos        (30U)
+#define HPSYS_CFG_RTC_DR_RSF_Msk        (0x1UL << HPSYS_CFG_RTC_DR_RSF_Pos)
+#define HPSYS_CFG_RTC_DR_RSF            HPSYS_CFG_RTC_DR_RSF_Msk
 #define HPSYS_CFG_RTC_DR_ERR_Pos        (31U)
 #define HPSYS_CFG_RTC_DR_ERR_Msk        (0x1UL << HPSYS_CFG_RTC_DR_ERR_Pos)
 #define HPSYS_CFG_RTC_DR_ERR            HPSYS_CFG_RTC_DR_ERR_Msk

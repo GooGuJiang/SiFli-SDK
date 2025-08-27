@@ -320,15 +320,24 @@ typedef struct __FLASH_HandleTypeDef
   * @param  \__HANDLE__ SPI FLASH handle
   * @retval None
   */
+//TODO:  
+#ifdef MPI_CR_HWIFE 
 #define __HAL_QSPI_EN_HWI(__HANDLE__)        (((__HANDLE__)->Instance->CR) |= MPI_CR_HWIFE)
+#else
+#define __HAL_QSPI_EN_HWI(__HANDLE__)        
+#endif /* MPI_CR_HWIFE */
 
 /**
   * @brief QSPI Disable Hardware Interface .
   * @param  \__HANDLE__ SPI FLASH handle
   * @retval None
   */
+//TODO:  
+#ifdef MPI_CR_HWIFE  
 #define __HAL_QSPI_DIS_HWI(__HANDLE__)        (((__HANDLE__)->Instance->CR) &= ~(MPI_CR_HWIFE))
-
+#else
+#define __HAL_QSPI_DIS_HWI(__HANDLE__)        
+#endif /* MPI_CR_HWIFE */
 /**
   * @brief QSPI Set Command , do not wait TCF.
   * @param  \__HANDLE__ SPI FLASH handle

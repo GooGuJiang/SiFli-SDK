@@ -18,10 +18,12 @@ typedef struct
     __IO uint32_t DLL2CR;
     __IO uint32_t HRCCAL1;
     __IO uint32_t HRCCAL2;
+    __IO uint32_t LRCCAL1;
+    __IO uint32_t LRCCAL2;
     __IO uint32_t DBGCLKR;
     __IO uint32_t DBGR;
     __IO uint32_t DWCFGR;
-    __IO uint32_t RSVD1[13];
+    __IO uint32_t RSVD1[11];
     __IO uint32_t TESTR;
 } HPSYS_RCC_TypeDef;
 
@@ -84,12 +86,18 @@ typedef struct
 #define HPSYS_RCC_RSTR1_BTIM2_Pos       (18U)
 #define HPSYS_RCC_RSTR1_BTIM2_Msk       (0x1UL << HPSYS_RCC_RSTR1_BTIM2_Pos)
 #define HPSYS_RCC_RSTR1_BTIM2           HPSYS_RCC_RSTR1_BTIM2_Msk
+#define HPSYS_RCC_RSTR1_PWM1_Pos        (19U)
+#define HPSYS_RCC_RSTR1_PWM1_Msk        (0x1UL << HPSYS_RCC_RSTR1_PWM1_Pos)
+#define HPSYS_RCC_RSTR1_PWM1            HPSYS_RCC_RSTR1_PWM1_Msk
 #define HPSYS_RCC_RSTR1_SPI1_Pos        (20U)
 #define HPSYS_RCC_RSTR1_SPI1_Msk        (0x1UL << HPSYS_RCC_RSTR1_SPI1_Pos)
 #define HPSYS_RCC_RSTR1_SPI1            HPSYS_RCC_RSTR1_SPI1_Msk
 #define HPSYS_RCC_RSTR1_SPI2_Pos        (21U)
 #define HPSYS_RCC_RSTR1_SPI2_Msk        (0x1UL << HPSYS_RCC_RSTR1_SPI2_Pos)
 #define HPSYS_RCC_RSTR1_SPI2            HPSYS_RCC_RSTR1_SPI2_Msk
+#define HPSYS_RCC_RSTR1_DMAC2_Pos       (22U)
+#define HPSYS_RCC_RSTR1_DMAC2_Msk       (0x1UL << HPSYS_RCC_RSTR1_DMAC2_Pos)
+#define HPSYS_RCC_RSTR1_DMAC2           HPSYS_RCC_RSTR1_DMAC2_Msk
 #define HPSYS_RCC_RSTR1_NPU_Pos         (24U)
 #define HPSYS_RCC_RSTR1_NPU_Msk         (0x1UL << HPSYS_RCC_RSTR1_NPU_Pos)
 #define HPSYS_RCC_RSTR1_NPU             HPSYS_RCC_RSTR1_NPU_Msk
@@ -102,6 +110,12 @@ typedef struct
 #define HPSYS_RCC_RSTR1_I2C2_Pos        (28U)
 #define HPSYS_RCC_RSTR1_I2C2_Msk        (0x1UL << HPSYS_RCC_RSTR1_I2C2_Pos)
 #define HPSYS_RCC_RSTR1_I2C2            HPSYS_RCC_RSTR1_I2C2_Msk
+#define HPSYS_RCC_RSTR1_DSIHOST_Pos     (29U)
+#define HPSYS_RCC_RSTR1_DSIHOST_Msk     (0x1UL << HPSYS_RCC_RSTR1_DSIHOST_Pos)
+#define HPSYS_RCC_RSTR1_DSIHOST         HPSYS_RCC_RSTR1_DSIHOST_Msk
+#define HPSYS_RCC_RSTR1_DSIPHY_Pos      (30U)
+#define HPSYS_RCC_RSTR1_DSIPHY_Msk      (0x1UL << HPSYS_RCC_RSTR1_DSIPHY_Pos)
+#define HPSYS_RCC_RSTR1_DSIPHY          HPSYS_RCC_RSTR1_DSIPHY_Msk
 #define HPSYS_RCC_RSTR1_PTC1_Pos        (31U)
 #define HPSYS_RCC_RSTR1_PTC1_Msk        (0x1UL << HPSYS_RCC_RSTR1_PTC1_Pos)
 #define HPSYS_RCC_RSTR1_PTC1            HPSYS_RCC_RSTR1_PTC1_Msk
@@ -119,13 +133,16 @@ typedef struct
 #define HPSYS_RCC_RSTR2_MPI3_Pos        (3U)
 #define HPSYS_RCC_RSTR2_MPI3_Msk        (0x1UL << HPSYS_RCC_RSTR2_MPI3_Pos)
 #define HPSYS_RCC_RSTR2_MPI3            HPSYS_RCC_RSTR2_MPI3_Msk
-#define HPSYS_RCC_RSTR2_SDMMC1_Pos      (4U)
+#define HPSYS_RCC_RSTR2_MPI4_Pos        (4U)
+#define HPSYS_RCC_RSTR2_MPI4_Msk        (0x1UL << HPSYS_RCC_RSTR2_MPI4_Pos)
+#define HPSYS_RCC_RSTR2_MPI4            HPSYS_RCC_RSTR2_MPI4_Msk
+#define HPSYS_RCC_RSTR2_SDMMC1_Pos      (5U)
 #define HPSYS_RCC_RSTR2_SDMMC1_Msk      (0x1UL << HPSYS_RCC_RSTR2_SDMMC1_Pos)
 #define HPSYS_RCC_RSTR2_SDMMC1          HPSYS_RCC_RSTR2_SDMMC1_Msk
-#define HPSYS_RCC_RSTR2_SDMMC2_Pos      (5U)
+#define HPSYS_RCC_RSTR2_SDMMC2_Pos      (6U)
 #define HPSYS_RCC_RSTR2_SDMMC2_Msk      (0x1UL << HPSYS_RCC_RSTR2_SDMMC2_Pos)
 #define HPSYS_RCC_RSTR2_SDMMC2          HPSYS_RCC_RSTR2_SDMMC2_Msk
-#define HPSYS_RCC_RSTR2_USBC_Pos        (6U)
+#define HPSYS_RCC_RSTR2_USBC_Pos        (7U)
 #define HPSYS_RCC_RSTR2_USBC_Msk        (0x1UL << HPSYS_RCC_RSTR2_USBC_Pos)
 #define HPSYS_RCC_RSTR2_USBC            HPSYS_RCC_RSTR2_USBC_Msk
 #define HPSYS_RCC_RSTR2_I2C3_Pos        (8U)
@@ -167,6 +184,9 @@ typedef struct
 #define HPSYS_RCC_RSTR2_I2C4_Pos        (25U)
 #define HPSYS_RCC_RSTR2_I2C4_Msk        (0x1UL << HPSYS_RCC_RSTR2_I2C4_Pos)
 #define HPSYS_RCC_RSTR2_I2C4            HPSYS_RCC_RSTR2_I2C4_Msk
+#define HPSYS_RCC_RSTR2_JPEGE_Pos       (26U)
+#define HPSYS_RCC_RSTR2_JPEGE_Msk       (0x1UL << HPSYS_RCC_RSTR2_JPEGE_Pos)
+#define HPSYS_RCC_RSTR2_JPEGE           HPSYS_RCC_RSTR2_JPEGE_Msk
 
 /***************** Bit definition for HPSYS_RCC_ENR1 register *****************/
 #define HPSYS_RCC_ENR1_GPDMA1_Pos       (0U)
@@ -223,12 +243,18 @@ typedef struct
 #define HPSYS_RCC_ENR1_BTIM2_Pos        (18U)
 #define HPSYS_RCC_ENR1_BTIM2_Msk        (0x1UL << HPSYS_RCC_ENR1_BTIM2_Pos)
 #define HPSYS_RCC_ENR1_BTIM2            HPSYS_RCC_ENR1_BTIM2_Msk
+#define HPSYS_RCC_ENR1_PWM1_Pos         (19U)
+#define HPSYS_RCC_ENR1_PWM1_Msk         (0x1UL << HPSYS_RCC_ENR1_PWM1_Pos)
+#define HPSYS_RCC_ENR1_PWM1             HPSYS_RCC_ENR1_PWM1_Msk
 #define HPSYS_RCC_ENR1_SPI1_Pos         (20U)
 #define HPSYS_RCC_ENR1_SPI1_Msk         (0x1UL << HPSYS_RCC_ENR1_SPI1_Pos)
 #define HPSYS_RCC_ENR1_SPI1             HPSYS_RCC_ENR1_SPI1_Msk
 #define HPSYS_RCC_ENR1_SPI2_Pos         (21U)
 #define HPSYS_RCC_ENR1_SPI2_Msk         (0x1UL << HPSYS_RCC_ENR1_SPI2_Pos)
 #define HPSYS_RCC_ENR1_SPI2             HPSYS_RCC_ENR1_SPI2_Msk
+#define HPSYS_RCC_ENR1_DMAC2_Pos        (22U)
+#define HPSYS_RCC_ENR1_DMAC2_Msk        (0x1UL << HPSYS_RCC_ENR1_DMAC2_Pos)
+#define HPSYS_RCC_ENR1_DMAC2            HPSYS_RCC_ENR1_DMAC2_Msk
 #define HPSYS_RCC_ENR1_SECU1_Pos        (23U)
 #define HPSYS_RCC_ENR1_SECU1_Msk        (0x1UL << HPSYS_RCC_ENR1_SECU1_Pos)
 #define HPSYS_RCC_ENR1_SECU1            HPSYS_RCC_ENR1_SECU1_Msk
@@ -244,6 +270,12 @@ typedef struct
 #define HPSYS_RCC_ENR1_I2C2_Pos         (28U)
 #define HPSYS_RCC_ENR1_I2C2_Msk         (0x1UL << HPSYS_RCC_ENR1_I2C2_Pos)
 #define HPSYS_RCC_ENR1_I2C2             HPSYS_RCC_ENR1_I2C2_Msk
+#define HPSYS_RCC_ENR1_DSIHOST_Pos      (29U)
+#define HPSYS_RCC_ENR1_DSIHOST_Msk      (0x1UL << HPSYS_RCC_ENR1_DSIHOST_Pos)
+#define HPSYS_RCC_ENR1_DSIHOST          HPSYS_RCC_ENR1_DSIHOST_Msk
+#define HPSYS_RCC_ENR1_DSIPHY_Pos       (30U)
+#define HPSYS_RCC_ENR1_DSIPHY_Msk       (0x1UL << HPSYS_RCC_ENR1_DSIPHY_Pos)
+#define HPSYS_RCC_ENR1_DSIPHY           HPSYS_RCC_ENR1_DSIPHY_Msk
 #define HPSYS_RCC_ENR1_PTC1_Pos         (31U)
 #define HPSYS_RCC_ENR1_PTC1_Msk         (0x1UL << HPSYS_RCC_ENR1_PTC1_Pos)
 #define HPSYS_RCC_ENR1_PTC1             HPSYS_RCC_ENR1_PTC1_Msk
@@ -261,13 +293,16 @@ typedef struct
 #define HPSYS_RCC_ENR2_MPI3_Pos         (3U)
 #define HPSYS_RCC_ENR2_MPI3_Msk         (0x1UL << HPSYS_RCC_ENR2_MPI3_Pos)
 #define HPSYS_RCC_ENR2_MPI3             HPSYS_RCC_ENR2_MPI3_Msk
-#define HPSYS_RCC_ENR2_SDMMC1_Pos       (4U)
+#define HPSYS_RCC_ENR2_MPI4_Pos         (4U)
+#define HPSYS_RCC_ENR2_MPI4_Msk         (0x1UL << HPSYS_RCC_ENR2_MPI4_Pos)
+#define HPSYS_RCC_ENR2_MPI4             HPSYS_RCC_ENR2_MPI4_Msk
+#define HPSYS_RCC_ENR2_SDMMC1_Pos       (5U)
 #define HPSYS_RCC_ENR2_SDMMC1_Msk       (0x1UL << HPSYS_RCC_ENR2_SDMMC1_Pos)
 #define HPSYS_RCC_ENR2_SDMMC1           HPSYS_RCC_ENR2_SDMMC1_Msk
-#define HPSYS_RCC_ENR2_SDMMC2_Pos       (5U)
+#define HPSYS_RCC_ENR2_SDMMC2_Pos       (6U)
 #define HPSYS_RCC_ENR2_SDMMC2_Msk       (0x1UL << HPSYS_RCC_ENR2_SDMMC2_Pos)
 #define HPSYS_RCC_ENR2_SDMMC2           HPSYS_RCC_ENR2_SDMMC2_Msk
-#define HPSYS_RCC_ENR2_USBC_Pos         (6U)
+#define HPSYS_RCC_ENR2_USBC_Pos         (7U)
 #define HPSYS_RCC_ENR2_USBC_Msk         (0x1UL << HPSYS_RCC_ENR2_USBC_Pos)
 #define HPSYS_RCC_ENR2_USBC             HPSYS_RCC_ENR2_USBC_Msk
 #define HPSYS_RCC_ENR2_I2C3_Pos         (8U)
@@ -309,6 +344,9 @@ typedef struct
 #define HPSYS_RCC_ENR2_I2C4_Pos         (25U)
 #define HPSYS_RCC_ENR2_I2C4_Msk         (0x1UL << HPSYS_RCC_ENR2_I2C4_Pos)
 #define HPSYS_RCC_ENR2_I2C4             HPSYS_RCC_ENR2_I2C4_Msk
+#define HPSYS_RCC_ENR2_JPEGE_Pos        (26U)
+#define HPSYS_RCC_ENR2_JPEGE_Msk        (0x1UL << HPSYS_RCC_ENR2_JPEGE_Pos)
+#define HPSYS_RCC_ENR2_JPEGE            HPSYS_RCC_ENR2_JPEGE_Msk
 
 /***************** Bit definition for HPSYS_RCC_ESR1 register *****************/
 #define HPSYS_RCC_ESR1_GPDMA1_Pos       (0U)
@@ -365,12 +403,18 @@ typedef struct
 #define HPSYS_RCC_ESR1_BTIM2_Pos        (18U)
 #define HPSYS_RCC_ESR1_BTIM2_Msk        (0x1UL << HPSYS_RCC_ESR1_BTIM2_Pos)
 #define HPSYS_RCC_ESR1_BTIM2            HPSYS_RCC_ESR1_BTIM2_Msk
+#define HPSYS_RCC_ESR1_PWM1_Pos         (19U)
+#define HPSYS_RCC_ESR1_PWM1_Msk         (0x1UL << HPSYS_RCC_ESR1_PWM1_Pos)
+#define HPSYS_RCC_ESR1_PWM1             HPSYS_RCC_ESR1_PWM1_Msk
 #define HPSYS_RCC_ESR1_SPI1_Pos         (20U)
 #define HPSYS_RCC_ESR1_SPI1_Msk         (0x1UL << HPSYS_RCC_ESR1_SPI1_Pos)
 #define HPSYS_RCC_ESR1_SPI1             HPSYS_RCC_ESR1_SPI1_Msk
 #define HPSYS_RCC_ESR1_SPI2_Pos         (21U)
 #define HPSYS_RCC_ESR1_SPI2_Msk         (0x1UL << HPSYS_RCC_ESR1_SPI2_Pos)
 #define HPSYS_RCC_ESR1_SPI2             HPSYS_RCC_ESR1_SPI2_Msk
+#define HPSYS_RCC_ESR1_DMAC2_Pos        (22U)
+#define HPSYS_RCC_ESR1_DMAC2_Msk        (0x1UL << HPSYS_RCC_ESR1_DMAC2_Pos)
+#define HPSYS_RCC_ESR1_DMAC2            HPSYS_RCC_ESR1_DMAC2_Msk
 #define HPSYS_RCC_ESR1_SECU1_Pos        (23U)
 #define HPSYS_RCC_ESR1_SECU1_Msk        (0x1UL << HPSYS_RCC_ESR1_SECU1_Pos)
 #define HPSYS_RCC_ESR1_SECU1            HPSYS_RCC_ESR1_SECU1_Msk
@@ -386,6 +430,12 @@ typedef struct
 #define HPSYS_RCC_ESR1_I2C2_Pos         (28U)
 #define HPSYS_RCC_ESR1_I2C2_Msk         (0x1UL << HPSYS_RCC_ESR1_I2C2_Pos)
 #define HPSYS_RCC_ESR1_I2C2             HPSYS_RCC_ESR1_I2C2_Msk
+#define HPSYS_RCC_ESR1_DSIHOST_Pos      (29U)
+#define HPSYS_RCC_ESR1_DSIHOST_Msk      (0x1UL << HPSYS_RCC_ESR1_DSIHOST_Pos)
+#define HPSYS_RCC_ESR1_DSIHOST          HPSYS_RCC_ESR1_DSIHOST_Msk
+#define HPSYS_RCC_ESR1_DSIPHY_Pos       (30U)
+#define HPSYS_RCC_ESR1_DSIPHY_Msk       (0x1UL << HPSYS_RCC_ESR1_DSIPHY_Pos)
+#define HPSYS_RCC_ESR1_DSIPHY           HPSYS_RCC_ESR1_DSIPHY_Msk
 #define HPSYS_RCC_ESR1_PTC1_Pos         (31U)
 #define HPSYS_RCC_ESR1_PTC1_Msk         (0x1UL << HPSYS_RCC_ESR1_PTC1_Pos)
 #define HPSYS_RCC_ESR1_PTC1             HPSYS_RCC_ESR1_PTC1_Msk
@@ -403,13 +453,16 @@ typedef struct
 #define HPSYS_RCC_ESR2_MPI3_Pos         (3U)
 #define HPSYS_RCC_ESR2_MPI3_Msk         (0x1UL << HPSYS_RCC_ESR2_MPI3_Pos)
 #define HPSYS_RCC_ESR2_MPI3             HPSYS_RCC_ESR2_MPI3_Msk
-#define HPSYS_RCC_ESR2_SDMMC1_Pos       (4U)
+#define HPSYS_RCC_ESR2_MPI4_Pos         (4U)
+#define HPSYS_RCC_ESR2_MPI4_Msk         (0x1UL << HPSYS_RCC_ESR2_MPI4_Pos)
+#define HPSYS_RCC_ESR2_MPI4             HPSYS_RCC_ESR2_MPI4_Msk
+#define HPSYS_RCC_ESR2_SDMMC1_Pos       (5U)
 #define HPSYS_RCC_ESR2_SDMMC1_Msk       (0x1UL << HPSYS_RCC_ESR2_SDMMC1_Pos)
 #define HPSYS_RCC_ESR2_SDMMC1           HPSYS_RCC_ESR2_SDMMC1_Msk
-#define HPSYS_RCC_ESR2_SDMMC2_Pos       (5U)
+#define HPSYS_RCC_ESR2_SDMMC2_Pos       (6U)
 #define HPSYS_RCC_ESR2_SDMMC2_Msk       (0x1UL << HPSYS_RCC_ESR2_SDMMC2_Pos)
 #define HPSYS_RCC_ESR2_SDMMC2           HPSYS_RCC_ESR2_SDMMC2_Msk
-#define HPSYS_RCC_ESR2_USBC_Pos         (6U)
+#define HPSYS_RCC_ESR2_USBC_Pos         (7U)
 #define HPSYS_RCC_ESR2_USBC_Msk         (0x1UL << HPSYS_RCC_ESR2_USBC_Pos)
 #define HPSYS_RCC_ESR2_USBC             HPSYS_RCC_ESR2_USBC_Msk
 #define HPSYS_RCC_ESR2_I2C3_Pos         (8U)
@@ -451,6 +504,9 @@ typedef struct
 #define HPSYS_RCC_ESR2_I2C4_Pos         (25U)
 #define HPSYS_RCC_ESR2_I2C4_Msk         (0x1UL << HPSYS_RCC_ESR2_I2C4_Pos)
 #define HPSYS_RCC_ESR2_I2C4             HPSYS_RCC_ESR2_I2C4_Msk
+#define HPSYS_RCC_ESR2_JPEGE_Pos        (26U)
+#define HPSYS_RCC_ESR2_JPEGE_Msk        (0x1UL << HPSYS_RCC_ESR2_JPEGE_Pos)
+#define HPSYS_RCC_ESR2_JPEGE            HPSYS_RCC_ESR2_JPEGE_Msk
 
 /***************** Bit definition for HPSYS_RCC_ECR1 register *****************/
 #define HPSYS_RCC_ECR1_GPDMA1_Pos       (0U)
@@ -507,12 +563,18 @@ typedef struct
 #define HPSYS_RCC_ECR1_BTIM2_Pos        (18U)
 #define HPSYS_RCC_ECR1_BTIM2_Msk        (0x1UL << HPSYS_RCC_ECR1_BTIM2_Pos)
 #define HPSYS_RCC_ECR1_BTIM2            HPSYS_RCC_ECR1_BTIM2_Msk
+#define HPSYS_RCC_ECR1_PWM1_Pos         (19U)
+#define HPSYS_RCC_ECR1_PWM1_Msk         (0x1UL << HPSYS_RCC_ECR1_PWM1_Pos)
+#define HPSYS_RCC_ECR1_PWM1             HPSYS_RCC_ECR1_PWM1_Msk
 #define HPSYS_RCC_ECR1_SPI1_Pos         (20U)
 #define HPSYS_RCC_ECR1_SPI1_Msk         (0x1UL << HPSYS_RCC_ECR1_SPI1_Pos)
 #define HPSYS_RCC_ECR1_SPI1             HPSYS_RCC_ECR1_SPI1_Msk
 #define HPSYS_RCC_ECR1_SPI2_Pos         (21U)
 #define HPSYS_RCC_ECR1_SPI2_Msk         (0x1UL << HPSYS_RCC_ECR1_SPI2_Pos)
 #define HPSYS_RCC_ECR1_SPI2             HPSYS_RCC_ECR1_SPI2_Msk
+#define HPSYS_RCC_ECR1_DMAC2_Pos        (22U)
+#define HPSYS_RCC_ECR1_DMAC2_Msk        (0x1UL << HPSYS_RCC_ECR1_DMAC2_Pos)
+#define HPSYS_RCC_ECR1_DMAC2            HPSYS_RCC_ECR1_DMAC2_Msk
 #define HPSYS_RCC_ECR1_SECU1_Pos        (23U)
 #define HPSYS_RCC_ECR1_SECU1_Msk        (0x1UL << HPSYS_RCC_ECR1_SECU1_Pos)
 #define HPSYS_RCC_ECR1_SECU1            HPSYS_RCC_ECR1_SECU1_Msk
@@ -528,6 +590,12 @@ typedef struct
 #define HPSYS_RCC_ECR1_I2C2_Pos         (28U)
 #define HPSYS_RCC_ECR1_I2C2_Msk         (0x1UL << HPSYS_RCC_ECR1_I2C2_Pos)
 #define HPSYS_RCC_ECR1_I2C2             HPSYS_RCC_ECR1_I2C2_Msk
+#define HPSYS_RCC_ECR1_DSIHOST_Pos      (29U)
+#define HPSYS_RCC_ECR1_DSIHOST_Msk      (0x1UL << HPSYS_RCC_ECR1_DSIHOST_Pos)
+#define HPSYS_RCC_ECR1_DSIHOST          HPSYS_RCC_ECR1_DSIHOST_Msk
+#define HPSYS_RCC_ECR1_DSIPHY_Pos       (30U)
+#define HPSYS_RCC_ECR1_DSIPHY_Msk       (0x1UL << HPSYS_RCC_ECR1_DSIPHY_Pos)
+#define HPSYS_RCC_ECR1_DSIPHY           HPSYS_RCC_ECR1_DSIPHY_Msk
 #define HPSYS_RCC_ECR1_PTC1_Pos         (31U)
 #define HPSYS_RCC_ECR1_PTC1_Msk         (0x1UL << HPSYS_RCC_ECR1_PTC1_Pos)
 #define HPSYS_RCC_ECR1_PTC1             HPSYS_RCC_ECR1_PTC1_Msk
@@ -545,13 +613,16 @@ typedef struct
 #define HPSYS_RCC_ECR2_MPI3_Pos         (3U)
 #define HPSYS_RCC_ECR2_MPI3_Msk         (0x1UL << HPSYS_RCC_ECR2_MPI3_Pos)
 #define HPSYS_RCC_ECR2_MPI3             HPSYS_RCC_ECR2_MPI3_Msk
-#define HPSYS_RCC_ECR2_SDMMC1_Pos       (4U)
+#define HPSYS_RCC_ECR2_MPI4_Pos         (4U)
+#define HPSYS_RCC_ECR2_MPI4_Msk         (0x1UL << HPSYS_RCC_ECR2_MPI4_Pos)
+#define HPSYS_RCC_ECR2_MPI4             HPSYS_RCC_ECR2_MPI4_Msk
+#define HPSYS_RCC_ECR2_SDMMC1_Pos       (5U)
 #define HPSYS_RCC_ECR2_SDMMC1_Msk       (0x1UL << HPSYS_RCC_ECR2_SDMMC1_Pos)
 #define HPSYS_RCC_ECR2_SDMMC1           HPSYS_RCC_ECR2_SDMMC1_Msk
-#define HPSYS_RCC_ECR2_SDMMC2_Pos       (5U)
+#define HPSYS_RCC_ECR2_SDMMC2_Pos       (6U)
 #define HPSYS_RCC_ECR2_SDMMC2_Msk       (0x1UL << HPSYS_RCC_ECR2_SDMMC2_Pos)
 #define HPSYS_RCC_ECR2_SDMMC2           HPSYS_RCC_ECR2_SDMMC2_Msk
-#define HPSYS_RCC_ECR2_USBC_Pos         (6U)
+#define HPSYS_RCC_ECR2_USBC_Pos         (7U)
 #define HPSYS_RCC_ECR2_USBC_Msk         (0x1UL << HPSYS_RCC_ECR2_USBC_Pos)
 #define HPSYS_RCC_ECR2_USBC             HPSYS_RCC_ECR2_USBC_Msk
 #define HPSYS_RCC_ECR2_I2C3_Pos         (8U)
@@ -593,6 +664,9 @@ typedef struct
 #define HPSYS_RCC_ECR2_I2C4_Pos         (25U)
 #define HPSYS_RCC_ECR2_I2C4_Msk         (0x1UL << HPSYS_RCC_ECR2_I2C4_Pos)
 #define HPSYS_RCC_ECR2_I2C4             HPSYS_RCC_ECR2_I2C4_Msk
+#define HPSYS_RCC_ECR2_JPEGE_Pos        (26U)
+#define HPSYS_RCC_ECR2_JPEGE_Msk        (0x1UL << HPSYS_RCC_ECR2_JPEGE_Pos)
+#define HPSYS_RCC_ECR2_JPEGE            HPSYS_RCC_ECR2_JPEGE_Msk
 
 /***************** Bit definition for HPSYS_RCC_CSR register ******************/
 #define HPSYS_RCC_CSR_SEL_SYS_Pos       (0U)
@@ -779,11 +853,24 @@ typedef struct
 
 /*************** Bit definition for HPSYS_RCC_HRCCAL2 register ****************/
 #define HPSYS_RCC_HRCCAL2_HRC_CNT_Pos   (0U)
-#define HPSYS_RCC_HRCCAL2_HRC_CNT_Msk   (0xFFFFUL << HPSYS_RCC_HRCCAL2_HRC_CNT_Pos)
+#define HPSYS_RCC_HRCCAL2_HRC_CNT_Msk   (0xFFFFFFUL << HPSYS_RCC_HRCCAL2_HRC_CNT_Pos)
 #define HPSYS_RCC_HRCCAL2_HRC_CNT       HPSYS_RCC_HRCCAL2_HRC_CNT_Msk
-#define HPSYS_RCC_HRCCAL2_HXT_CNT_Pos   (16U)
-#define HPSYS_RCC_HRCCAL2_HXT_CNT_Msk   (0xFFFFUL << HPSYS_RCC_HRCCAL2_HXT_CNT_Pos)
-#define HPSYS_RCC_HRCCAL2_HXT_CNT       HPSYS_RCC_HRCCAL2_HXT_CNT_Msk
+
+/*************** Bit definition for HPSYS_RCC_LRCCAL1 register ****************/
+#define HPSYS_RCC_LRCCAL1_LENGTH_Pos    (0U)
+#define HPSYS_RCC_LRCCAL1_LENGTH_Msk    (0xFFFFUL << HPSYS_RCC_LRCCAL1_LENGTH_Pos)
+#define HPSYS_RCC_LRCCAL1_LENGTH        HPSYS_RCC_LRCCAL1_LENGTH_Msk
+#define HPSYS_RCC_LRCCAL1_START_Pos     (16U)
+#define HPSYS_RCC_LRCCAL1_START_Msk     (0x1UL << HPSYS_RCC_LRCCAL1_START_Pos)
+#define HPSYS_RCC_LRCCAL1_START         HPSYS_RCC_LRCCAL1_START_Msk
+#define HPSYS_RCC_LRCCAL1_DONE_Pos      (31U)
+#define HPSYS_RCC_LRCCAL1_DONE_Msk      (0x1UL << HPSYS_RCC_LRCCAL1_DONE_Pos)
+#define HPSYS_RCC_LRCCAL1_DONE          HPSYS_RCC_LRCCAL1_DONE_Msk
+
+/*************** Bit definition for HPSYS_RCC_LRCCAL2 register ****************/
+#define HPSYS_RCC_LRCCAL2_RESULT_Pos    (0U)
+#define HPSYS_RCC_LRCCAL2_RESULT_Msk    (0x3FFFFFFFUL << HPSYS_RCC_LRCCAL2_RESULT_Pos)
+#define HPSYS_RCC_LRCCAL2_RESULT        HPSYS_RCC_LRCCAL2_RESULT_Msk
 
 /*************** Bit definition for HPSYS_RCC_DBGCLKR register ****************/
 #define HPSYS_RCC_DBGCLKR_DBGCLK_SEL_Pos  (0U)

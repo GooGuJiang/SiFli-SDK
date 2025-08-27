@@ -880,6 +880,11 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
         *group = 0;
         *mask = HPSYS_RCC_ENR1_GPDMA1;
         break;
+    case RCC_MOD_DMAC2:
+        base_rcc = (uint32_t *)hwp_hpsys_rcc;
+        *group = 0;
+        *mask = HPSYS_RCC_ENR1_DMAC2;
+        break;
     case RCC_MOD_MAILBOX1:
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
         *group = 0;
@@ -1133,10 +1138,10 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
         *group = 0;
         *mask = LPSYS_RCC_ENR1_MAILBOX2;
         break;
-    case RCC_MOD_DMAC2:
+    case RCC_MOD_DMAC3:
         base_rcc = (uint32_t *)hwp_lpsys_rcc;
         *group = 0;
-        *mask = LPSYS_RCC_ENR1_DMAC2;
+        *mask = LPSYS_RCC_ENR1_DMAC3;
         break;
     case RCC_MOD_MAC:
         base_rcc = (uint32_t *)hwp_lpsys_rcc;
@@ -2548,7 +2553,7 @@ __HAL_ROM_USED uint32_t HAL_RCC_GetModuleFreq(RCC_MODULE_TYPE module)
 }
 
 
-#if defined(SF32LB52X) || defined(SF32LB57X)
+#if defined(SF32LB52X)
 __HAL_ROM_USED HAL_StatusTypeDef HAL_RCC_CalibrateRC48(void)
 {
     uint32_t hxt_cnt;
@@ -2628,6 +2633,12 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_RCC_CalibrateRC48(void)
     }
 }
 
+#elif defined(SF32LB57X)
+__HAL_ROM_USED HAL_StatusTypeDef HAL_RCC_CalibrateRC48(void)
+{
+    /* TODO: */
+    return HAL_OK;
+}
 #else
 __HAL_ROM_USED HAL_StatusTypeDef HAL_RCC_CalibrateRC48(void)
 {

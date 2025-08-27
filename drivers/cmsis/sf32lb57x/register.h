@@ -536,6 +536,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #include "atim.h"
 #include "audprc.h"
 #include "btim.h"
+#include "pwm.h"
 #include "mailbox1.h"
 #include "mailbox2.h"
 #include "rtc.h"
@@ -551,6 +552,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #include "sd.h"
 #include "aes_acc.h"
 #include "gpio1.h"
+#include "gpio2.h"
 #include "hpsys_pinmux.h"
 #include "hpsys_aon.h"
 #include "lpsys_aon.h"
@@ -600,6 +602,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define PTC1_BASE           0x50080000
 #define GPDMA1_BASE         0x50081000
 #define MAILBOX1_BASE       0x50082000
+#define DMAC2_BASE          0x50083000
 #define USART1_BASE         0x50084000
 #define USART2_BASE         0x50085000
 #define USART3_BASE         0x50086000
@@ -620,6 +623,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define GPTIM2_BASE         0x500b0000
 #define BTIM2_BASE          0x500b1000
 #define GPADC_BASE          0x500b2000
+#define PWM1_BASE           0x500b3000
 //------------------------------------
 #define HPSYS_AON_BASE      0x500c0000
 #define LPTIM1_BASE         0x500c1000
@@ -638,7 +642,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 
 //================== MCU_LPSYS ===================
 #define LPSYS_RCC_BASE      0x40000000
-#define DMAC2_BASE          0x40001000
+#define DMAC3_BASE          0x40001000
 #define MAILBOX2_BASE       0x40002000
 #define PINMUX2_BASE        0x40003000
 #define PATCH_BASE          0x40004000
@@ -653,8 +657,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define WDT2_BASE           0x40041000
 #define LPTIM3_BASE         0x40042000
 //------------------------------------
-/** no GPIO2 module, placeholder for convenience*/
-#define GPIO2_BASE          0x00000000
+#define GPIO2_BASE          0x40080000
 #define BT_RFC_MEM_BASE     0x40082000
 #define BT_RFC_REG_BASE     0x40082800
 #define BT_PHY_BASE         0x40084000
@@ -669,6 +672,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_gpdma1      ((GPDMA_TypeDef         *)    GPDMA1_BASE)
 #define hwp_dmac1       ((GPDMA_TypeDef         *)    GPDMA1_BASE)
 #define hwp_dmac2       ((DMAC_TypeDef          *)    DMAC2_BASE)
+#define hwp_dmac3       ((DMAC_TypeDef          *)    DMAC3_BASE)
 #define hwp_atim1       ((ATIM_TypeDef          *)    ATIM1_BASE)
 #define hwp_audprc      ((AUDPRC_TypeDef        *)    AUDPRC_BASE)
 #define hwp_audcodec    ((AUDCODEC_TypeDef      *)    AUDCODEC_BASE)
@@ -678,6 +682,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_btim2       ((BTIM_TypeDef          *)    BTIM2_BASE)
 #define hwp_btim3       ((BTIM_TypeDef          *)    BTIM3_BASE)
 #define hwp_btim4       ((BTIM_TypeDef          *)    BTIM4_BASE)
+#define hwp_pwm1        ((PWM_TypeDef           *)    PWM1_BASE)
 #define hwp_epic        ((EPIC_TypeDef          *)    EPIC_BASE)
 #define hwp_v2d_gpu     ((V2D_GPU_TypeDef       *)    V2D_GPU_BASE)
 #define hwp_spi1        ((SPI_TypeDef           *)    SPI1_BASE)
@@ -835,8 +840,6 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define DMA1_Channel6       ((DMA_Channel_TypeDef *) &DMA1->CCR6)
 #define DMA1_Channel7       ((DMA_Channel_TypeDef *) &DMA1->CCR7)
 #define DMA1_Channel8       ((DMA_Channel_TypeDef *) &DMA1->CCR8)
-#define DMA1_Channel9       ((DMA_Channel_TypeDef *) &DMA1->CCR9)
-#define DMA1_Channel10      ((DMA_Channel_TypeDef *) &DMA1->CCR10)
 //TODO: whether suitable for dynamic allocation?
 #define DMA1_CHANNEL_NUM    (10)
 #define DMA1_CSELR          ((DMA_Request_TypeDef *) &DMA1->CSELR1)
