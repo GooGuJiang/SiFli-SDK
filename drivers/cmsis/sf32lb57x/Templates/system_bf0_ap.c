@@ -254,8 +254,7 @@ __WEAK void mpu_config(void)
 //#endif
 
     SCB_EnableDCache();
-    //TODO: need to be enabled if hw fix the cache issue
-    // SCB_EnableICache();
+    SCB_EnableICache();
 }
 #else
 __WEAK void mpu_config(void)
