@@ -93,12 +93,24 @@
 #define EPIC_DEBUG_PRINT_AREA_INFO(area, area_name) \
                     EPIC_PRINTF("area %s,area[x0y0(%d,%d),x1y1(%d,%d)]\n", \
                                 area_name, (area)->x0, (area)->y0, (area)->x1, (area)->y1);
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+static void EPIC_DEBUG_PRINT_FLOAT_MATRIX(const char *s, const sifli_matrix_3x3_t *mat)
+{
+    EPIC_PRINTF("%s\n", s);
+    EPIC_PRINTF("%10.3f  %10.3f  %10.3f  \n", mat->m[0][0], mat->m[0][1], mat->m[0][2]);
+    EPIC_PRINTF("%10.3f  %10.3f  %10.3f  \n", mat->m[1][0], mat->m[1][1], mat->m[1][2]);
+    EPIC_PRINTF("%10.3f  %10.3f  %10.3f  \n", mat->m[2][0], mat->m[2][1], mat->m[2][2]);
+}
+#endif
 
 //v and pivot_v must have same origin
 #define EPIC_MIRROR_V(v, pivot_v) ((pivot_v) - ((v) - (pivot_v)))
 
+#define IS_MATRIX_TRANSFROM(rot_cfg) ( NULL != (rot_cfg)->trans_matrix)
+
 #define IS_NEED_TRANSFROM(rot_cfg) ((EPIC_INPUT_SCALING_FACTOR_1 != (rot_cfg)->scale_x) || (EPIC_INPUT_SCALING_FACTOR_1 != (rot_cfg)->scale_y) || (0 != (rot_cfg)->angle)\
-                                    || (0 != (rot_cfg)->h_mirror)|| (0 != (rot_cfg)->v_mirror))
+                                    || (0 != (rot_cfg)->h_mirror)|| (0 != (rot_cfg)->v_mirror) || IS_MATRIX_TRANSFROM(rot_cfg))
+
 #define IS_Ax_COLOR_MODE(c)        ((EPIC_COLOR_A2 == (c)) || (EPIC_COLOR_A2_SWAP == (c)) \
                                     || (EPIC_COLOR_A4 == (c)) || (EPIC_COLOR_A4_SWAP == (c)) \
                                     || (EPIC_COLOR_A8 == (c)) || (EPIC_COLOR_MONO == (c)))
@@ -182,6 +194,21 @@ typedef struct
     /*Mirror*/
     int8_t h_mirror;
     int8_t v_mirror;
+
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+    int8_t is_matrix_transfrom;
+    sifli_matrix_3x3_t matrix;
+
+    /*
+        The top-left coordinates of matrix layer after transformed,
+        use to calculate the offset to the last layer TL in `EPIC_ConfigMatrixTransLayer`.
+
+        Typically the offset caused by function `EPIC_MakeAllLayerCoordValid(Ex)`,
+        which move all negative coordinate to positive.
+    */
+    int16_t transformed_tl_x;
+    int16_t transformed_tl_y;
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
 } EPIC_TransformResultDef;
 
 /** sin table for 0~90 degree, Q1.15 */
@@ -227,6 +254,13 @@ static HAL_StatusTypeDef EPIC_ConfigFilling(EPIC_HandleTypeDef *epic, EPIC_Filli
 static HAL_StatusTypeDef EPIC_ConfigGrad(EPIC_HandleTypeDef *epic, EPIC_GradCfgTypeDef *param);
 void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
                          const EPIC_PointTypeDef *pivot);
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+    static void EPIC_GetMatrixTransfromedArea(sifli_matrix_3x3_t *p_matrix, EPIC_AreaTypeDef *p_area);
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
+
+/*------------------------------
+    EPIC functions definitions
+ ------------------------------*/
 
 /** Return with sinus of an angle
  *
@@ -1340,7 +1374,7 @@ static uint32_t EPIC_Allocate_L8Table(EPIC_TypeDef *epic)
 
     EPIC_LayerxTypeDef *layer_x;
     EPIC_VideoLayerxTypeDef *Vlayer_x;
-
+#ifdef EPIC_L2_EXTENTS_MAX_COL //On 58x/56x/52x, L2 is another video layer
     layer_x = (EPIC_LayerxTypeDef *)&epic->L0_CFG;
     for (uint32_t i = 0; i < 2; i++, layer_x++)
     {
@@ -1358,7 +1392,22 @@ static uint32_t EPIC_Allocate_L8Table(EPIC_TypeDef *epic)
             free_tables[(layer_x->MISC_CFG & EPIC_VL_MISC_CFG_CLUT_SEL_Msk) >> EPIC_VL_MISC_CFG_CLUT_SEL_Pos] = 0;
         }
     }
+#else //After 52x, L2 is not suppoert L8 any more
+    layer_x = (EPIC_LayerxTypeDef *)&epic->L0_CFG;
+    for (uint32_t i = 0; i < 2; i++, layer_x++)
+    {
+        if ((EPIC_L0_CFG_ACTIVE | EPIC_L0_CFG_FMT_L8) == (layer_x->CFG & (EPIC_L0_CFG_ACTIVE_Msk | EPIC_L0_CFG_FORMAT_Msk)))
+        {
+            free_tables[(layer_x->MISC_CFG & EPIC_L0_MISC_CFG_CLUT_SEL_Msk) >> EPIC_L0_MISC_CFG_CLUT_SEL_Pos] = 0;
+        }
+    }
 
+    Vlayer_x = (EPIC_VideoLayerxTypeDef *)&epic->VL_CFG;
+    if ((EPIC_VL_CFG_ACTIVE | EPIC_VL_CFG_FMT_L8) == (Vlayer_x->CFG & (EPIC_VL_CFG_ACTIVE_Msk | EPIC_VL_CFG_FORMAT_Msk)))
+    {
+        free_tables[(layer_x->MISC_CFG & EPIC_VL_MISC_CFG_CLUT_SEL_Msk) >> EPIC_VL_MISC_CFG_CLUT_SEL_Pos] = 0;
+    }
+#endif
     for (uint32_t i = 0; i < (sizeof(free_tables) / sizeof(free_tables[0])); i++)
     {
         if (free_tables[i]) return i;
@@ -2263,22 +2312,6 @@ static HAL_StatusTypeDef EPIC_TransformVideoLayer(EPIC_TypeDef *epic,
     uint32_t epic_scale_y;       //EPIC scale value
     EPIC_PointTypeDef pivot;                //Pivot base on VideoLayer's origin(or base on submodule's origin)
 
-    EPIC_VideoLayerxTypeDef *Vlayer_x;
-    EPIC_VideoLayerxTransTypeDef *Vlayer_x_trans;
-    uint32_t vl_idx;
-    Vlayer_x       = (EPIC_VideoLayerxTypeDef *)&epic->VL_CFG;
-    Vlayer_x_trans = (EPIC_VideoLayerxTransTypeDef *)&epic->VL_ROT_M_CFG1;
-
-#ifdef SF32LB58X //L2 support transfrom only on 58x
-    HAL_ASSERT((EPIC_LAYER_IDX_VL == layer_idx) || (EPIC_LAYER_IDX_2 == layer_idx));
-    vl_idx = (EPIC_LAYER_IDX_VL == layer_idx) ? 0 : 1;
-#else
-    HAL_ASSERT(EPIC_LAYER_IDX_VL == layer_idx);
-    vl_idx = 0;
-#endif /* SF32LB55X */
-
-    Vlayer_x += vl_idx;
-    Vlayer_x_trans += vl_idx;
 
     if ((0 == fg->width) || (0 == fg->height))
     {
@@ -2581,7 +2614,43 @@ static HAL_StatusTypeDef EPIC_TransformVideoLayer(EPIC_TypeDef *epic,
         new_offset_y += pivot_y_old - pivot_y_new;
     }
 
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+    if (rot_cfg->trans_matrix)
+    {
+        memcpy(&trans_result->matrix, rot_cfg->trans_matrix, sizeof(sifli_matrix_3x3_t));
+        trans_result->is_matrix_transfrom = 1;
 
+        //The TL of original image area is always {0,0}
+        EPIC_AreaTypeDef area;
+        area.x0 = 0;
+        area.y0 = 0;
+        area.x1 = new_width + 1;
+        area.y1 = new_height + 1;
+
+        //Move original image from {0,0} to {new_offset_x,new_offset_y}
+        sifli_matrix_3x3_t mat;
+        sifli_identity_3x3(&mat);
+        sifli_mat_translate_3x3(new_offset_x, new_offset_y, &mat);
+        sifli_mat_multiply_3x3(&mat, &trans_result->matrix, &trans_result->matrix);
+
+        EPIC_DEBUG_PRINT_FLOAT_MATRIX("Matrix for {0,0} image", &trans_result->matrix);
+
+        //Get the transformed area
+        EPIC_GetMatrixTransfromedArea(&trans_result->matrix, &area);
+
+        //Save the transformed area to fg layer
+        new_offset_x = area.x0;
+        new_offset_y = area.y0;
+        new_width = area.x1 - area.x0 - 1;
+        new_height = area.y1 - area.y0 - 1;
+    }
+    else
+    {
+        trans_result->is_matrix_transfrom = 0;
+    }
+    trans_result->transformed_tl_x = new_offset_x;
+    trans_result->transformed_tl_y = new_offset_y;
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
     /******************************************************************************/
     fg->x_offset = new_offset_x;
     fg->y_offset = new_offset_y;
@@ -3487,6 +3556,235 @@ static HAL_StatusTypeDef EPIC_ConfigEzipDec(EPIC_HandleTypeDef *epic,
 }
 
 #endif /* HAL_EZIP_MODULE_ENABLED */
+
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+static void EPIC_GetMatrixTransfromedArea(sifli_matrix_3x3_t *p_matrix, EPIC_AreaTypeDef *p_area)
+{
+    sifli_vertex_2d_t lt = {p_area->x0, p_area->y0};
+    sifli_vertex_2d_t rt = {p_area->x1, p_area->y0};
+    sifli_vertex_2d_t lb = {p_area->x0, p_area->y1};
+    sifli_vertex_2d_t rb = {p_area->x1, p_area->y1};
+
+    sifli_mat_vertex_multiply(p_matrix, &lt.x, &lt.y);
+    sifli_mat_vertex_multiply(p_matrix, &rt.x, &rt.y);
+    sifli_mat_vertex_multiply(p_matrix, &lb.x, &lb.y);
+    sifli_mat_vertex_multiply(p_matrix, &rb.x, &rb.y);
+
+    EPIC_PRINTF("EPIC_GetMatrixTransfromedArea \n");
+    EPIC_PRINTF("lt=%f,%f \n", lt.x, lt.y);
+    EPIC_PRINTF("rt=%f,%f \n", rt.x, rt.y);
+    EPIC_PRINTF("lb=%f,%f \n", lb.x, lb.y);
+    EPIC_PRINTF("rb=%f,%f \n", rb.x, rb.y);
+
+    p_area->x0 = EPIC_MATH_MIN4(lt.x, rt.x, lb.x, rb.x) - 1;
+    p_area->y0 = EPIC_MATH_MIN4(lt.y, rt.y, lb.y, rb.y) - 1;
+    p_area->x1 = EPIC_MATH_MAX4(lt.x, rt.x, lb.x, rb.x) + 1;
+    p_area->y1 = EPIC_MATH_MAX4(lt.y, rt.y, lb.y, rb.y) + 1;
+
+    EPIC_DEBUG_PRINT_AREA_INFO(p_area, "TransformedArea");
+}
+
+
+/**
+ * Convert a 3x3 transform matrix from float to int32_t format
+ *
+ * @param matrix_i 3x3 transform matrix in int32_t format, column 0~1 is S12.20, column 2 is S16.16, row major:
+ *              row 0 : matrix_i[0]~matrix_i[2]
+ *              row 1 : matrix_i[3]~matrix_i[5]
+ *              row 2 : matrix_i[6]~matrix_i[8]
+ *
+ * @param matrix_f 3x3 transform matrix in float format, row major:
+ *              row 0 : matrix_f[0]~matrix_f[2]
+ *              row 1 : matrix_f[3]~matrix_f[5]
+ *              row 2 : matrix_f[6]~matrix_f[8]
+ * @return HAL status
+ * */
+static HAL_StatusTypeDef EPIC_TransMatrix_FromFloat(int32_t *matrix_i, const float *matrix_f)
+{
+    const float EPIC_TRANS_MATRIX_COL01_FACTOR_1 = (float)(1 << 20);
+    const float EPIC_TRANS_MATRIX_COL2_FACTOR_1  = (float)(1 << 16);
+
+    HAL_ASSERT(matrix_i && matrix_f);
+    sifli_matrix_3x3_t mat_inverse;
+
+    int ret = sifli_mat_inverse_3x3((const sifli_matrix_3x3_t *)matrix_f, &mat_inverse);
+
+    if (0 != ret)
+    {
+        EPIC_PRINTF("Matrix cannot be inversed\r\n");
+        return HAL_ERROR;
+    }
+
+    EPIC_DEBUG_PRINT_FLOAT_MATRIX("float matrix", (const sifli_matrix_3x3_t *)matrix_f);
+    EPIC_DEBUG_PRINT_FLOAT_MATRIX("inverse matrix", &mat_inverse);
+
+    const float *matrix_f_inv = &mat_inverse.m[0][0];
+    for (int i = 0; i < 9; i++)
+    {
+        float factor1;
+        if (2 == (i % 3)) factor1 = EPIC_TRANS_MATRIX_COL2_FACTOR_1;
+        else factor1 = EPIC_TRANS_MATRIX_COL01_FACTOR_1;
+
+        matrix_i[i] = (int32_t)(matrix_f_inv[i] * factor1 + 0.5f);
+    }
+    EPIC_PRINTF("EPIC matrix:\n");
+    EPIC_PRINTF("%08x,%08x,%08x\n", matrix_i[0], matrix_i[1], matrix_i[2]);
+    EPIC_PRINTF("%08x,%08x,%08x\n", matrix_i[3], matrix_i[4], matrix_i[5]);
+    EPIC_PRINTF("%08x,%08x,%08x\n", matrix_i[6], matrix_i[7], matrix_i[8]);
+
+    return HAL_OK;
+}
+
+static HAL_StatusTypeDef EPIC_ConfigMatrixTransLayer(EPIC_HandleTypeDef *hepic,
+        EPIC_TransformResultDef *trans_result,
+        EPIC_BlendingDataType *config,
+        uint8_t alpha)
+{
+    EPIC_TypeDef *epic = hepic->Instance;
+    EPIC_LayerxTypeDef *layer_x;
+    uint32_t color_depth, line_bytes;
+    uint32_t layer_color_format;
+    int16_t layer_x_offset = config->x_offset;
+    int16_t layer_y_offset = config->y_offset;
+
+
+    //Check overflow
+    if (EPCI_IS_TLBR_OVERFLOW(EPIC_VL, layer_x_offset, layer_y_offset, layer_x_offset + config->width - 1, layer_y_offset + config->height - 1))
+    {
+        //Overflow
+        EPIC_DEBUG_PRINT_LAYER_INFO(config, "Overflow");
+        HAL_ASSERT(0);
+        return HAL_ERROR;
+    }
+
+    EPIC_DEBUG_PRINT_LAYER_INFO(config, "Matrix trans layer");
+
+
+    //Add the offset which is from current top-left to transformed_tl_x/y to matrix
+    float mat_translate_x = layer_x_offset - trans_result->transformed_tl_x;
+    float mat_translate_y = layer_y_offset - trans_result->transformed_tl_y;
+    EPIC_PRINTF("sifli_mat_translate_3x3: %f,%f \n", mat_translate_x, mat_translate_y);
+
+
+    sifli_matrix_3x3_t mat;
+    sifli_identity_3x3(&mat);
+    sifli_mat_translate_3x3(mat_translate_x, mat_translate_y, &mat);
+    sifli_mat_multiply_3x3(&mat, &trans_result->matrix, &trans_result->matrix);
+
+
+
+    layer_x = (EPIC_LayerxTypeDef *)&epic->L2_CFG;
+    layer_x->TL_POS = MAKE_REG_VAL(layer_x_offset, EPIC_L0_TL_POS_X0_Msk, EPIC_L0_TL_POS_X0_Pos)
+                      | MAKE_REG_VAL(layer_y_offset, EPIC_L0_TL_POS_Y0_Msk, EPIC_L0_TL_POS_Y0_Pos);
+    layer_x->BR_POS = MAKE_REG_VAL(layer_x_offset + config->width - 1, EPIC_L0_BR_POS_X1_Msk, EPIC_L0_BR_POS_X1_Pos)
+                      | MAKE_REG_VAL(layer_y_offset + config->height - 1, EPIC_L0_BR_POS_Y1_Msk, EPIC_L0_BR_POS_Y1_Pos);
+
+    layer_x->SRC = (uint32_t)HCPU_MPI_SBUS_ADDR(config->data);
+
+    color_depth = EPIC_GetColorDepth(config->color_mode);
+    layer_color_format = EPIC_GetLayerColorFormat(config->color_mode);
+
+
+    layer_x->CFG = 0;
+
+
+    if ((EPIC_L0_CFG_FMT_RGB565 != layer_color_format) && (EPIC_L0_CFG_FMT_RGB888 != layer_color_format)
+            && (EPIC_COLOR_MONO != config->color_mode))
+    {
+        layer_x->CFG |= MAKE_REG_VAL(1, EPIC_L0_CFG_ALPHA_BLEND_Msk, EPIC_L0_CFG_ALPHA_BLEND_Pos);
+    }
+    else
+    {
+        layer_x->CFG |= EPIC_L0_CFG_ALPHA_SEL;
+    }
+    layer_x->CFG |= MAKE_REG_VAL(alpha, EPIC_L0_CFG_ALPHA_Msk, EPIC_L0_CFG_ALPHA_Pos);
+
+#ifdef HAL_EZIP_MODULE_ENABLED
+    if (IS_EZIP_COLOR_MODE(config->color_mode))
+    {
+        RETURN_ERROR(hepic, HAL_ERROR);
+    }
+#endif /* HAL_EZIP_MODULE_ENABLED */
+
+#if defined(EPIC_SUPPORT_YUV)
+    if (IS_YUV_COLOR_MODE(config->color_mode))
+    {
+        RETURN_ERROR(hepic, HAL_ERROR);
+    }
+#endif /* SF32LB56X */
+
+#ifdef EPIC_SUPPORT_JPEGD
+    if (IS_JPEG_COLOR_MODE(config->color_mode))
+    {
+        RETURN_ERROR(hepic, HAL_ERROR);
+    }
+#endif /* EPIC_SUPPORT_JPEGD */
+
+    if (IS_Ax_COLOR_MODE(config->color_mode))
+    {
+        RETURN_ERROR(hepic, HAL_ERROR);
+    }
+    else if (config->color_en)
+    {
+        layer_x->CFG |= EPIC_L0_CFG_FILTER_EN;
+        layer_x->FILTER = MAKE_REG_VAL(0x0, EPIC_L0_FILTER_FILTER_MASK_Msk, EPIC_L0_FILTER_FILTER_MASK_Pos)
+                          | MAKE_REG_VAL(config->color_r, EPIC_L0_FILTER_FILTER_R_Msk, EPIC_L0_FILTER_FILTER_R_Pos)
+                          | MAKE_REG_VAL(config->color_g, EPIC_L0_FILTER_FILTER_G_Msk, EPIC_L0_FILTER_FILTER_G_Pos)
+                          | MAKE_REG_VAL(config->color_b, EPIC_L0_FILTER_FILTER_B_Msk, EPIC_L0_FILTER_FILTER_B_Pos);
+    }
+
+#ifndef SF32LB55X
+    if (EPIC_COLOR_L8 == config->color_mode)
+    {
+        uint32_t tab_id = EPIC_Allocate_L8Table(hepic->Instance);
+
+        HAL_ASSERT(tab_id <= (EPIC_L0_MISC_CFG_CLUT_SEL_Msk >> EPIC_L0_MISC_CFG_CLUT_SEL_Pos));
+        EPIC_Overwrite_L8Table(hepic, tab_id, config->lookup_table, config->lookup_table_size);
+        layer_x->MISC_CFG &= ~EPIC_L0_MISC_CFG_CLUT_SEL_Msk;
+        layer_x->MISC_CFG |= MAKE_REG_VAL(tab_id, EPIC_L0_MISC_CFG_CLUT_SEL_Msk, EPIC_L0_MISC_CFG_CLUT_SEL_Pos);
+    }
+#endif /* SF32LB55X */
+
+    layer_x->MISC_CFG &= ~(EPIC_L2_MISC_CFG_MAX_LINE_Msk | EPIC_L2_MISC_CFG_MAX_COL_Msk);
+    layer_x->MISC_CFG |= MAKE_REG_VAL(trans_result->height, EPIC_L2_MISC_CFG_MAX_LINE_Msk, EPIC_L2_MISC_CFG_MAX_LINE_Pos)
+                         | MAKE_REG_VAL(trans_result->width, EPIC_L2_MISC_CFG_MAX_COL_Msk, EPIC_L2_MISC_CFG_MAX_COL_Pos);
+
+    layer_x->CFG |= layer_color_format;
+    if (EPIC_COLOR_MONO != config->color_mode)
+    {
+        line_bytes = HAL_ALIGN(color_depth * config->total_width, 8) >> 3;
+        layer_x->CFG |= MAKE_REG_VAL(line_bytes, EPIC_L0_CFG_WIDTH_Msk, EPIC_L0_CFG_WIDTH_Pos);
+    }
+    else
+    {
+        ;//Keep layer width as 0
+    }
+#ifdef EPIC_L0_FILL_PIXEL_ORDER
+    //Endian and pixel order
+    if (IS_SWAPPED_COLOR_MODE(config->color_mode))
+        layer_x->FILL |= EPIC_L0_FILL_PIXEL_ORDER | EPIC_L0_FILL_ENDIAN;
+    else
+        layer_x->FILL &= ~(EPIC_L0_FILL_PIXEL_ORDER | EPIC_L0_FILL_ENDIAN);
+#endif /* EPIC_L0_FILL_PIXEL_ORDER */
+
+
+    //Convert to EPIC's matrix format, and save it to EPIC registers
+    if ((layer_x->SRC != 0)
+            && (HAL_OK == EPIC_TransMatrix_FromFloat((int32_t *)&epic->L2_MAT_A0, (const float *) & (trans_result->matrix.m[0][0])))
+       )
+    {
+        //Active layer
+        layer_x->CFG |= EPIC_L0_CFG_ACTIVE;
+    }
+    else
+    {
+        layer_x->CFG &= ~EPIC_L0_CFG_ACTIVE;
+    }
+
+    return HAL_OK;
+}
+#endif /* EPIC_SUPPORT_TRANS_MATRIX  */
+
 
 #ifdef EPIC_DEBUG
 static inline EPIC_OpHistItemTypeDef *EPIC_AllocRecordItem(EPIC_HandleTypeDef *epic)
@@ -5573,6 +5871,14 @@ static HAL_StatusTypeDef EPIC_ConfigRotation(EPIC_HandleTypeDef *epic,
         {
             ret = EPIC_ConfigMaskLayer(epic, EPIC_LAYER_IDX_0, fg);
         }
+        else if (IS_MATRIX_TRANSFROM(rot_cfg))
+        {
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+            ret = EPIC_ConfigMatrixTransLayer(epic, &trans_result, fg, alpha);
+#else
+            RETURN_ERROR(epic, HAL_ERROR);
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
+        }
         else
         {
             EPIC_ConfigVideoLayer(epic, EPIC_LAYER_IDX_VL, &trans_result, fg, alpha, 1);
@@ -5855,7 +6161,7 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
     uint8_t jpeg_num = 0;
 #endif /* EPIC_SUPPORT_JPEGD */
 
-#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X)
+#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X) || defined(SF32LB57X)
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_2;
 #elif defined(SF32LB57X)
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_1;
@@ -5882,6 +6188,20 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
                 cur_fix_depth_layer--;
             }
 #endif /* SF32LB55X */
+            else if (IS_MATRIX_TRANSFROM(&transform_cfg[i]))
+            {
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+                if ((int8_t)EPIC_LAYER_IDX_2 == cur_fix_depth_layer)
+                {
+                    epic_layer[i]       = cur_fix_depth_layer;
+                    cur_fix_depth_layer--;
+                }
+                else
+                    return HAL_ERROR;
+#else
+                return HAL_ERROR;
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
+            }
             else if (video_layer_valid)
             {
                 epic_layer[i] = EPIC_LAYER_IDX_VL;
@@ -5904,8 +6224,13 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
             return HAL_ERROR;
 #endif /* SF32LB55X */
         }
-        else
+        else //Choose an EPIC layer for normal blending input layer
         {
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+            //L2 support matrix transform only,not for normal blending
+            if ((int8_t)EPIC_LAYER_IDX_2 == cur_fix_depth_layer)  cur_fix_depth_layer--;
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
+
             if ((video_layer_valid) &&
                     ((cur_fix_depth_layer < (int8_t)EPIC_LAYER_IDX_0)
 
@@ -5926,7 +6251,7 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
             }
             else
             {
-                return HAL_ERROR; //No avaliable layer
+                return HAL_ERROR; //No avaliable EPIC layer
             }
         }
 
@@ -6000,7 +6325,7 @@ static HAL_StatusTypeDef EPIC_ConfigBlendEx(EPIC_HandleTypeDef *epic,
     ret = EPIC_ChooseLayer(input, transform_cfg, input_layer_num, epic_layer, &video_layer_depth);
     if (HAL_OK != ret)
     {
-        return ret;
+        RETURN_ERROR(epic, ret);
     }
 
     //2.Transfrom layer to update other layer's coordinates
@@ -6044,7 +6369,12 @@ static HAL_StatusTypeDef EPIC_ConfigBlendEx(EPIC_HandleTypeDef *epic,
 #endif /* SF32LB55X */
                 )
         {
-            ret = EPIC_ConfigVideoLayer(epic, epic_layer[i], &trans_result[i], &input[i], alpha[i], video_layer_depth);
+#ifdef EPIC_SUPPORT_TRANS_MATRIX
+            if (IS_MATRIX_TRANSFROM(&transform_cfg[i]))
+                ret = EPIC_ConfigMatrixTransLayer(epic, &trans_result[i], &input[i], alpha[i]);
+            else
+#endif /* EPIC_SUPPORT_TRANS_MATRIX */
+                ret = EPIC_ConfigVideoLayer(epic, epic_layer[i], &trans_result[i], &input[i], alpha[i], video_layer_depth);
         }
         else if (IS_ALPHA_MASK_LAYER(&input[i]))
         {
@@ -6070,7 +6400,7 @@ static HAL_StatusTypeDef EPIC_ConfigBlendEx(EPIC_HandleTypeDef *epic,
 
         if (HAL_OK != ret)
         {
-            return ret;
+            RETURN_ERROR(epic, ret);
         }
 
 
@@ -6090,7 +6420,7 @@ static HAL_StatusTypeDef EPIC_ConfigBlendEx(EPIC_HandleTypeDef *epic,
     ret = EPIC_ConfigOutputLayerEx(epic, input, input_layer_num, output);
     if (HAL_OK != ret)
     {
-        return ret;
+        RETURN_ERROR(epic, ret);
     }
 
 #ifdef EPIC_SUPPORT_DITHER

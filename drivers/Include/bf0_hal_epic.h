@@ -14,7 +14,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include <stdbool.h>
 #include "bf0_hal_def.h"
-
+#include "sifli_matrix.h"
 
 
 #ifndef SF32LB55X /* Features supported after 55x */
@@ -36,6 +36,7 @@ extern "C" {
 #define HAL_EPICTL_ENABLED
 #define EPIC_SUPPORT_L4
 #define EPIC_SUPPORT_GREYSCALE
+#define EPIC_SUPPORT_TRANS_MATRIX
 #endif /* SF32LB52X */
 #endif /* SF32LB56X */
 #endif /* SF32LB58X */
@@ -259,8 +260,17 @@ typedef struct
 } EPIC_PointTypeDef;
 
 #define EPIC_SIN_COS_FRAC_BIT   (15)
+
 typedef struct
 {
+    /*
+      !!IMPORTANT!!
+       Part1~3 are mutually exclusive, only one part is used each time
+    */
+
+    /*****************
+     * Part1 for basic 2D transform
+     * *********************/
     /** angle in 0.1 degree */
     int16_t angle;
     /** flip left to right */
@@ -286,7 +296,9 @@ typedef struct
      */
     uint32_t scale_y;
 
-    /*Reserved params for epic_adv APIs*/
+    /***************
+     * Part2 Reserved params for epic_adv APIs
+     * *****************/
     uint16_t type; /*0: disable, 1-type1 2-type2*/
     int16_t angle_adv; /** angle in 0.1 degree */
     int16_t pivot_z;
@@ -294,6 +306,12 @@ typedef struct
     int16_t vp_x_offset; /*view x offset*/
     int16_t vp_y_offset; /*view y offset*/
     int16_t dst_z_offset; /*dst z offset*/
+
+
+    /*******************
+     * Part3 for matrix transfrom only
+     * *********************/
+    sifli_matrix_3x3_t *trans_matrix;
 } EPIC_TransformCfgTypeDef;
 
 typedef struct
@@ -409,7 +427,7 @@ typedef struct
      * 3. used as background color by output layer
      */
     bool color_en;
-    /** Red, if color_filter_en is true, it's filter color for rotation/scaling layer or background color for output layer */
+    /** Red */
     uint8_t color_r;
     /** Green */
     uint8_t color_g;
