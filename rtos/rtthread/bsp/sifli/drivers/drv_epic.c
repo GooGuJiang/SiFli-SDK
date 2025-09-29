@@ -905,6 +905,7 @@ void drv_gpu_open(void)
         HAL_NVIC_SetPriority(JPEGD_IRQn, 3, 0);
         HAL_NVIC_EnableIRQ(JPEGD_IRQn);
         epic->hjpegd = drv_get_jpegd_handle();
+        epic->hjpegd->Instance = hwp_jpegd;
         HAL_JPEGD_Init(epic->hjpegd, NULL, NULL);
 #ifdef LV_HOR_RES_MAX
         max_img_width = ((LV_HOR_RES_MAX + 15 + 15) >> 4) << 4;
