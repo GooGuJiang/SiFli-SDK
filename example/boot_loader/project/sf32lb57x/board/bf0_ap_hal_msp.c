@@ -1,47 +1,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include <rtconfig.h>
+#include "bf0_hal.h"
 #include "board.h"
 #include "string.h"
-
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN TD */
-
-/* USER CODE END TD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN Define */
-
-/* USER CODE END Define */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN Macro */
-
-/* USER CODE END Macro */
-
-/* Private variables ---------------------------------------------------------*/
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* External functions --------------------------------------------------------*/
-/* USER CODE BEGIN ExternalFunctions */
-
-/* USER CODE END ExternalFunctions */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-//void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 void boot_uart_tx(USART_TypeDef *uart, uint8_t *data, int len)
 {
@@ -86,13 +47,16 @@ void boot_error(unsigned char code)
 void HAL_MspInit(void)
 {
     // TODO:
-    // __HAL_WDT_DISABLE();
-    __HAL_IWDT_DISABLE();
+    __HAL_WDT_DISABLE();
 #ifdef CFG_BOOTROM
     char *boot_tag = "SFBL\n";
     boot_uart_tx(hwp_usart1, (uint8_t *)boot_tag, strlen(boot_tag));
-    HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_SYS, RCC_SYSCLK_HXT48);
-    HAL_Delay_us(BOOT_MODE_DELAY);      // Wait for boot_mode options.
+    //TODO:
+    //HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_SYS, RCC_SYSCLK_HXT48);
+    if ((hwp_pmuc->CR & (PMUC_CR_HIBER_EN | PMUC_CR_REBOOT)) == 0)
+    {
+        HAL_Delay_us(BOOT_MODE_DELAY);      // Wait for boot_mode options.
+    }
 #endif
 }
 
@@ -105,11 +69,4 @@ void cache_enable(void)
 {
     // Do nothing
 }
-
-
-/* USER CODE BEGIN 1 */
-
-
-/* USER CODE END 1 */
-
 

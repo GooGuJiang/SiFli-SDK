@@ -7,8 +7,7 @@ void sd1_init()
     //pinmux_sdmmc1(1);
     HAL_Delay_us(100);
     hwp_hpsys_rcc->ENR2 |= HPSYS_RCC_ENR2_SDMMC1;
-    //TODO:
-    // hwp_hpsys_cfg->SYSCR |= HPSYS_CFG_SYSCR_SDNAND;
+    hwp_hpsys_cfg->SYSCR |= HPSYS_CFG_SYSCR_SDNAND;
     hwp_sdmmc1->CLKCR = 0x1 << SD_CLKCR_DIV_Pos; //also clear sd_stop_clk
     hwp_sdmmc1->CDR = 0; //no card detect
     //hwp_sdmmc1->TOR = SD_BLOCK_SIZE*8*100;
@@ -122,7 +121,8 @@ void sd1_read(uint8_t wire_mode, uint8_t block_num)
 
 uint8_t sd1_wait_read()
 {
-    while ((hwp_sdmmc1->SR & SD_SR_DATA_DONE) == 0);
+    uint32_t mask = SD_SR_DATA_DONE | SD_SR_DATA_TIMEOUT | SD_SR_DATA_CRC;
+    while ((hwp_sdmmc1->SR & mask) == 0);
     hwp_sdmmc1->SR = SD_SR_DATA_DONE; //clear cmd done status
     if (hwp_sdmmc1->SR & SD_SR_DATA_TIMEOUT)
         return SD_TIMEOUT;

@@ -9,6 +9,7 @@
  */
 
 #include "board.h"
+#include "boot_flash.h"
 
 void SystemClock_Config(void)
 {
@@ -76,10 +77,23 @@ void board_pinmux_mpi1_puya_base()
 
 void board_pinmux_mpi1_puya_ext(int is64Mb)
 {
+    HAL_PIN_Set_Analog(PAD_SA04, 1);
+    HAL_PIN_Set_Analog(PAD_SA05, 1);
+    HAL_PIN_Set_Analog(PAD_SA06, 1);
+    HAL_PIN_Set_Analog(PAD_SA08, 1);
+    HAL_PIN_Set_Analog(PAD_SA11, 1);
+    HAL_PIN_Set_Analog(PAD_SA12, 1);
+
     if (is64Mb)
+    {
+        HAL_PIN_Set_Analog(PAD_SA00, 1);
         HAL_PIN_Set(PAD_SA03, MPI1_DIO2, PIN_PULLUP, 1);
+    }
     else
+    {
+        HAL_PIN_Set_Analog(PAD_SA03, 1);
         HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
+    }
 }
 
 void board_pinmux_mpi1_gd()
@@ -90,37 +104,25 @@ void board_pinmux_mpi1_gd()
     HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
     HAL_PIN_Set(PAD_SA08, MPI1_DIO3, PIN_PULLUP, 1);
-}
 
-void board_pinmux_mpi2()
-{
-    HAL_PIN_Set(PAD_PA16, MPI2_CLK, PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA12, MPI2_CS,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA15, MPI2_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA13, MPI2_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA14, MPI2_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA17, MPI2_DIO3, PIN_PULLUP, 1);
+    HAL_PIN_Set_Analog(PAD_SA01, 1);
+    HAL_PIN_Set_Analog(PAD_SA03, 1);
+    HAL_PIN_Set_Analog(PAD_SA05, 1);
+    HAL_PIN_Set_Analog(PAD_SA06, 1);
+    HAL_PIN_Set_Analog(PAD_SA07, 1);
+    HAL_PIN_Set_Analog(PAD_SA10, 1);
+    HAL_PIN_Set_Analog(PAD_SA12, 1);
+
 }
 
 void board_pinmux_mpi3()
 {
-    HAL_PIN_Set(PAD_SB04, MPI3_CLK, PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SB00, MPI3_CS,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SB03, MPI3_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SB01, MPI3_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SB02, MPI3_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_SB05, MPI3_DIO3, PIN_PULLUP, 1);
-}
-
-void board_pinmux_mpi4()
-{
-    //TODO: pin_const table not changed yet
-    HAL_PIN_Set(PAD_PA16, MPI4_CLK, PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA12, MPI4_CS,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA15, MPI4_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA13, MPI4_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA14, MPI4_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA17, MPI4_DIO3, PIN_PULLUP, 1);
+    HAL_PIN_Set(PAD_PA16, MPI3_CLK, PIN_NOPULL, 1);
+    HAL_PIN_Set(PAD_PA12, MPI3_CS,  PIN_NOPULL, 1);
+    HAL_PIN_Set(PAD_PA15, MPI3_DIO0, PIN_PULLDOWN, 1);
+    HAL_PIN_Set(PAD_PA13, MPI3_DIO1, PIN_PULLDOWN, 1);
+    HAL_PIN_Set(PAD_PA14, MPI3_DIO2, PIN_PULLUP, 1);
+    HAL_PIN_Set(PAD_PA17, MPI3_DIO3, PIN_PULLUP, 1);
 }
 
 void board_pinmux_sd()
@@ -141,16 +143,24 @@ void board_pinmux_uart()
     HAL_PIN_Set(PAD_PA18, USART1_RXD, PIN_PULLUP, 1);
 }
 
+static void board_pinmux_mpi1_none(void)
+{
+    uint32_t i;
+
+    for (i = 0; i <= 12; i++)
+    {
+        HAL_PIN_Set_Analog(PAD_SA00 + i, 1);
+    }
+}
+
 int board_boot_from(void)
 {
     uint32_t pid = (hwp_hpsys_cfg->IDR & HPSYS_CFG_IDR_PID_Msk) >> HPSYS_CFG_IDR_PID_Pos;
     int r;
 
     pid &= 7;
-
-    //TODO: may not needed, yankai will confirm it later
-    hwp_pmuc->CR &= ~(PMUC_CR_PA_RET | PMUC_CR_SA_RET | PMUC_CR_SB_RET);
-    HAL_Delay_us(100);
+    if (BOOT_SIP_NONE == pid)
+        board_pinmux_mpi1_none();
 
     if (pid == BOOT_SIP_PUYA)
         r = BOOT_FROM_SIP_PUYA;
@@ -159,16 +169,25 @@ int board_boot_from(void)
     else
     {
 #ifdef CFG_BOOTROM
+        hwp_pmuc->CR &= ~PMUC_CR_PIN_RET;
+        HAL_Delay_us(100);
+
         // Use external PIN(DIO1,DIO3) to detect NOR/NAND/SD-NAND
         int ext_bond = HAL_GPIO_ReadPin(hwp_gpio1, 17);      // A17,  MPI2_DIO3
         ext_bond |= (HAL_GPIO_ReadPin(hwp_gpio1, 13) << 1);  // A13,  MPI2_DIO1
 
         if (ext_bond == 0)
+        {
             r = BOOT_FROM_NOR;
+        }
         else if (ext_bond == 1)
+        {
             r = BOOT_FROM_NAND;
+        }
         else
-            r = BOOT_FROM_SD;
+        {
+            r = (ext_bond == 2) ? BOOT_FROM_SD : BOOT_FROM_EMMC;
+        }
         HAL_Set_backup(RTC_BACKUP_BOOTOPT, r);
 #else
         r = HAL_Get_backup(RTC_BACKUP_BOOTOPT);
@@ -178,6 +197,7 @@ int board_boot_from(void)
 }
 
 // Use internal LDO to power on flash.
+//TODO:
 void board_flash_power_on()
 {
     // hwp_pmuc->PERI_LDO |= PMUC_PERI_LDO_EN_VDD33_LDO2;

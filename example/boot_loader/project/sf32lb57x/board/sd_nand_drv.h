@@ -7,6 +7,11 @@
 //#include <drv_io.h>
 
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SD_SUCCESS 0
 #define SD_TIMEOUT 1
 #define SD_CRCERR  2
@@ -48,4 +53,10 @@ uint8_t sd1_wait_read();
 uint8_t sdmmc1_sdnand();
 int sd_read_data(uint32_t addr, uint8_t *data, uint32_t len);
 
+int sdio_emmc_init();
+int emmc_read_data(uint32_t addr, uint8_t *data, uint32_t len);
+
+#ifdef __cplusplus
+}
+#endif
 #endif  //_SD_NAND_DRV_H_

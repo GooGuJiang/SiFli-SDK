@@ -21,7 +21,11 @@ uint8_t sdmmc1_sdnand()
 
     //initialize sdmmc host
     sd1_init();
-    hwp_sdmmc1->CLKCR = 359 << SD_CLKCR_DIV_Pos; //48M/120=400k, stop_clk = 0
+#ifdef FPGA
+    hwp_sdmmc1->CLKCR = 119 << SD_CLKCR_DIV_Pos; //48M/120=400k, stop_clk = 0
+#else
+    hwp_sdmmc1->CLKCR = 359 << SD_CLKCR_DIV_Pos; //144M/360=400k, stop_clk = 0
+#endif
     hwp_sdmmc1->CLKCR |= SD_CLKCR_VOID_FIFO_ERROR;
     hwp_sdmmc1->IER = 0; //mask sdmmc interrupt
     hwp_sdmmc1->TOR = 0x00100000; // set timeout for 400K about 2.6s
@@ -194,7 +198,11 @@ uint8_t sdmmc1_sdnand()
     }
     //debug_print("SD card identification done!\n");
 
-    hwp_sdmmc1->CLKCR = 5 << SD_CLKCR_DIV_Pos; //48M/2=24M
+#ifdef FPGA
+    hwp_sdmmc1->CLKCR = 1 << SD_CLKCR_DIV_Pos; //48M/2=24M
+#else
+    hwp_sdmmc1->CLKCR = 5 << SD_CLKCR_DIV_Pos; //144M/6=24M
+#endif
     hwp_sdmmc1->CLKCR |= SD_CLKCR_VOID_FIFO_ERROR;
     hwp_sdmmc1->TOR = 0x02000000; // set timeout for 24M about 1.4s
     hwp_sdmmc1->CDR = SD_CDR_ITIMING_SEL | (0 << SD_CDR_ITIMING_Pos);

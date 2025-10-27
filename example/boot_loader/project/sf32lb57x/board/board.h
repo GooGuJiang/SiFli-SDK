@@ -29,6 +29,7 @@ extern "C" {
 #define BOOT_FROM_NOR               3
 #define BOOT_FROM_NAND              4
 #define BOOT_FROM_SD                5
+#define BOOT_FROM_EMMC              6
 
 // MPI1 SIP for 54x
 #define BOOT_SIP_PUYA               0
@@ -43,6 +44,7 @@ extern "C" {
 extern int board_boot_src;
 int board_boot_from(void);
 void board_flash_power_on();
+void board_init_psram(void);
 
 extern void board_pinmux_uart();
 extern void board_pinmux_mpi1_puya_base();
@@ -50,7 +52,6 @@ extern void board_pinmux_mpi1_puya_ext(int is64Mb);
 extern void board_pinmux_mpi1_gd();
 extern void board_pinmux_mpi2();
 extern void board_pinmux_mpi3();
-extern void board_pinmux_mpi4();
 extern void board_pinmux_sd();
 extern void boot_error(unsigned char code);
 

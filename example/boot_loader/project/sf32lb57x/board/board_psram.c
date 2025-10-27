@@ -56,6 +56,8 @@ void board_pinmux_psram_func0()
     HAL_PIN_Set(PAD_SA09, MPI1_DQSDM, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA10, MPI1_CLK,  PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA11, MPI1_CS,   PIN_NOPULL, 1);
+    HAL_PIN_Set_Analog(PAD_SA00, 1);
+    HAL_PIN_Set_Analog(PAD_SA12, 1);
 }
 
 /* APS 1:64p 2:32P, 4:Winbond 32/64/128p*/
@@ -81,6 +83,8 @@ void board_pinmux_psram_func1_2_4(int func)
     {
     case 1:             // APS 64P XCELLA
         HAL_PIN_Set(PAD_SA12, MPI1_DQSDM, PIN_PULLDOWN, 1);
+        HAL_PIN_Set_Analog(PAD_SA00, 1);
+        HAL_PIN_Set_Analog(PAD_SA06, 1);
         break;
     case 2:             // APS 32P LEGACY
         HAL_PIN_Set(PAD_SA00, MPI1_DM, PIN_PULLDOWN, 1);
@@ -90,6 +94,8 @@ void board_pinmux_psram_func1_2_4(int func)
     case 4:             // Winbond 32/64/128p
         //HAL_PIN_Set(PAD_SA06, MPI1_CLKB, PIN_NOPULL, 1);
         HAL_PIN_Set(PAD_SA12, MPI1_DQSDM, PIN_NOPULL, 1);
+        HAL_PIN_Set_Analog(PAD_SA00, 1);
+        HAL_PIN_Set_Analog(PAD_SA06, 1);
         break;
     }
 #endif
@@ -105,6 +111,14 @@ void board_pinmux_psram_func3()
     HAL_PIN_Set(PAD_SA07, MPI1_DIO1, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA06, MPI1_DIO2, PIN_PULLUP, 1);
     HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_PULLUP, 1);
+
+    HAL_PIN_Set_Analog(PAD_SA00, 1);
+    HAL_PIN_Set_Analog(PAD_SA01, 1);
+    HAL_PIN_Set_Analog(PAD_SA02, 1);
+    HAL_PIN_Set_Analog(PAD_SA03, 1);
+    HAL_PIN_Set_Analog(PAD_SA04, 1);
+    HAL_PIN_Set_Analog(PAD_SA11, 1);
+    HAL_PIN_Set_Analog(PAD_SA12, 1);
 }
 
 

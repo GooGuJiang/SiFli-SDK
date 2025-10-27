@@ -2,6 +2,7 @@
 #include "stdint.h"
 #include "string.h"
 #include "../dfu/dfu.h"
+#include "bf0_hal.h"
 #include "board.h"
 
 #define AES_BLOCK_SIZE 512
@@ -9,7 +10,7 @@
 #define EFUSE_OFFSET_UID        0
 #define EFUSE_OFFSET_SIG_HASH   128
 #define EFUSE_OFFSET_SECURE     192
-#define EFUSE_OFFSET_ROOT       512
+#define EFUSE_OFFSET_ROOT       768
 #define EFUSE_BANK_SIZE         32
 #define EFUSE_BANK_NUM          (4)
 
@@ -71,7 +72,7 @@ void sifli_hw_init_xip_key(uint8_t *enc_img_key)
     static uint32_t plain_key[DFU_KEY_SIZE >> 2];
 
     //TODO:
-    // __HAL_SYSCFG_SET_SECURITY();
+    __HAL_SYSCFG_SET_SECURITY();
     uid = &g_uid[0];
     sifli_hw_efuse_read(EFUSE_UID, uid, DFU_UID_SIZE);
     memset(plain_key, 0, sizeof(plain_key));
@@ -79,7 +80,7 @@ void sifli_hw_init_xip_key(uint8_t *enc_img_key)
     HAL_AES_run(AES_DEC, enc_img_key, (uint8_t *)plain_key, DFU_KEY_SIZE);
     /* restore to normal mode */
     //TODO:
-    // __HAL_SYSCFG_CLEAR_SECURITY();
+    __HAL_SYSCFG_CLEAR_SECURITY();
 }
 
 
@@ -113,11 +114,6 @@ int sifli_hw_dec(uint8_t *key, uint8_t *in_data, uint8_t *out_data, int size, ui
     return offset;
 }
 
-void sifli_hw_dec_once(uint8_t *key, uint8_t *in_data, uint8_t *out_data, int size)
-{
-    HAL_AES_init((uint32_t *)key, DFU_KEY_SIZE, (uint32_t *)dfu_get_counter(0), AES_MODE_CTR);
-    HAL_AES_run(AES_DEC, in_data, out_data, size);
-}
 
 uint8_t *dfu_get_counter(uint32_t offset)
 {
