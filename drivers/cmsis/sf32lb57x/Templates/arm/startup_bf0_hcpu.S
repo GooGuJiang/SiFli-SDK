@@ -94,7 +94,7 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      DMAC2_CH8_IRQHandler                   ;   9 Interrupt 9                    
                 DCD      PATCH_IRQHandler                       ;  10 Interrupt 10
                 DCD      dm_isr                                 ;  11 Interrupt 11
-                DCD      Interrupt12_IRQHandler                 ;  12 Interrupt 12
+                DCD      USART4_IRQHandler                      ;  12 Interrupt 12
                 DCD      USART5_IRQHandler                      ;  13 Interrupt 13
                 DCD      SECU2_IRQHandler                       ;  14 Interrupt 14   
                 DCD      bt_isr                                 ;  15 Interrupt 15
@@ -103,8 +103,8 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      PTC2_IRQHandler                        ;  18 Interrupt 18
                 DCD      LPTIM3_IRQHandler                      ;  19 Interrupt 19
                 DCD      GPIO2_IRQHandler                       ;  20 Interrupt 20
-                DCD      LCPU_SYSRESET_IRQHandler               ;  21 Interrupt 21
-                DCD      Interrupt22_IRQHandler                 ;  22 Interrupt 22
+                DCD      HPSYS0_IRQHandler                      ;  21 Interrupt 21
+                DCD      HPSYS1_IRQHandler                      ;  22 Interrupt 22
                 DCD      Interrupt23_IRQHandler                 ;  23 Interrupt 23
                 DCD      Interrupt24_IRQHandler                 ;  24 Interrupt 24
                 DCD      Interrupt25_IRQHandler                 ;  25 Interrupt 25
@@ -114,14 +114,14 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      Interrupt29_IRQHandler                 ;  29 Interrupt 29
                 DCD      Interrupt30_IRQHandler                 ;  30 Interrupt 30
                 DCD      Interrupt31_IRQHandler                 ;  31 Interrupt 31
-                DCD      Interrupt32_IRQHandler                 ;  32 Interrupt 32
-                DCD      Interrupt33_IRQHandler                 ;  33 Interrupt 33    
-                DCD      Interrupt34_IRQHandler                 ;  34 Interrupt 34   
-                DCD      Interrupt35_IRQHandler                 ;  35 Interrupt 35                    
-                DCD      Interrupt36_IRQHandler                 ;  36 Interrupt 36                                        
-                DCD      Interrupt37_IRQHandler                 ;  37 Interrupt 37
-                DCD      Interrupt38_IRQHandler                 ;  38 Interrupt 38                    
-                DCD      Interrupt39_IRQHandler                 ;  39 Interrupt 39
+                DCD      PTM1_CORE0_IRQHandler                  ;  32 Interrupt 32
+                DCD      PTM1_CORE1_IRQHandler                  ;  33 Interrupt 33    
+                DCD      PTM1_CORE2_IRQHandler                  ;  34 Interrupt 34   
+                DCD      PTM1_CORE3_IRQHandler                  ;  35 Interrupt 35                    
+                DCD      PTM1_CORE4_IRQHandler                  ;  36 Interrupt 36                                        
+                DCD      PTM1_CORE5_IRQHandler                  ;  37 Interrupt 37
+                DCD      PTM1_CORE6_IRQHandler                  ;  38 Interrupt 38                    
+                DCD      PTM1_CORE7_IRQHandler                  ;  39 Interrupt 39
                 DCD      Interrupt40_IRQHandler                 ;  40 Interrupt 40                                         
                 DCD      Interrupt41_IRQHandler                 ;  41 Interrupt 41
                 DCD      Interrupt42_IRQHandler                 ;  42 Interrupt 42
@@ -130,7 +130,7 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      Interrupt45_IRQHandler                 ;  45 Interrupt 45                                         
                 DCD      LPTIM1_IRQHandler                      ;  46 Interrupt 46
                 DCD      LPTIM2_IRQHandler                      ;  47 Interrupt 47
-                DCD      WDT2_IRQHandler                        ;  48 Interrupt 48
+                DCD      PMUC_IRQHandler                        ;  48 Interrupt 48
                 DCD      RTC_IRQHandler                         ;  49 Interrupt 49
                 DCD      DMAC1_CH1_IRQHandler                   ;  50 Interrupt 50
                 DCD      DMAC1_CH2_IRQHandler                   ;  51 Interrupt 51
@@ -159,7 +159,7 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      USART2_IRQHandler                      ;  74 Interrupt 74 
                 DCD      SPI2_IRQHandler                        ;  75 Interrupt 75
                 DCD      I2C2_IRQHandler                        ;  76 Interrupt 76
-                DCD      V2D_GPU_IRQHandler                     ;  77 Interrupt 77
+                DCD      EXTDMA_IRQHandler                      ;  77 Interrupt 77
                 DCD      I2C4_IRQHandler                        ;  78 Interrupt 78
                 DCD      SDMMC1_IRQHandler                      ;  79 Interrupt 79
                 DCD      ACPU2HCPU_IRQHandler                   ;  80 Interrupt 80
@@ -169,8 +169,8 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      GPIO1_IRQHandler                       ;  84 Interrupt 84 
                 DCD      QSPI1_IRQHandler                       ;  85 Interrupt 85
                 DCD      QSPI2_IRQHandler                       ;  86 Interrupt 86
-                DCD      QSPI3_IRQHandler                       ;  87 Interrupt 87
-                DCD      NPU_IRQHandler                         ;  88 Interrupt 88
+                DCD      Interrupt87_IRQHandler                 ;  87 Interrupt 87
+                DCD      Interrupt88_IRQHandler                 ;  88 Interrupt 88
                 DCD      EZIP_IRQHandler                     	;  89 Interrupt 89
                 DCD      AUDPRC_IRQHandler                     	;  90 Interrupt 90
                 DCD      TSEN_IRQHandler                        ;  91 Interrupt 91
@@ -182,13 +182,13 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      DCMI_IRQHandler                        ;  97 Interrupt 97
                 DCD      SECU1_IRQHandler                       ;  98 Interrupt 98
                 DCD      JPEGD_IRQHandler                       ;  99 Interrupt 99
-                DCD      HASH_IRQHandler                        ;  100 Interrupt 100
-                DCD      USART4_IRQHandler                      ;  101 Interrupt 101
-                DCD      EPICTL_IRQHandler                      ;  102 Interrupt 102
-                DCD      DMAC1_CH9_IRQHandler                   ;  103 Interrupt 103
-                DCD      DMAC1_CH10_IRQHandler                  ;  104 Interrupt 104
-                
-                SPACE    (375 * 4)                              ; Interrupts 105 .. 479 are left out
+                DCD      Interrupt100_IRQHandler                ;  100 Interrupt 100
+                DCD      Interrupt101_IRQHandler                ;  101 Interrupt 101
+                DCD      Interrupt102_IRQHandler                ;  102 Interrupt 102
+                DCD      I2S2_IRQHandler                        ;  103 Interrupt 103
+                DCD      Interrupt104_IRQHandler                ;  104 Interrupt 104                
+                DCD      PWM1_IRQHandler                        ;  105 Interrupt 105
+                SPACE    (6 * 4)                                ; Interrupts 106 .. 111 are left out
 __Vectors_End
 __Vectors_Size  EQU      __Vectors_End - __Vectors
 
@@ -252,17 +252,17 @@ $Handler_Name   PROC
                 Set_Default_Handler      DMAC2_CH8_IRQHandler  
                 Set_Default_Handler      PATCH_IRQHandler      
                 Set_Default_Handler      dm_isr     
-                Set_Default_Handler      Interrupt12_IRQHandler     
+                Set_Default_Handler      USART4_IRQHandler     
                 Set_Default_Handler      USART5_IRQHandler     
                 Set_Default_Handler      SECU2_IRQHandler     
                 Set_Default_Handler      bt_isr       
                 Set_Default_Handler      BTIM3_IRQHandler      
-                Set_Default_Handler      BTIM4_IRQHandler   
+                Set_Default_Handler      BTIM4_IRQHandler
                 Set_Default_Handler      PTC2_IRQHandler       		
                 Set_Default_Handler      LPTIM3_IRQHandler   		
                 Set_Default_Handler      GPIO2_IRQHandler     
-                Set_Default_Handler      LCPU_SYSRESET_IRQHandler     
-                Set_Default_Handler      Interrupt22_IRQHandler     				
+                Set_Default_Handler      HPSYS0_IRQHandler     
+                Set_Default_Handler      HPSYS1_IRQHandler     				
                 Set_Default_Handler      Interrupt23_IRQHandler       
                 Set_Default_Handler      Interrupt24_IRQHandler       
                 Set_Default_Handler      Interrupt25_IRQHandler       
@@ -272,14 +272,14 @@ $Handler_Name   PROC
                 Set_Default_Handler      Interrupt29_IRQHandler       
                 Set_Default_Handler      Interrupt30_IRQHandler       
                 Set_Default_Handler      Interrupt31_IRQHandler       
-                Set_Default_Handler      Interrupt32_IRQHandler       
-                Set_Default_Handler      Interrupt33_IRQHandler       
-                Set_Default_Handler      Interrupt34_IRQHandler       
-                Set_Default_Handler      Interrupt35_IRQHandler       
-                Set_Default_Handler      Interrupt36_IRQHandler       
-                Set_Default_Handler      Interrupt37_IRQHandler       
-                Set_Default_Handler      Interrupt38_IRQHandler       
-                Set_Default_Handler      Interrupt39_IRQHandler       
+                Set_Default_Handler      PTM1_CORE0_IRQHandler       
+                Set_Default_Handler      PTM1_CORE1_IRQHandler       
+                Set_Default_Handler      PTM1_CORE2_IRQHandler       
+                Set_Default_Handler      PTM1_CORE3_IRQHandler       
+                Set_Default_Handler      PTM1_CORE4_IRQHandler       
+                Set_Default_Handler      PTM1_CORE5_IRQHandler       
+                Set_Default_Handler      PTM1_CORE6_IRQHandler       
+                Set_Default_Handler      PTM1_CORE7_IRQHandler
                 Set_Default_Handler      Interrupt40_IRQHandler       
                 Set_Default_Handler      Interrupt41_IRQHandler       
                 Set_Default_Handler      Interrupt42_IRQHandler       
@@ -288,7 +288,7 @@ $Handler_Name   PROC
                 Set_Default_Handler      Interrupt45_IRQHandler       
                 Set_Default_Handler      LPTIM1_IRQHandler          
                 Set_Default_Handler      LPTIM2_IRQHandler   
-                Set_Default_Handler      WDT2_IRQHandler          		
+                Set_Default_Handler      PMUC_IRQHandler          		
                 Set_Default_Handler      RTC_IRQHandler        
                 Set_Default_Handler      DMAC1_CH1_IRQHandler  
                 Set_Default_Handler      DMAC1_CH2_IRQHandler  
@@ -317,7 +317,7 @@ $Handler_Name   PROC
                 Set_Default_Handler      USART2_IRQHandler      
                 Set_Default_Handler      SPI2_IRQHandler      
                 Set_Default_Handler      I2C2_IRQHandler      
-                Set_Default_Handler      V2D_GPU_IRQHandler     
+                Set_Default_Handler      EXTDMA_IRQHandler     
                 Set_Default_Handler      I2C4_IRQHandler     
                 Set_Default_Handler      SDMMC1_IRQHandler      
                 Set_Default_Handler      ACPU2HCPU_IRQHandler       
@@ -327,8 +327,8 @@ $Handler_Name   PROC
                 Set_Default_Handler      GPIO1_IRQHandler      
                 Set_Default_Handler      QSPI1_IRQHandler      
                 Set_Default_Handler      QSPI2_IRQHandler      
-                Set_Default_Handler      QSPI3_IRQHandler      
-                Set_Default_Handler      NPU_IRQHandler  
+                Set_Default_Handler      Interrupt87_IRQHandler      
+                Set_Default_Handler      Interrupt88_IRQHandler  
                 Set_Default_Handler      EZIP_IRQHandler
                 Set_Default_Handler      AUDPRC_IRQHandler
                 Set_Default_Handler      TSEN_IRQHandler
@@ -340,11 +340,12 @@ $Handler_Name   PROC
                 Set_Default_Handler      DCMI_IRQHandler  
                 Set_Default_Handler      SECU1_IRQHandler 
                 Set_Default_Handler      JPEGD_IRQHandler 
-                Set_Default_Handler      HASH_IRQHandler 
-                Set_Default_Handler      USART4_IRQHandler
-                Set_Default_Handler      EPICTL_IRQHandler 
-                Set_Default_Handler      DMAC1_CH9_IRQHandler 
-                Set_Default_Handler      DMAC1_CH10_IRQHandler 
+                Set_Default_Handler      Interrupt100_IRQHandler
+                Set_Default_Handler      Interrupt101_IRQHandler
+                Set_Default_Handler      Interrupt102_IRQHandler
+                Set_Default_Handler      I2S2_IRQHandler
+                Set_Default_Handler      Interrupt104_IRQHandler
+                Set_Default_Handler      PWM1_IRQHandler
 
                 ALIGN
 

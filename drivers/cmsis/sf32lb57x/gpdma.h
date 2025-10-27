@@ -1144,30 +1144,30 @@ typedef struct
 
 /****************** Bit definition for GPDMA_CSELR1 register ******************/
 #define GPDMA_CSELR1_C1S_Pos            (0U)
-#define GPDMA_CSELR1_C1S_Msk            (0x3FUL << GPDMA_CSELR1_C1S_Pos)
+#define GPDMA_CSELR1_C1S_Msk            (0x7FUL << GPDMA_CSELR1_C1S_Pos)
 #define GPDMA_CSELR1_C1S                GPDMA_CSELR1_C1S_Msk
 #define GPDMA_CSELR1_C2S_Pos            (8U)
-#define GPDMA_CSELR1_C2S_Msk            (0x3FUL << GPDMA_CSELR1_C2S_Pos)
+#define GPDMA_CSELR1_C2S_Msk            (0x7FUL << GPDMA_CSELR1_C2S_Pos)
 #define GPDMA_CSELR1_C2S                GPDMA_CSELR1_C2S_Msk
 #define GPDMA_CSELR1_C3S_Pos            (16U)
-#define GPDMA_CSELR1_C3S_Msk            (0x3FUL << GPDMA_CSELR1_C3S_Pos)
+#define GPDMA_CSELR1_C3S_Msk            (0x7FUL << GPDMA_CSELR1_C3S_Pos)
 #define GPDMA_CSELR1_C3S                GPDMA_CSELR1_C3S_Msk
 #define GPDMA_CSELR1_C4S_Pos            (24U)
-#define GPDMA_CSELR1_C4S_Msk            (0x3FUL << GPDMA_CSELR1_C4S_Pos)
+#define GPDMA_CSELR1_C4S_Msk            (0x7FUL << GPDMA_CSELR1_C4S_Pos)
 #define GPDMA_CSELR1_C4S                GPDMA_CSELR1_C4S_Msk
 
 /****************** Bit definition for GPDMA_CSELR2 register ******************/
 #define GPDMA_CSELR2_C5S_Pos            (0U)
-#define GPDMA_CSELR2_C5S_Msk            (0x3FUL << GPDMA_CSELR2_C5S_Pos)
+#define GPDMA_CSELR2_C5S_Msk            (0x7FUL << GPDMA_CSELR2_C5S_Pos)
 #define GPDMA_CSELR2_C5S                GPDMA_CSELR2_C5S_Msk
 #define GPDMA_CSELR2_C6S_Pos            (8U)
-#define GPDMA_CSELR2_C6S_Msk            (0x3FUL << GPDMA_CSELR2_C6S_Pos)
+#define GPDMA_CSELR2_C6S_Msk            (0x7FUL << GPDMA_CSELR2_C6S_Pos)
 #define GPDMA_CSELR2_C6S                GPDMA_CSELR2_C6S_Msk
 #define GPDMA_CSELR2_C7S_Pos            (16U)
-#define GPDMA_CSELR2_C7S_Msk            (0x3FUL << GPDMA_CSELR2_C7S_Pos)
+#define GPDMA_CSELR2_C7S_Msk            (0x7FUL << GPDMA_CSELR2_C7S_Pos)
 #define GPDMA_CSELR2_C7S                GPDMA_CSELR2_C7S_Msk
 #define GPDMA_CSELR2_C8S_Pos            (24U)
-#define GPDMA_CSELR2_C8S_Msk            (0x3FUL << GPDMA_CSELR2_C8S_Pos)
+#define GPDMA_CSELR2_C8S_Msk            (0x7FUL << GPDMA_CSELR2_C8S_Pos)
 #define GPDMA_CSELR2_C8S                GPDMA_CSELR2_C8S_Msk
 
 /****************** Bit definition for GPDMA_DBGSEL register ******************/

@@ -28,9 +28,10 @@ src += ['pmu_ldo_update.c']
 if GetDepend(['BF0_HCPU']) and not GetDepend(['CFG_BOOTLOADER']):
     src += ['lcpu_patch.c']
     src += ['bf0_lcpu_init.c']
-    if GetDepend(['FPGA']):
-        src += ['ble_rf_fulcal_ad9364.c']
-        src += ['spi_tst_drv.c']
+    # TODO: need to enanble after ble_rf_fulcal_ad9364 is available
+    # if GetDepend(['FPGA']):
+    #     src += ['ble_rf_fulcal_ad9364.c']
+    #     src += ['spi_tst_drv.c']
 
 ASFLAGS = ''
 CCFLAGS = ''

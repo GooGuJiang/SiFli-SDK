@@ -32,6 +32,10 @@ extern "C" {
 #define DMA_LINK_LIST_SUPPORT
 #endif /* GPDMA_LISR_LCIF1 */
 
+#if defined(GPDMA1_BASE) || defined(GPDMA2_BASE) || defined(GPDMA3_BASE)
+#define DMA_SUPPORT_GPDMA
+#endif /* GPDMA1_BASE || GPDMA2_BASE || GPDMA3_BASE */
+
 /** @addtogroup BF0_HAL_Driver
   * @{
   */
@@ -158,8 +162,9 @@ typedef struct __DMA_HandleTypeDef
 
     DMAC_TypeDef           *DmaBaseAddress;                                            /*!< DMA Channel Base Address             */
 
-    uint32_t               ChannelIndex;                                              /*!< DMA Channel Index, the value is left-shifted by 2 bits */
-    uint32_t               OrgChannelIndex;                                           /*!< Channel index without any change, range is 0~7 */
+    uint32_t               ChannelIndex;                                               /*!< DMA Channel Index, the value is left-shifted by 2 bits */
+    uint32_t               OrgChannelIndex: 31;                                        /*!< Channel index without any change, range is 0~7 */
+    uint32_t               IsGPDMA: 1;                                                 /*!< Is GPDMA channel                     */
 
 #ifdef DMA_SUPPORT_DYN_CHANNEL_ALLOC
     uint32_t               LeftCounts;

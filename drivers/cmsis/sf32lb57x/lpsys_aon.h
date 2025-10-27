@@ -6,6 +6,7 @@ typedef struct
     __IO uint32_t PMR;
     __IO uint32_t CR1;
     __IO uint32_t CR2;
+    __IO uint32_t CR3;
     __IO uint32_t ACR;
     __IO uint32_t LSCR;
     __IO uint32_t DSCR;
@@ -23,7 +24,7 @@ typedef struct
     __IO uint32_t GTIMR;
     __IO uint32_t RESERVE0;
     __IO uint32_t RESERVE1;
-    __IO uint32_t RSVD1[44];
+    __IO uint32_t RSVD1[43];
     __IO uint32_t SPR;
     __IO uint32_t PCR;
 } LPSYS_AON_TypeDef;
@@ -101,6 +102,23 @@ typedef struct
 #define LPSYS_AON_CR2_PIN15_MODE_Msk    (0x7UL << LPSYS_AON_CR2_PIN15_MODE_Pos)
 #define LPSYS_AON_CR2_PIN15_MODE        LPSYS_AON_CR2_PIN15_MODE_Msk
 
+/***************** Bit definition for LPSYS_AON_CR3 register ******************/
+#define LPSYS_AON_CR3_PIN16_MODE_Pos    (0U)
+#define LPSYS_AON_CR3_PIN16_MODE_Msk    (0x7UL << LPSYS_AON_CR3_PIN16_MODE_Pos)
+#define LPSYS_AON_CR3_PIN16_MODE        LPSYS_AON_CR3_PIN16_MODE_Msk
+#define LPSYS_AON_CR3_PIN17_MODE_Pos    (3U)
+#define LPSYS_AON_CR3_PIN17_MODE_Msk    (0x7UL << LPSYS_AON_CR3_PIN17_MODE_Pos)
+#define LPSYS_AON_CR3_PIN17_MODE        LPSYS_AON_CR3_PIN17_MODE_Msk
+#define LPSYS_AON_CR3_PIN18_MODE_Pos    (6U)
+#define LPSYS_AON_CR3_PIN18_MODE_Msk    (0x7UL << LPSYS_AON_CR3_PIN18_MODE_Pos)
+#define LPSYS_AON_CR3_PIN18_MODE        LPSYS_AON_CR3_PIN18_MODE_Msk
+#define LPSYS_AON_CR3_PIN19_MODE_Pos    (9U)
+#define LPSYS_AON_CR3_PIN19_MODE_Msk    (0x7UL << LPSYS_AON_CR3_PIN19_MODE_Pos)
+#define LPSYS_AON_CR3_PIN19_MODE        LPSYS_AON_CR3_PIN19_MODE_Msk
+#define LPSYS_AON_CR3_PIN20_MODE_Pos    (12U)
+#define LPSYS_AON_CR3_PIN20_MODE_Msk    (0x7UL << LPSYS_AON_CR3_PIN20_MODE_Pos)
+#define LPSYS_AON_CR3_PIN20_MODE        LPSYS_AON_CR3_PIN20_MODE_Msk
+
 /***************** Bit definition for LPSYS_AON_ACR register ******************/
 #define LPSYS_AON_ACR_HRC48_REQ_Pos     (0U)
 #define LPSYS_AON_ACR_HRC48_REQ_Msk     (0x1UL << LPSYS_AON_ACR_HRC48_REQ_Pos)
@@ -173,18 +191,12 @@ typedef struct
 #define LPSYS_AON_WER_RTC_Pos           (0U)
 #define LPSYS_AON_WER_RTC_Msk           (0x1UL << LPSYS_AON_WER_RTC_Pos)
 #define LPSYS_AON_WER_RTC               LPSYS_AON_WER_RTC_Msk
-#define LPSYS_AON_WER_WDT2_Pos          (1U)
-#define LPSYS_AON_WER_WDT2_Msk          (0x1UL << LPSYS_AON_WER_WDT2_Pos)
-#define LPSYS_AON_WER_WDT2              LPSYS_AON_WER_WDT2_Msk
-#define LPSYS_AON_WER_GPIO2_Pos         (2U)
+#define LPSYS_AON_WER_GPIO2_Pos         (1U)
 #define LPSYS_AON_WER_GPIO2_Msk         (0x1UL << LPSYS_AON_WER_GPIO2_Pos)
 #define LPSYS_AON_WER_GPIO2             LPSYS_AON_WER_GPIO2_Msk
-#define LPSYS_AON_WER_LPTIM3_Pos        (3U)
+#define LPSYS_AON_WER_LPTIM3_Pos        (2U)
 #define LPSYS_AON_WER_LPTIM3_Msk        (0x1UL << LPSYS_AON_WER_LPTIM3_Pos)
 #define LPSYS_AON_WER_LPTIM3            LPSYS_AON_WER_LPTIM3_Msk
-#define LPSYS_AON_WER_LPTIM3OUT_Pos     (4U)
-#define LPSYS_AON_WER_LPTIM3OUT_Msk     (0x1UL << LPSYS_AON_WER_LPTIM3OUT_Pos)
-#define LPSYS_AON_WER_LPTIM3OUT         LPSYS_AON_WER_LPTIM3OUT_Msk
 #define LPSYS_AON_WER_BT_Pos            (5U)
 #define LPSYS_AON_WER_BT_Msk            (0x1UL << LPSYS_AON_WER_BT_Pos)
 #define LPSYS_AON_WER_BT                LPSYS_AON_WER_BT_Msk
@@ -242,18 +254,30 @@ typedef struct
 #define LPSYS_AON_WER_PIN15_Pos         (23U)
 #define LPSYS_AON_WER_PIN15_Msk         (0x1UL << LPSYS_AON_WER_PIN15_Pos)
 #define LPSYS_AON_WER_PIN15             LPSYS_AON_WER_PIN15_Msk
+#define LPSYS_AON_WER_PIN16_Pos         (24U)
+#define LPSYS_AON_WER_PIN16_Msk         (0x1UL << LPSYS_AON_WER_PIN16_Pos)
+#define LPSYS_AON_WER_PIN16             LPSYS_AON_WER_PIN16_Msk
+#define LPSYS_AON_WER_PIN17_Pos         (25U)
+#define LPSYS_AON_WER_PIN17_Msk         (0x1UL << LPSYS_AON_WER_PIN17_Pos)
+#define LPSYS_AON_WER_PIN17             LPSYS_AON_WER_PIN17_Msk
+#define LPSYS_AON_WER_PIN18_Pos         (26U)
+#define LPSYS_AON_WER_PIN18_Msk         (0x1UL << LPSYS_AON_WER_PIN18_Pos)
+#define LPSYS_AON_WER_PIN18             LPSYS_AON_WER_PIN18_Msk
+#define LPSYS_AON_WER_PIN19_Pos         (27U)
+#define LPSYS_AON_WER_PIN19_Msk         (0x1UL << LPSYS_AON_WER_PIN19_Pos)
+#define LPSYS_AON_WER_PIN19             LPSYS_AON_WER_PIN19_Msk
+#define LPSYS_AON_WER_PIN20_Pos         (28U)
+#define LPSYS_AON_WER_PIN20_Msk         (0x1UL << LPSYS_AON_WER_PIN20_Pos)
+#define LPSYS_AON_WER_PIN20             LPSYS_AON_WER_PIN20_Msk
 
 /***************** Bit definition for LPSYS_AON_WSR register ******************/
 #define LPSYS_AON_WSR_RTC_Pos           (0U)
 #define LPSYS_AON_WSR_RTC_Msk           (0x1UL << LPSYS_AON_WSR_RTC_Pos)
 #define LPSYS_AON_WSR_RTC               LPSYS_AON_WSR_RTC_Msk
-#define LPSYS_AON_WSR_WDT2_Pos          (1U)
-#define LPSYS_AON_WSR_WDT2_Msk          (0x1UL << LPSYS_AON_WSR_WDT2_Pos)
-#define LPSYS_AON_WSR_WDT2              LPSYS_AON_WSR_WDT2_Msk
-#define LPSYS_AON_WSR_GPIO2_Pos         (2U)
+#define LPSYS_AON_WSR_GPIO2_Pos         (1U)
 #define LPSYS_AON_WSR_GPIO2_Msk         (0x1UL << LPSYS_AON_WSR_GPIO2_Pos)
 #define LPSYS_AON_WSR_GPIO2             LPSYS_AON_WSR_GPIO2_Msk
-#define LPSYS_AON_WSR_LPTIM3_Pos        (3U)
+#define LPSYS_AON_WSR_LPTIM3_Pos        (2U)
 #define LPSYS_AON_WSR_LPTIM3_Msk        (0x1UL << LPSYS_AON_WSR_LPTIM3_Pos)
 #define LPSYS_AON_WSR_LPTIM3            LPSYS_AON_WSR_LPTIM3_Msk
 #define LPSYS_AON_WSR_BT_Pos            (5U)
@@ -313,11 +337,28 @@ typedef struct
 #define LPSYS_AON_WSR_PIN15_Pos         (23U)
 #define LPSYS_AON_WSR_PIN15_Msk         (0x1UL << LPSYS_AON_WSR_PIN15_Pos)
 #define LPSYS_AON_WSR_PIN15             LPSYS_AON_WSR_PIN15_Msk
+#define LPSYS_AON_WSR_PIN16_Pos         (24U)
+#define LPSYS_AON_WSR_PIN16_Msk         (0x1UL << LPSYS_AON_WSR_PIN16_Pos)
+#define LPSYS_AON_WSR_PIN16             LPSYS_AON_WSR_PIN16_Msk
+#define LPSYS_AON_WSR_PIN17_Pos         (25U)
+#define LPSYS_AON_WSR_PIN17_Msk         (0x1UL << LPSYS_AON_WSR_PIN17_Pos)
+#define LPSYS_AON_WSR_PIN17             LPSYS_AON_WSR_PIN17_Msk
+#define LPSYS_AON_WSR_PIN18_Pos         (26U)
+#define LPSYS_AON_WSR_PIN18_Msk         (0x1UL << LPSYS_AON_WSR_PIN18_Pos)
+#define LPSYS_AON_WSR_PIN18             LPSYS_AON_WSR_PIN18_Msk
+#define LPSYS_AON_WSR_PIN19_Pos         (27U)
+#define LPSYS_AON_WSR_PIN19_Msk         (0x1UL << LPSYS_AON_WSR_PIN19_Pos)
+#define LPSYS_AON_WSR_PIN19             LPSYS_AON_WSR_PIN19_Msk
+#define LPSYS_AON_WSR_PIN20_Pos         (28U)
+#define LPSYS_AON_WSR_PIN20_Msk         (0x1UL << LPSYS_AON_WSR_PIN20_Pos)
+#define LPSYS_AON_WSR_PIN20             LPSYS_AON_WSR_PIN20_Msk
 #define LPSYS_AON_WSR_PIN_ALL           (LPSYS_AON_WSR_PIN0 | LPSYS_AON_WSR_PIN1 | LPSYS_AON_WSR_PIN2 | LPSYS_AON_WSR_PIN3      \
                                          | LPSYS_AON_WSR_PIN4 | LPSYS_AON_WSR_PIN5 | LPSYS_AON_WSR_PIN6 | LPSYS_AON_WSR_PIN7    \
                                          | LPSYS_AON_WSR_PIN8 | LPSYS_AON_WSR_PIN9 | LPSYS_AON_WSR_PIN10 | LPSYS_AON_WSR_PIN11  \
-                                         | LPSYS_AON_WSR_PIN12 | LPSYS_AON_WSR_PIN13 | LPSYS_AON_WSR_PIN14 | LPSYS_AON_WSR_PIN15)
-#define LPSYS_AON_WSR_PIN_NUM           (16)
+                                         | LPSYS_AON_WSR_PIN12 | LPSYS_AON_WSR_PIN13 | LPSYS_AON_WSR_PIN14 | LPSYS_AON_WSR_PIN15 \
+                                         | LPSYS_AON_WSR_PIN16 | LPSYS_AON_WSR_PIN17 | LPSYS_AON_WSR_PIN18 | LPSYS_AON_WSR_PIN19 \
+                                         | LPSYS_AON_WSR_PIN20)
+#define LPSYS_AON_WSR_PIN_NUM           (21)
 
 
 /***************** Bit definition for LPSYS_AON_WCR register ******************/
@@ -369,6 +410,21 @@ typedef struct
 #define LPSYS_AON_WCR_PIN15_Pos         (23U)
 #define LPSYS_AON_WCR_PIN15_Msk         (0x1UL << LPSYS_AON_WCR_PIN15_Pos)
 #define LPSYS_AON_WCR_PIN15             LPSYS_AON_WCR_PIN15_Msk
+#define LPSYS_AON_WCR_PIN16_Pos         (24U)
+#define LPSYS_AON_WCR_PIN16_Msk         (0x1UL << LPSYS_AON_WCR_PIN16_Pos)
+#define LPSYS_AON_WCR_PIN16             LPSYS_AON_WCR_PIN16_Msk
+#define LPSYS_AON_WCR_PIN17_Pos         (25U)
+#define LPSYS_AON_WCR_PIN17_Msk         (0x1UL << LPSYS_AON_WCR_PIN17_Pos)
+#define LPSYS_AON_WCR_PIN17             LPSYS_AON_WCR_PIN17_Msk
+#define LPSYS_AON_WCR_PIN18_Pos         (26U)
+#define LPSYS_AON_WCR_PIN18_Msk         (0x1UL << LPSYS_AON_WCR_PIN18_Pos)
+#define LPSYS_AON_WCR_PIN18             LPSYS_AON_WCR_PIN18_Msk
+#define LPSYS_AON_WCR_PIN19_Pos         (27U)
+#define LPSYS_AON_WCR_PIN19_Msk         (0x1UL << LPSYS_AON_WCR_PIN19_Pos)
+#define LPSYS_AON_WCR_PIN19             LPSYS_AON_WCR_PIN19_Msk
+#define LPSYS_AON_WCR_PIN20_Pos         (28U)
+#define LPSYS_AON_WCR_PIN20_Msk         (0x1UL << LPSYS_AON_WCR_PIN20_Pos)
+#define LPSYS_AON_WCR_PIN20             LPSYS_AON_WCR_PIN20_Msk
 #define LPSYS_AON_WCR_AON_Pos           (31U)
 #define LPSYS_AON_WCR_AON_Msk           (0x1UL << LPSYS_AON_WCR_AON_Pos)
 #define LPSYS_AON_WCR_AON               LPSYS_AON_WCR_AON_Msk
@@ -431,7 +487,10 @@ typedef struct
 #define LPSYS_AON_SLP_CTRL_BT_WKUP      LPSYS_AON_SLP_CTRL_BT_WKUP_Msk
 
 /**************** Bit definition for LPSYS_AON_ANACR register *****************/
-#define LPSYS_AON_ANACR_VLP_ISO_Pos     (0U)
+#define LPSYS_AON_ANACR_PB_ISO_Pos      (0U)
+#define LPSYS_AON_ANACR_PB_ISO_Msk      (0x1UL << LPSYS_AON_ANACR_PB_ISO_Pos)
+#define LPSYS_AON_ANACR_PB_ISO          LPSYS_AON_ANACR_PB_ISO_Msk
+#define LPSYS_AON_ANACR_VLP_ISO_Pos     (1U)
 #define LPSYS_AON_ANACR_VLP_ISO_Msk     (0x1UL << LPSYS_AON_ANACR_VLP_ISO_Pos)
 #define LPSYS_AON_ANACR_VLP_ISO         LPSYS_AON_ANACR_VLP_ISO_Msk
 

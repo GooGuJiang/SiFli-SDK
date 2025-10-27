@@ -42,7 +42,7 @@ static DMA_ChannelAllocTypeDef dma2_ch_pool[DMA2_CHANNEL_NUM];
   */
 static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t Counts);
 
-#ifdef GPDMA1_BASE
+#ifdef DMA_SUPPORT_GPDMA
     /**
     * @brief  Get burst size by fifo size and data width
     *
@@ -62,7 +62,7 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
     * @return void
     */
     static void DMA_SetBurstSizeAndFix(DMA_InitTypeDef *Init, uint32_t *CCR);
-#endif /* GPDMA1_BASE */
+#endif /* DMA_SUPPORT_GPDMA */
 
 #ifdef DMA_LINK_LIST_SUPPORT
     static volatile uint32_t *DMA_ConfigMutiple(DMA_HandleTypeDef *hdma, DMA_LinkListTypeDef *LinkList);
@@ -113,9 +113,7 @@ static void DMA_Init(DMA_HandleTypeDef *hdma)
     hdma->State = HAL_DMA_STATE_BUSY;
 
     /* Set burst size */
-#ifdef GPDMA1_BASE
-    if (GPDMA1_BASE != (uint32_t)hdma->DmaBaseAddress)
-#endif
+    if (!hdma->IsGPDMA)
     {
         hdma->Instance->CBSR = hdma->Init.BurstSize;
     }
@@ -134,12 +132,13 @@ static void DMA_Init(DMA_HandleTypeDef *hdma)
             hdma->Init.PeriphDataAlignment | hdma->Init.MemDataAlignment |
             hdma->Init.Mode                | hdma->Init.Priority;
 
-#ifdef GPDMA1_BASE
-    if ((hdma->DmaBaseAddress == (DMAC_TypeDef *)DMA1) && (hdma->OrgChannelIndex < 2))
+#ifdef DMA_SUPPORT_GPDMA
+//TODO:
+    if ((hdma->IsGPDMA) && (hdma->OrgChannelIndex < 2))
     {
         DMA_SetBurstSizeAndFix(&hdma->Init, &tmp);
     }
-#endif /* GPDMA1_BASE */
+#endif /* DMA_SUPPORT_GPDMA */
 
     /* Write to DMA Channel CR register */
     hdma->Instance->CCR = tmp;
@@ -374,7 +373,7 @@ static HAL_StatusTypeDef DMA_AllocChannel(DMA_HandleTypeDef *hdma, bool init)
             DMA_Init(hdma);
         }
         pool[i].handle = hdma;
-        NVIC_SetPriority(irq_type,hdma->Init.IrqPrio);
+        NVIC_SetPriority(irq_type, hdma->Init.IrqPrio);
         HAL_NVIC_EnableIRQ(irq_type);
     }
 
@@ -605,6 +604,11 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
         hdma->OrgChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA1_Channel1) / ((uint32_t)DMA1_Channel2 - (uint32_t)DMA1_Channel1));
         hdma->ChannelIndex = hdma->OrgChannelIndex << 2;
         hdma->DmaBaseAddress = (DMAC_TypeDef *)DMA1;
+#ifdef GPDMA1_BASE
+        hdma->IsGPDMA = 1;
+#else
+        hdma->IsGPDMA = 0;
+#endif /* GPDMA1_BASE */
     }
 #ifdef DMA1_Channel9
     else if (((uint32_t)(hdma->Instance) >= (uint32_t)(DMA1_Channel9))
@@ -623,6 +627,11 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
         hdma->OrgChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA2_Channel1) / ((uint32_t)DMA2_Channel2 - (uint32_t)DMA2_Channel1));
         hdma->ChannelIndex = hdma->OrgChannelIndex << 2;
         hdma->DmaBaseAddress = DMA2;
+#ifdef GPDMA2_BASE
+        hdma->IsGPDMA = 1;
+#else
+        hdma->IsGPDMA = 0;
+#endif /* GPDMA2_BASE */
     }
 #ifdef SF32LB58X
     else if (((uint32_t)(hdma->Instance) >= (uint32_t)(DMA3_Channel1))
@@ -632,6 +641,12 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_DMA_Init(DMA_HandleTypeDef *hdma)
         hdma->OrgChannelIndex = (((uint32_t)hdma->Instance - (uint32_t)DMA3_Channel1) / ((uint32_t)DMA3_Channel2 - (uint32_t)DMA3_Channel1));
         hdma->ChannelIndex = hdma->OrgChannelIndex << 2;
         hdma->DmaBaseAddress = DMA3;
+#ifdef GPDMA3_BASE
+        hdma->IsGPDMA = 1;
+#else
+        hdma->IsGPDMA = 0;
+#endif /* GPDMA3_BASE */
+
     }
 #endif /* SF32LB58X */
     else
@@ -1884,7 +1899,7 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
 
 }
 
-#ifdef GPDMA1_BASE
+#ifdef DMA_SUPPORT_GPDMA
 static uint16_t DMA_GetBurstSize(uint16_t fifo_size, uint16_t data_width)
 {
     uint16_t burst_size = 0;
@@ -1931,6 +1946,7 @@ static void DMA_SetBurstSizeAndFix(DMA_InitTypeDef *Init, uint32_t *CCR)
         burst_size = Init->BurstSize;
         if (burst_size > 0)
         {
+            //TODO: ???
             *CCR |= GPDMA_CCR1_DFIX;
         }
     }
@@ -1957,7 +1973,7 @@ static void DMA_SetBurstSizeAndFix(DMA_InitTypeDef *Init, uint32_t *CCR)
     }
     *CCR |= MAKE_REG_VAL(burst_size, GPDMA_CCR1_SBURST_Msk, GPDMA_CCR1_SBURST_Pos);
 }
-#endif /* GPDMA1_BASE */
+#endif /* DMA_SUPPORT_GPDMA */
 
 #ifdef DMA_LINK_LIST_SUPPORT
 static volatile uint32_t *DMA_ConfigMutiple(DMA_HandleTypeDef *hdma, DMA_LinkListTypeDef *LinkList)

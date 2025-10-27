@@ -52,7 +52,7 @@ typedef enum
 #endif /* SF32LB56X */
 
 
-#if defined(SF32LB52X)
+#if defined(SF32LB52X) || defined(SF32LB57X)
 
 /** Charger Calibration Parameters */
 typedef struct
@@ -709,7 +709,7 @@ void HAL_PMU_SaveCalData(FACTORY_CFG_VBK_LDO_T *cfg);
 HAL_StatusTypeDef HAL_PMU_ConfigHpsysLdoVolt(PMU_HpsysLdoVoltTypeDef volt);
 #endif /* SF32LB56X */
 
-#if defined(SF32LB52X)
+#if defined(SF32LB52X) || defined(SF32LB57X)
 
 /**
  * @brief Init charger

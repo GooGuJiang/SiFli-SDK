@@ -1,48 +1,7 @@
-/**
-  ******************************************************************************
-  * @file   system_bf0_ap.c
-  * @author Sifli software development team
-  * @brief    CMSIS Device System Source File for
- *           ARMCM33 Device
-  ******************************************************************************
-*/
-/**
- * @attention
- * Copyright (c) 2019 - 2022,  Sifli Technology
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
  *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form, except as embedded into a Sifli integrated circuit
- *    in a product or a software update for such product, must reproduce the above
- *    copyright notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Sifli nor the names of its contributors may be used to endorse
- *    or promote products derived from this software without specific prior written permission.
- *
- * 4. This software, with or without modification, must only be used with a
- *    Sifli integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY SIFLI TECHNOLOGY "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL SIFLI TECHNOLOGY OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "bf0_hal.h"
@@ -216,9 +175,9 @@ __WEAK void mpu_config(void)
     // psram
     rbar = ARM_MPU_RBAR(0x60000000, ARM_MPU_SH_NON, 0, 1, 0); //Non-shareable,RW,any privilege,executable
 #ifdef PSRAM_CACHE_WB
-    rlar = ARM_MPU_RLAR(0x63ffffff, ATTR_PSRAM_WB_IDX);
+    rlar = ARM_MPU_RLAR(0x61ffffff, ATTR_PSRAM_WB_IDX);
 #else
-    rlar = ARM_MPU_RLAR(0x63ffffff, ATTR_PSRAM_WT_IDX);
+    rlar = ARM_MPU_RLAR(0x61ffffff, ATTR_PSRAM_WT_IDX);
 #endif
 
     ARM_MPU_SetRegion(rnr++, rbar, rlar);
@@ -238,14 +197,10 @@ __WEAK void mpu_config(void)
     rlar = ARM_MPU_RLAR(0x208fffff, ATTR_CODE_IDX);
     ARM_MPU_SetRegion(rnr++, rbar, rlar);
 
-    // qspi2
-    rbar = ARM_MPU_RBAR(0x64000000, ARM_MPU_SH_NON, 0, 1, 0); //Non-shareable,RO,any privilege,executable
-    rlar = ARM_MPU_RLAR(0x67FFFFFF, ATTR_CODE_IDX);
-    ARM_MPU_SetRegion(rnr++, rbar, rlar);
 
     // qspi3
-    rbar = ARM_MPU_RBAR(0x68000000, ARM_MPU_SH_NON, 0, 1, 0); //Non-shareable,RO,any privilege,executable
-    rlar = ARM_MPU_RLAR(0x6fFFFFFF, ATTR_CODE_IDX);
+    rbar = ARM_MPU_RBAR(0x64000000, ARM_MPU_SH_NON, 1, 1, 0); //Non-shareable,RO,any privilege,executable
+    rlar = ARM_MPU_RLAR(0x6FFFFFFF, ATTR_RAM_IDX);
     ARM_MPU_SetRegion(rnr++, rbar, rlar);
 
 
@@ -326,12 +281,11 @@ typedef struct
     scatter_load_fun func;
 } region_load_t;
 
+extern int Region$$Table$$Base;
+extern int Region$$Table$$Limit;
 
 __WEAK void rom_scatterload(void)
 {
-#ifdef __CC_ARM
-    extern int Region$$Table$$Base;
-    extern int Region$$Table$$Limit;
     uint32_t reg_start = (uint32_t)&Region$$Table$$Base;
     uint32_t reg_stop = (uint32_t)&Region$$Table$$Limit;
     region_load_t *reg_ctrl;
@@ -344,7 +298,6 @@ __WEAK void rom_scatterload(void)
         // sizeof region load
         reg_start += 16;
     }
-#endif
 }
 
 __WEAK void SystemPowerOnModeInit(void)
@@ -356,6 +309,11 @@ __WEAK void SystemPowerOnModeInit(void)
 __WEAK pm_power_on_mode_t SystemPowerOnModeGet(void)
 {
     return PM_COLD_BOOT;
+}
+
+__WEAK void SystemVectorTableRemapping(void)
+{
+    return;
 }
 
 
@@ -442,4 +400,3 @@ void lcpu_rom_jump(void)
     __asm("MOV PC, %0" :: "r"(hwp_lpsys_aon->PCR));
 #endif
 }
-/************************ (C) COPYRIGHT Sifli Technology *******END OF FILE****/

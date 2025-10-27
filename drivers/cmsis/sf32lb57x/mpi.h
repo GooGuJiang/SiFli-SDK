@@ -26,6 +26,8 @@ typedef struct
     __IO uint32_t HWCCR;
     __IO uint32_t FIFOCR;
     __IO uint32_t MISCR;
+    __IO uint32_t CALCR;
+    __IO uint32_t CALRR;
     __IO uint32_t CTRSAR;
     __IO uint32_t CTREAR;
     __IO uint32_t NONCEA;
@@ -38,12 +40,8 @@ typedef struct
     __IO uint32_t SMKR;
     __IO uint32_t TIMR;
     __IO uint32_t WDTR;
-    __IO uint32_t PRCR1;
-    __IO uint32_t PRCR2;
-    __IO uint32_t DCR2;
     __IO uint32_t CR2;
-    __IO uint32_t CALCR;
-    __IO uint32_t CALRR;
+    __IO uint32_t DCR2;
     __IO uint32_t CTRSAR2;
     __IO uint32_t CTREAR2;
     __IO uint32_t NONCEA2;
@@ -80,12 +78,12 @@ typedef struct
 #define MPI_CR_TCIE_Pos                 (8U)
 #define MPI_CR_TCIE_Msk                 (0x1UL << MPI_CR_TCIE_Pos)
 #define MPI_CR_TCIE                     MPI_CR_TCIE_Msk
-#define MPI_CR_FUIE_Pos                 (9U)
-#define MPI_CR_FUIE_Msk                 (0x1UL << MPI_CR_FUIE_Pos)
-#define MPI_CR_FUIE                     MPI_CR_FUIE_Msk
-#define MPI_CR_FOIE_Pos                 (10U)
-#define MPI_CR_FOIE_Msk                 (0x1UL << MPI_CR_FOIE_Pos)
-#define MPI_CR_FOIE                     MPI_CR_FOIE_Msk
+#define MPI_CR_TOIE_Pos                 (9U)
+#define MPI_CR_TOIE_Msk                 (0x1UL << MPI_CR_TOIE_Pos)
+#define MPI_CR_TOIE                     MPI_CR_TOIE_Msk
+#define MPI_CR_ROIE_Pos                 (10U)
+#define MPI_CR_ROIE_Msk                 (0x1UL << MPI_CR_ROIE_Pos)
+#define MPI_CR_ROIE                     MPI_CR_ROIE_Msk
 #define MPI_CR_SMIE_Pos                 (11U)
 #define MPI_CR_SMIE_Msk                 (0x1UL << MPI_CR_SMIE_Pos)
 #define MPI_CR_SMIE                     MPI_CR_SMIE_Msk
@@ -147,9 +145,6 @@ typedef struct
 #define MPI_DCR_TRCMIN_Pos              (26U)
 #define MPI_DCR_TRCMIN_Msk              (0x1FUL << MPI_DCR_TRCMIN_Pos)
 #define MPI_DCR_TRCMIN                  MPI_DCR_TRCMIN_Msk
-#define MPI_DCR_DTR_Pos                 (31U)
-#define MPI_DCR_DTR_Msk                 (0x1UL << MPI_DCR_DTR_Pos)
-#define MPI_DCR_DTR                     MPI_DCR_DTR_Msk
 
 /******************* Bit definition for MPI_PSCLR register ********************/
 #define MPI_PSCLR_DIV_Pos               (0U)
@@ -395,6 +390,25 @@ typedef struct
 #define MPI_MISCR_LC2DLY_Msk            (0x1UL << MPI_MISCR_LC2DLY_Pos)
 #define MPI_MISCR_LC2DLY                MPI_MISCR_LC2DLY_Msk
 
+/******************* Bit definition for MPI_CALCR register ********************/
+#define MPI_CALCR_STOP_Pos              (30U)
+#define MPI_CALCR_STOP_Msk              (0x1UL << MPI_CALCR_STOP_Pos)
+#define MPI_CALCR_STOP                  MPI_CALCR_STOP_Msk
+#define MPI_CALCR_START_Pos             (31U)
+#define MPI_CALCR_START_Msk             (0x1UL << MPI_CALCR_START_Pos)
+#define MPI_CALCR_START                 MPI_CALCR_START_Msk
+
+/******************* Bit definition for MPI_CALRR register ********************/
+#define MPI_CALRR_DSMP_Pos              (0U)
+#define MPI_CALRR_DSMP_Msk              (0xFFFFUL << MPI_CALRR_DSMP_Pos)
+#define MPI_CALRR_DSMP                  MPI_CALRR_DSMP_Msk
+#define MPI_CALRR_CSMP_Pos              (16U)
+#define MPI_CALRR_CSMP_Msk              (0x1UL << MPI_CALRR_CSMP_Pos)
+#define MPI_CALRR_CSMP                  MPI_CALRR_CSMP_Msk
+#define MPI_CALRR_RUN_Pos               (31U)
+#define MPI_CALRR_RUN_Msk               (0x1UL << MPI_CALRR_RUN_Pos)
+#define MPI_CALRR_RUN                   MPI_CALRR_RUN_Msk
+
 /******************* Bit definition for MPI_CTRSAR register *******************/
 #define MPI_CTRSAR_SA_Pos               (10U)
 #define MPI_CTRSAR_SA_Msk               (0x3FFFFFUL << MPI_CTRSAR_SA_Pos)
@@ -470,39 +484,6 @@ typedef struct
 #define MPI_WDTR_TOF_Msk                (0x1UL << MPI_WDTR_TOF_Pos)
 #define MPI_WDTR_TOF                    MPI_WDTR_TOF_Msk
 
-/******************* Bit definition for MPI_PRCR1 register ********************/
-#define MPI_PRCR1_BASE_Pos              (0U)
-#define MPI_PRCR1_BASE_Msk              (0xFFFFUL << MPI_PRCR1_BASE_Pos)
-#define MPI_PRCR1_BASE                  MPI_PRCR1_BASE_Msk
-#define MPI_PRCR1_SIZE_Pos              (16U)
-#define MPI_PRCR1_SIZE_Msk              (0xFFFUL << MPI_PRCR1_SIZE_Pos)
-#define MPI_PRCR1_SIZE                  MPI_PRCR1_SIZE_Msk
-#define MPI_PRCR1_MID_Pos               (28U)
-#define MPI_PRCR1_MID_Msk               (0xFUL << MPI_PRCR1_MID_Pos)
-#define MPI_PRCR1_MID                   MPI_PRCR1_MID_Msk
-
-/******************* Bit definition for MPI_PRCR2 register ********************/
-#define MPI_PRCR2_BASE_Pos              (0U)
-#define MPI_PRCR2_BASE_Msk              (0xFFFFUL << MPI_PRCR2_BASE_Pos)
-#define MPI_PRCR2_BASE                  MPI_PRCR2_BASE_Msk
-#define MPI_PRCR2_SIZE_Pos              (16U)
-#define MPI_PRCR2_SIZE_Msk              (0xFFFUL << MPI_PRCR2_SIZE_Pos)
-#define MPI_PRCR2_SIZE                  MPI_PRCR2_SIZE_Msk
-#define MPI_PRCR2_MID_Pos               (28U)
-#define MPI_PRCR2_MID_Msk               (0xFUL << MPI_PRCR2_MID_Pos)
-#define MPI_PRCR2_MID                   MPI_PRCR2_MID_Msk
-
-/******************** Bit definition for MPI_DCR2 register ********************/
-#define MPI_DCR2_TCPHR_Pos              (0U)
-#define MPI_DCR2_TCPHR_Msk              (0xFUL << MPI_DCR2_TCPHR_Pos)
-#define MPI_DCR2_TCPHR                  MPI_DCR2_TCPHR_Msk
-#define MPI_DCR2_TCPHW_Pos              (4U)
-#define MPI_DCR2_TCPHW_Msk              (0xFUL << MPI_DCR2_TCPHW_Pos)
-#define MPI_DCR2_TCPHW                  MPI_DCR2_TCPHW_Msk
-#define MPI_DCR2_BTYPE_Pos              (8U)
-#define MPI_DCR2_BTYPE_Msk              (0x1UL << MPI_DCR2_BTYPE_Pos)
-#define MPI_DCR2_BTYPE                  MPI_DCR2_BTYPE_Msk
-
 /******************** Bit definition for MPI_CR2 register *********************/
 #define MPI_CR2_LOOP_Pos                (0U)
 #define MPI_CR2_LOOP_Msk                (0xFFUL << MPI_CR2_LOOP_Pos)
@@ -514,30 +495,19 @@ typedef struct
 #define MPI_CR2_CS2E_Msk                (0x1UL << MPI_CR2_CS2E_Pos)
 #define MPI_CR2_CS2E                    MPI_CR2_CS2E_Msk
 
-/******************* Bit definition for MPI_CALCR register ********************/
-#define MPI_CALCR_TXDLY_Pos             (0U)
-#define MPI_CALCR_TXDLY_Msk             (0xFFUL << MPI_CALCR_TXDLY_Pos)
-#define MPI_CALCR_TXDLY                 MPI_CALCR_TXDLY_Msk
-#define MPI_CALCR_RXDLY_Pos             (8U)
-#define MPI_CALCR_RXDLY_Msk             (0xFFUL << MPI_CALCR_RXDLY_Pos)
-#define MPI_CALCR_RXDLY                 MPI_CALCR_RXDLY_Msk
-#define MPI_CALCR_STOP_Pos              (30U)
-#define MPI_CALCR_STOP_Msk              (0x1UL << MPI_CALCR_STOP_Pos)
-#define MPI_CALCR_STOP                  MPI_CALCR_STOP_Msk
-#define MPI_CALCR_START_Pos             (31U)
-#define MPI_CALCR_START_Msk             (0x1UL << MPI_CALCR_START_Pos)
-#define MPI_CALCR_START                 MPI_CALCR_START_Msk
-
-/******************* Bit definition for MPI_CALRR register ********************/
-#define MPI_CALRR_DSMP_Pos              (0U)
-#define MPI_CALRR_DSMP_Msk              (0xFFFFUL << MPI_CALRR_DSMP_Pos)
-#define MPI_CALRR_DSMP                  MPI_CALRR_DSMP_Msk
-#define MPI_CALRR_CSMP_Pos              (16U)
-#define MPI_CALRR_CSMP_Msk              (0x1UL << MPI_CALRR_CSMP_Pos)
-#define MPI_CALRR_CSMP                  MPI_CALRR_CSMP_Msk
-#define MPI_CALRR_RUN_Pos               (31U)
-#define MPI_CALRR_RUN_Msk               (0x1UL << MPI_CALRR_RUN_Pos)
-#define MPI_CALRR_RUN                   MPI_CALRR_RUN_Msk
+/******************** Bit definition for MPI_DCR2 register ********************/
+#define MPI_DCR2_TCPHR_Pos              (0U)
+#define MPI_DCR2_TCPHR_Msk              (0xFUL << MPI_DCR2_TCPHR_Pos)
+#define MPI_DCR2_TCPHR                  MPI_DCR2_TCPHR_Msk
+#define MPI_DCR2_TCPHW_Pos              (4U)
+#define MPI_DCR2_TCPHW_Msk              (0xFUL << MPI_DCR2_TCPHW_Pos)
+#define MPI_DCR2_TCPHW                  MPI_DCR2_TCPHW_Msk
+#define MPI_DCR2_BTYPE_Pos              (8U)
+#define MPI_DCR2_BTYPE_Msk              (0x1UL << MPI_DCR2_BTYPE_Pos)
+#define MPI_DCR2_BTYPE                  MPI_DCR2_BTYPE_Msk
+#define MPI_DCR2_CFMT_Pos               (9U)
+#define MPI_DCR2_CFMT_Msk               (0x1UL << MPI_DCR2_CFMT_Pos)
+#define MPI_DCR2_CFMT                   MPI_DCR2_CFMT_Msk
 
 /****************** Bit definition for MPI_CTRSAR2 register *******************/
 #define MPI_CTRSAR2_SA_Pos              (10U)

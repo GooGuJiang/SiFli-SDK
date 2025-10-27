@@ -77,6 +77,9 @@ typedef struct
 #define JPEGD_JPEGD_PARA_OUT_SEL_Pos    (0U)
 #define JPEGD_JPEGD_PARA_OUT_SEL_Msk    (0x1UL << JPEGD_JPEGD_PARA_OUT_SEL_Pos)
 #define JPEGD_JPEGD_PARA_OUT_SEL        JPEGD_JPEGD_PARA_OUT_SEL_Msk
+#define JPEGD_JPEGD_PARA_MJPEG_SEL_Pos  (4U)
+#define JPEGD_JPEGD_PARA_MJPEG_SEL_Msk  (0x1UL << JPEGD_JPEGD_PARA_MJPEG_SEL_Pos)
+#define JPEGD_JPEGD_PARA_MJPEG_SEL      JPEGD_JPEGD_PARA_MJPEG_SEL_Msk
 
 /***************** Bit definition for JPEGD_SRC_LEN register ******************/
 #define JPEGD_SRC_LEN_SRC_LEN_Pos       (0U)

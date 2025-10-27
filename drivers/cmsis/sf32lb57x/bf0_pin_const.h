@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef _BF0_PIN_CONST_H
 #define _BF0_PIN_CONST_H
 /** @addtogroup PINMUX
@@ -14,8 +20,6 @@ typedef enum
     MPI1_CLKB,
     /** MPI1_CS */
     MPI1_CS,
-    /** MPI1_CS2 */
-    MPI1_CS2,
     /** MPI1_DM */
     MPI1_DM,
     /** MPI1_DQS */
@@ -64,8 +68,6 @@ typedef enum
     MPI2_CLKB,
     /** MPI2_CS */
     MPI2_CS,
-    /** MPI2_CS2 */
-    MPI2_CS2,
     /** MPI2_DM */
     MPI2_DM,
     /** MPI2_DQS */
@@ -112,8 +114,6 @@ typedef enum
     MPI3_CLK,
     /** MPI3_CS */
     MPI3_CS,
-    /** MPI3_CS2 */
-    MPI3_CS2,
     /** MPI3_DQS */
     MPI3_DQS,
     /** MPI3_DIO0 */
@@ -136,8 +136,6 @@ typedef enum
     MPI4_CLK,
     /** MPI4_CS */
     MPI4_CS,
-    /** MPI4_CS2 */
-    MPI4_CS2,
     /** MPI4_DQS */
     MPI4_DQS,
     /** MPI4_DIO0 */
@@ -672,8 +670,6 @@ typedef enum
     SPI1_CS,
     /** SPI1_DI */
     SPI1_DI,
-    /** SPI1_DO */
-    SPI1_DO,
     /** SPI1_DIO */
     SPI1_DIO,
     /** SPI2_CLK */
@@ -682,56 +678,24 @@ typedef enum
     SPI2_CS,
     /** SPI2_DI */
     SPI2_DI,
-    /** SPI2_DO */
-    SPI2_DO,
     /** SPI2_DIO */
     SPI2_DIO,
-    /** SPI3_CLK */
-    SPI3_CLK,
-    /** SPI3_CS */
-    SPI3_CS,
-    /** SPI3_DI */
-    SPI3_DI,
-    /** SPI3_DO */
-    SPI3_DO,
-    /** SPI3_DIO */
-    SPI3_DIO,
-    /** SPI4_CLK */
-    SPI4_CLK,
-    /** SPI4_CS */
-    SPI4_CS,
-    /** SPI4_DI */
-    SPI4_DI,
-    /** SPI4_DO */
-    SPI4_DO,
-    /** SPI4_DIO */
-    SPI4_DIO,
-    /** SPI5_CLK */
-    SPI5_CLK,
-    /** SPI5_CS */
-    SPI5_CS,
-    /** SPI5_DI */
-    SPI5_DI,
-    /** SPI5_DO */
-    SPI5_DO,
-    /** SPI5_DIO */
-    SPI5_DIO,
-    /** LCDC_SPI_CS */
-    LCDC_SPI_CS,
-    /** LCDC_SPI_CLK */
-    LCDC_SPI_CLK,
-    /** LCDC_SPI_DIO0 */
-    LCDC_SPI_DIO0,
-    /** LCDC_SPI_DIO1 */
-    LCDC_SPI_DIO1,
-    /** LCDC_SPI_DIO2 */
-    LCDC_SPI_DIO2,
-    /** LCDC_SPI_DIO3 */
-    LCDC_SPI_DIO3,
-    /** LCDC_SPI_RSTB */
-    LCDC_SPI_RSTB,
-    /** LCDC_SPI_TE */
-    LCDC_SPI_TE,
+    /** LCDC1_SPI_CS */
+    LCDC1_SPI_CS,
+    /** LCDC1_SPI_CLK */
+    LCDC1_SPI_CLK,
+    /** LCDC1_SPI_DIO0 */
+    LCDC1_SPI_DIO0,
+    /** LCDC1_SPI_DIO1 */
+    LCDC1_SPI_DIO1,
+    /** LCDC1_SPI_DIO2 */
+    LCDC1_SPI_DIO2,
+    /** LCDC1_SPI_DIO3 */
+    LCDC1_SPI_DIO3,
+    /** LCDC1_SPI_RSTB */
+    LCDC1_SPI_RSTB,
+    /** LCDC1_SPI_TE */
+    LCDC1_SPI_TE,
     /** LCDC2_SPI_CS */
     LCDC2_SPI_CS,
     /** LCDC2_SPI_CLK */
@@ -748,134 +712,134 @@ typedef enum
     LCDC2_SPI_RSTB,
     /** LCDC2_SPI_TE */
     LCDC2_SPI_TE,
-    /** LCDC_8080_WR */
-    LCDC_8080_WR,
-    /** LCDC_8080_CS */
-    LCDC_8080_CS,
-    /** LCDC_8080_DIO0 */
-    LCDC_8080_DIO0,
-    /** LCDC_8080_DIO1 */
-    LCDC_8080_DIO1,
-    /** LCDC_8080_DIO2 */
-    LCDC_8080_DIO2,
-    /** LCDC_8080_DIO3 */
-    LCDC_8080_DIO3,
-    /** LCDC_8080_DIO4 */
-    LCDC_8080_DIO4,
-    /** LCDC_8080_DIO5 */
-    LCDC_8080_DIO5,
-    /** LCDC_8080_DIO6 */
-    LCDC_8080_DIO6,
-    /** LCDC_8080_DIO7 */
-    LCDC_8080_DIO7,
-    /** LCDC_8080_RD */
-    LCDC_8080_RD,
-    /** LCDC_8080_DC */
-    LCDC_8080_DC,
-    /** LCDC_8080_RSTB */
-    LCDC_8080_RSTB,
-    /** LCDC_8080_TE */
-    LCDC_8080_TE,
-    /** LCDC_DPI_CLK */
-    LCDC_DPI_CLK,
-    /** LCDC_DPI_DE */
-    LCDC_DPI_DE,
-    /** LCDC_DPI_SD */
-    LCDC_DPI_SD,
-    /** LCDC_DPI_CM */
-    LCDC_DPI_CM,
-    /** LCDC_DPI_HSYNC */
-    LCDC_DPI_HSYNC,
-    /** LCDC_DPI_VSYNC */
-    LCDC_DPI_VSYNC,
-    /** LCDC_DPI_R7 */
-    LCDC_DPI_R7,
-    /** LCDC_DPI_R6 */
-    LCDC_DPI_R6,
-    /** LCDC_DPI_R5 */
-    LCDC_DPI_R5,
-    /** LCDC_DPI_R4 */
-    LCDC_DPI_R4,
-    /** LCDC_DPI_R3 */
-    LCDC_DPI_R3,
-    /** LCDC_DPI_R2 */
-    LCDC_DPI_R2,
-    /** LCDC_DPI_R1 */
-    LCDC_DPI_R1,
-    /** LCDC_DPI_R0 */
-    LCDC_DPI_R0,
-    /** LCDC_DPI_G7 */
-    LCDC_DPI_G7,
-    /** LCDC_DPI_G6 */
-    LCDC_DPI_G6,
-    /** LCDC_DPI_G5 */
-    LCDC_DPI_G5,
-    /** LCDC_DPI_G4 */
-    LCDC_DPI_G4,
-    /** LCDC_DPI_G3 */
-    LCDC_DPI_G3,
-    /** LCDC_DPI_G2 */
-    LCDC_DPI_G2,
-    /** LCDC_DPI_G1 */
-    LCDC_DPI_G1,
-    /** LCDC_DPI_G0 */
-    LCDC_DPI_G0,
-    /** LCDC_DPI_B7 */
-    LCDC_DPI_B7,
-    /** LCDC_DPI_B6 */
-    LCDC_DPI_B6,
-    /** LCDC_DPI_B5 */
-    LCDC_DPI_B5,
-    /** LCDC_DPI_B4 */
-    LCDC_DPI_B4,
-    /** LCDC_DPI_B3 */
-    LCDC_DPI_B3,
-    /** LCDC_DPI_B2 */
-    LCDC_DPI_B2,
-    /** LCDC_DPI_B1 */
-    LCDC_DPI_B1,
-    /** LCDC_DPI_B0 */
-    LCDC_DPI_B0,
-    /** LCDC_JDI_SCLK */
-    LCDC_JDI_SCLK,
-    /** LCDC_JDI_SCS */
-    LCDC_JDI_SCS,
-    /** LCDC_JDI_SO */
-    LCDC_JDI_SO,
-    /** LCDC_JDI_DISP */
-    LCDC_JDI_DISP,
-    /** LCDC_JDI_EXTCOMIN */
-    LCDC_JDI_EXTCOMIN,
-    /** LCDC_JDI_XRST */
-    LCDC_JDI_XRST,
-    /** LCDC_JDI_VCK */
-    LCDC_JDI_VCK,
-    /** LCDC_JDI_VST */
-    LCDC_JDI_VST,
-    /** LCDC_JDI_ENB */
-    LCDC_JDI_ENB,
-    /** LCDC_JDI_HCK */
-    LCDC_JDI_HCK,
-    /** LCDC_JDI_HST */
-    LCDC_JDI_HST,
-    /** LCDC_JDI_R1 */
-    LCDC_JDI_R1,
-    /** LCDC_JDI_R2 */
-    LCDC_JDI_R2,
-    /** LCDC_JDI_G1 */
-    LCDC_JDI_G1,
-    /** LCDC_JDI_G2 */
-    LCDC_JDI_G2,
-    /** LCDC_JDI_B1 */
-    LCDC_JDI_B1,
-    /** LCDC_JDI_B2 */
-    LCDC_JDI_B2,
-    /** LCDC_JDI_FRP */
-    LCDC_JDI_FRP,
-    /** LCDC_JDI_XFRP */
-    LCDC_JDI_XFRP,
-    /** LCDC_JDI_VCOM */
-    LCDC_JDI_VCOM,
+    /** LCDC1_8080_WR */
+    LCDC1_8080_WR,
+    /** LCDC1_8080_CS */
+    LCDC1_8080_CS,
+    /** LCDC1_8080_DIO0 */
+    LCDC1_8080_DIO0,
+    /** LCDC1_8080_DIO1 */
+    LCDC1_8080_DIO1,
+    /** LCDC1_8080_DIO2 */
+    LCDC1_8080_DIO2,
+    /** LCDC1_8080_DIO3 */
+    LCDC1_8080_DIO3,
+    /** LCDC1_8080_DIO4 */
+    LCDC1_8080_DIO4,
+    /** LCDC1_8080_DIO5 */
+    LCDC1_8080_DIO5,
+    /** LCDC1_8080_DIO6 */
+    LCDC1_8080_DIO6,
+    /** LCDC1_8080_DIO7 */
+    LCDC1_8080_DIO7,
+    /** LCDC1_8080_RD */
+    LCDC1_8080_RD,
+    /** LCDC1_8080_DC */
+    LCDC1_8080_DC,
+    /** LCDC1_8080_RSTB */
+    LCDC1_8080_RSTB,
+    /** LCDC1_8080_TE */
+    LCDC1_8080_TE,
+    /** LCDC1_DPI_CLK */
+    LCDC1_DPI_CLK,
+    /** LCDC1_DPI_DE */
+    LCDC1_DPI_DE,
+    /** LCDC1_DPI_SD */
+    LCDC1_DPI_SD,
+    /** LCDC1_DPI_CM */
+    LCDC1_DPI_CM,
+    /** LCDC1_DPI_HSYNC */
+    LCDC1_DPI_HSYNC,
+    /** LCDC1_DPI_VSYNC */
+    LCDC1_DPI_VSYNC,
+    /** LCDC1_DPI_R7 */
+    LCDC1_DPI_R7,
+    /** LCDC1_DPI_R6 */
+    LCDC1_DPI_R6,
+    /** LCDC1_DPI_R5 */
+    LCDC1_DPI_R5,
+    /** LCDC1_DPI_R4 */
+    LCDC1_DPI_R4,
+    /** LCDC1_DPI_R3 */
+    LCDC1_DPI_R3,
+    /** LCDC1_DPI_R2 */
+    LCDC1_DPI_R2,
+    /** LCDC1_DPI_R1 */
+    LCDC1_DPI_R1,
+    /** LCDC1_DPI_R0 */
+    LCDC1_DPI_R0,
+    /** LCDC1_DPI_G7 */
+    LCDC1_DPI_G7,
+    /** LCDC1_DPI_G6 */
+    LCDC1_DPI_G6,
+    /** LCDC1_DPI_G5 */
+    LCDC1_DPI_G5,
+    /** LCDC1_DPI_G4 */
+    LCDC1_DPI_G4,
+    /** LCDC1_DPI_G3 */
+    LCDC1_DPI_G3,
+    /** LCDC1_DPI_G2 */
+    LCDC1_DPI_G2,
+    /** LCDC1_DPI_G1 */
+    LCDC1_DPI_G1,
+    /** LCDC1_DPI_G0 */
+    LCDC1_DPI_G0,
+    /** LCDC1_DPI_B7 */
+    LCDC1_DPI_B7,
+    /** LCDC1_DPI_B6 */
+    LCDC1_DPI_B6,
+    /** LCDC1_DPI_B5 */
+    LCDC1_DPI_B5,
+    /** LCDC1_DPI_B4 */
+    LCDC1_DPI_B4,
+    /** LCDC1_DPI_B3 */
+    LCDC1_DPI_B3,
+    /** LCDC1_DPI_B2 */
+    LCDC1_DPI_B2,
+    /** LCDC1_DPI_B1 */
+    LCDC1_DPI_B1,
+    /** LCDC1_DPI_B0 */
+    LCDC1_DPI_B0,
+    /** LCDC1_JDI_SCLK */
+    LCDC1_JDI_SCLK,
+    /** LCDC1_JDI_SCS */
+    LCDC1_JDI_SCS,
+    /** LCDC1_JDI_SO */
+    LCDC1_JDI_SO,
+    /** LCDC1_JDI_DISP */
+    LCDC1_JDI_DISP,
+    /** LCDC1_JDI_EXTCOMIN */
+    LCDC1_JDI_EXTCOMIN,
+    /** LCDC1_JDI_XRST */
+    LCDC1_JDI_XRST,
+    /** LCDC1_JDI_VCK */
+    LCDC1_JDI_VCK,
+    /** LCDC1_JDI_VST */
+    LCDC1_JDI_VST,
+    /** LCDC1_JDI_ENB */
+    LCDC1_JDI_ENB,
+    /** LCDC1_JDI_HCK */
+    LCDC1_JDI_HCK,
+    /** LCDC1_JDI_HST */
+    LCDC1_JDI_HST,
+    /** LCDC1_JDI_R1 */
+    LCDC1_JDI_R1,
+    /** LCDC1_JDI_R2 */
+    LCDC1_JDI_R2,
+    /** LCDC1_JDI_G1 */
+    LCDC1_JDI_G1,
+    /** LCDC1_JDI_G2 */
+    LCDC1_JDI_G2,
+    /** LCDC1_JDI_B1 */
+    LCDC1_JDI_B1,
+    /** LCDC1_JDI_B2 */
+    LCDC1_JDI_B2,
+    /** LCDC1_JDI_FRP */
+    LCDC1_JDI_FRP,
+    /** LCDC1_JDI_XFRP */
+    LCDC1_JDI_XFRP,
+    /** LCDC1_JDI_VCOM */
+    LCDC1_JDI_VCOM,
     /** LCDC2_JDI_SCLK */
     LCDC2_JDI_SCLK,
     /** LCDC2_JDI_SCS */
@@ -1144,8 +1108,6 @@ typedef enum
     SCAN_RSTB,
     /** SCAN_EN */
     SCAN_EN,
-    /** SCAN_FAST_CAP */
-    SCAN_FAST_CAP,
     /** EDT_CLK */
     EDT_CLK,
     /** EDT_UPDATE */
@@ -1780,6 +1742,18 @@ typedef enum
     PB30_I2C_UART,
     /** PB31_I2C_UART */
     PB31_I2C_UART,
+    /** PBR_GPO */
+    PBR_GPO,
+    /** PBR_CLK_LP */
+    PBR_CLK_RTC,
+    /** PBR_LPTIM1_OUT */
+    PBR_LPTIM1_OUT,
+    /** PBR_LPTIM1_INV_OUT */
+    PBR_LPTIM1_INV_OUT,
+    /** PBR_LPTIM2_OUT */
+    PBR_LPTIM2_OUT,
+    /** PBR_LPTIM2_INV_OUT */
+    PBR_LPTIM2_INV_OUT,
     PIN_FUNC_MAX,
 } pin_function;
 
@@ -1813,24 +1787,6 @@ typedef enum
     PAD_SA11,
     /** PAD_SA12 */
     PAD_SA12,
-    /** PAD_SA13 */
-    PAD_SA13,
-    /** PAD_SA14 */
-    PAD_SA14,
-    /** PAD_SA15 */
-    PAD_SA15,
-    /** PAD_SA16 */
-    PAD_SA16,
-    /** PAD_SA17 */
-    PAD_SA17,
-    /** PAD_SA18 */
-    PAD_SA18,
-    /** PAD_SA19 */
-    PAD_SA19,
-    /** PAD_SA20 */
-    PAD_SA20,
-    /** PAD_SA21 */
-    PAD_SA21,
     /** PAD_SB00 */
     PAD_SB00,
     /** PAD_SB01 */
@@ -1947,79 +1903,29 @@ typedef enum
     PAD_PA43,
     /** PAD_PA44 */
     PAD_PA44,
-    /** PAD_PA45 */
-    PAD_PA45,
-    /** PAD_PA46 */
-    PAD_PA46,
-    /** PAD_PA47 */
-    PAD_PA47,
-    /** PAD_PA48 */
-    PAD_PA48,
-    /** PAD_PA49 */
-    PAD_PA49,
-    /** PAD_PA50 */
-    PAD_PA50,
-    /** PAD_PA51 */
-    PAD_PA51,
-    /** PAD_PA52 */
-    PAD_PA52,
-    /** PAD_PA53 */
-    PAD_PA53,
-    /** PAD_PA54 */
-    PAD_PA54,
-    /** PAD_PA55 */
-    PAD_PA55,
-    /** PAD_PA56 */
-    PAD_PA56,
-    /** PAD_PA57 */
-    PAD_PA57,
-    /** PAD_PA58 */
-    PAD_PA58,
-    /** PAD_PA59 */
-    PAD_PA59,
-    /** PAD_PA60 */
-    PAD_PA60,
-    /** PAD_PA61 */
-    PAD_PA61,
-    /** PAD_PA62 */
-    PAD_PA62,
-    /** PAD_PA63 */
-    PAD_PA63,
-    /** PAD_PA64 */
-    PAD_PA64,
-    /** PAD_PA65 */
-    PAD_PA65,
-    /** PAD_PA66 */
-    PAD_PA66,
-    /** PAD_PA67 */
-    PAD_PA67,
-    /** PAD_PA68 */
-    PAD_PA68,
-    /** PAD_PA69 */
-    PAD_PA69,
-    /** PAD_PA70 */
-    PAD_PA70,
-    /** PAD_PA71 */
-    PAD_PA71,
-    /** PAD_PA72 */
-    PAD_PA72,
-    /** PAD_PA73 */
-    PAD_PA73,
-    /** PAD_PA74 */
-    PAD_PA74,
-    /** PAD_PA75 */
-    PAD_PA75,
     PIN_PAD_MAX_H,
 
-    PIN_PAD_UNDEF_L = PIN_PAD_MAX_H,
-} pin_pad_hcpu;
+    PIN_PAD_UNDEF_L,
+    /** PAD_PB00 */
+    PAD_PB00,
+    /** PAD_PB01 */
+    PAD_PB01,
+    /** PAD_PB02 */
+    PAD_PB02,
+    /** PAD_PB03 */
+    PAD_PB03,
+    PIN_PAD_MAX_L,
+} pin_pad;
 #define PIN_FUNC_SEL_NUM  (16)
 
 /** HCPU pad function definition table */
 extern const unsigned short pin_pad_func_hcpu[][16];
+/** LCPU pad function definition table */
+extern const unsigned short pin_pad_func_lcpu[][16];
 #ifdef PIN_DEBUG
     extern const char pin_function_str[][20];
     extern const char pin_pad_str_hcpu[][20];
+    extern const char pin_pad_str_lcpu[][20];
 #endif
 /**
  * @}

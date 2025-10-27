@@ -837,12 +837,7 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
     case RCC_MOD_DMAC1:
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
         *group = 0;
-        *mask = HPSYS_RCC_ENR1_GPDMA1;
-        break;
-    case RCC_MOD_DMAC2:
-        base_rcc = (uint32_t *)hwp_hpsys_rcc;
-        *group = 0;
-        *mask = HPSYS_RCC_ENR1_DMAC2;
+        *mask = HPSYS_RCC_ENR1_DMAC1;
         break;
     case RCC_MOD_MAILBOX1:
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
@@ -1000,11 +995,6 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
         *group = 1;
         *mask = HPSYS_RCC_ENR2_USART3;
         break;
-    case RCC_MOD_USART4:
-        base_rcc = (uint32_t *)hwp_hpsys_rcc;
-        *group = 1;
-        *mask = HPSYS_RCC_ENR2_USART4;
-        break;
     case RCC_MOD_AUDCODEC_HP:
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
         *group = 1;
@@ -1044,11 +1034,6 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
         *group = 1;
         *mask = HPSYS_RCC_ENR2_AUDCODEC;
-        break;
-    case RCC_MOD_GPU:
-        base_rcc = (uint32_t *)hwp_hpsys_rcc;
-        *group = 1;
-        *mask = HPSYS_RCC_ENR2_GPU;
         break;
     case RCC_MOD_DCMI:
         base_rcc = (uint32_t *)hwp_hpsys_rcc;
@@ -1097,10 +1082,10 @@ static inline __IO uint32_t *RCC_GetModuleMask(RCC_MODULE_TYPE module, uint32_t 
         *group = 0;
         *mask = LPSYS_RCC_ENR1_MAILBOX2;
         break;
-    case RCC_MOD_DMAC3:
+    case RCC_MOD_DMAC2:
         base_rcc = (uint32_t *)hwp_lpsys_rcc;
         *group = 0;
-        *mask = LPSYS_RCC_ENR1_DMAC3;
+        *mask = LPSYS_RCC_ENR1_DMAC2;
         break;
     case RCC_MOD_MAC:
         base_rcc = (uint32_t *)hwp_lpsys_rcc;

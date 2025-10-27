@@ -63,20 +63,26 @@ HAL_RETM_BSS_SECT(pmu_cal_data, static PMU_CalDataTypeDef pmu_cal_data);
 
 static inline int16_t PMU_RoundF_I16(float val)
 {
-	if (val < 0.0f) {
-		return (int16_t)(val - 0.5f);
-	} else {
-		return (int16_t)(val + 0.5f);
-	}
+    if (val < 0.0f)
+    {
+        return (int16_t)(val - 0.5f);
+    }
+    else
+    {
+        return (int16_t)(val + 0.5f);
+    }
 }
 
 static inline uint16_t PMU_RoundF_U16(float val)
 {
-	if (val < 0.0f) {
-		return 0U;
-	} else {
-		return (uint16_t)(val + 0.5f);
-	}
+    if (val < 0.0f)
+    {
+        return 0U;
+    }
+    else
+    {
+        return (uint16_t)(val + 0.5f);
+    }
 }
 
 #ifdef PMUC_CR_PIN0_SEL
@@ -233,7 +239,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_RC10Kconfig(void)
 
     /* configure default delays in boot options when not set */
     uint32_t bootopt = HAL_Get_backup(RTC_BACKUP_BOOTOPT);
-    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U) {
+    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U)
+    {
         HAL_Set_backup(RTC_BACKUP_BOOTOPT,
                        (bootopt |
                         RTC_BACKUP_BOOTOPT_PD_DELAY_MS(5) |
@@ -284,7 +291,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_RC10Kconfig(void)
 
     /* configure default delays in boot options when not set */
     uint32_t bootopt = HAL_Get_backup(RTC_BACKUP_BOOTOPT);
-    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U) {
+    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U)
+    {
         HAL_Set_backup(RTC_BACKUP_BOOTOPT,
                        (bootopt |
                         RTC_BACKUP_BOOTOPT_PD_DELAY_MS(5) |
@@ -616,7 +624,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_EnableBuck2(void)
 
     /* configure default delays in boot options when not set */
     uint32_t bootopt = HAL_Get_backup(RTC_BACKUP_BOOTOPT);
-    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U) {
+    if ((bootopt & (RTC_BACKUP_BOOTOPT_PD_DELAY_Msk | RTC_BACKUP_BOOTOPT_PU_DELAY_Msk)) == 0U)
+    {
         HAL_Set_backup(RTC_BACKUP_BOOTOPT,
                        (bootopt |
                         RTC_BACKUP_BOOTOPT_PD_DELAY_MS(5) |
@@ -717,7 +726,8 @@ void HAL_PMU_ConfigDBL96(bool enabled)
 }
 #endif /* SF32LB56X */
 
-#if defined(SF32LB52X)
+//TODO:
+#if defined(SF32LB52X) || defined(SF32LB57X)
 
 HAL_StatusTypeDef HAL_PMU_ChgInit(PMU_ChgHandleTypeDef *handle, PMU_ChgCalParamTypeDef *cal_param)
 {
@@ -1279,12 +1289,13 @@ HAL_RAM_RET_CODE_SECT(HAL_PMU_ConfigPeriLdo, HAL_StatusTypeDef HAL_PMU_ConfigPer
     uint32_t mask;
     uint32_t val;
 
+//TODO:
+#ifdef SF32LB52X
     if ((PMU_PERI_LDO_1V8 != ldo) && SF32LB52X_LETTER_SERIES())
     {
         /* letter series doesn't support PERI_LDO V33 */
         return HAL_OK;
     }
-
 #ifndef HAL_VDDSIP_LDO18_ENABLE
     if (SF32LB52X_LETTER_SERIES())
     {
@@ -1293,6 +1304,7 @@ HAL_RAM_RET_CODE_SECT(HAL_PMU_ConfigPeriLdo, HAL_StatusTypeDef HAL_PMU_ConfigPer
     }
 #endif /* !HAL_VDDSIP_LDO18_ENABLE */
 
+#endif /* SF32LB52X */
 
     if ((PMU_PERI_LDO_1V8 != ldo)
             && (PMU_PERI_LDO2_3V3 != ldo)

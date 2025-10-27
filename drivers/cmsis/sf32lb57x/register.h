@@ -52,8 +52,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef SOC_BF0_HCPU
 
+#ifdef SOC_BF0_HCPU
 /* -------------------------  Interrupt Number Definition  ------------------------ */
 
 typedef enum IRQn
@@ -83,7 +83,7 @@ typedef enum IRQn
     DMAC2_CH8_IRQn                =   9,
     PATCH_IRQn                    =  10,
     DM_MAC_IRQn                   =  11,
-    Interrupt12_IRQn              =  12,
+    USART4_IRQn                   =  12,
     USART5_IRQn                   =  13,
     SECU2_IRQn                    =  14,
     BT_MAC_IRQn                   =  15,
@@ -92,8 +92,8 @@ typedef enum IRQn
     PTC2_IRQn                     =  18,
     LPTIM3_IRQn                   =  19,
     GPIO2_IRQn                    =  20,
-    LCPU_SYSRESET_IRQn            =  21,
-    Interrupt22_IRQn              =  22,
+    HPSYS0_IRQn                   =  21,
+    HPSYS1_IRQn                   =  22,
     Interrupt23_IRQn              =  23,
     Interrupt24_IRQn              =  24,
     Interrupt25_IRQn              =  25,
@@ -103,14 +103,14 @@ typedef enum IRQn
     Interrupt29_IRQn              =  29,
     Interrupt30_IRQn              =  30,
     Interrupt31_IRQn              =  31,
-    Interrupt32_IRQn              =  32,
-    Interrupt33_IRQn              =  33,
-    Interrupt34_IRQn              =  34,
-    Interrupt35_IRQn              =  35,
-    Interrupt36_IRQn              =  36,
-    Interrupt37_IRQn              =  37,
-    Interrupt38_IRQn              =  38,
-    Interrupt39_IRQn              =  39,
+    PTM1_CORE0_IRQn               =  32,
+    PTM1_CORE1_IRQn               =  33,
+    PTM1_CORE2_IRQn               =  34,
+    PTM1_CORE3_IRQn               =  35,
+    PTM1_CORE4_IRQn               =  36,
+    PTM1_CORE5_IRQn               =  37,
+    PTM1_CORE6_IRQn               =  38,
+    PTM1_CORE7_IRQn               =  39,
     Interrupt40_IRQn              =  40,
     Interrupt41_IRQn              =  41,
     Interrupt42_IRQn              =  42,
@@ -119,7 +119,7 @@ typedef enum IRQn
     Interrupt45_IRQn              =  45,
     LPTIM1_IRQn                   =  46,
     LPTIM2_IRQn                   =  47,
-    WDT2_IRQn                     =  48,
+    CHG_IRQn                      =  48,
     RTC_IRQn                      =  49,
     DMAC1_CH1_IRQn                =  50,
     DMAC1_CH2_IRQn                =  51,
@@ -148,7 +148,7 @@ typedef enum IRQn
     USART2_IRQn                   =  74,
     SPI2_IRQn                     =  75,
     I2C2_IRQn                     =  76,
-    V2D_GPU_IRQn                  =  77,
+    EXTDMA_IRQn                   =  77,
     I2C4_IRQn                     =  78,
     SDMMC1_IRQn                   =  79,
     ACPU2HCPU_IRQn                =  80,
@@ -158,8 +158,8 @@ typedef enum IRQn
     GPIO1_IRQn                    =  84,
     MPI1_IRQn                     =  85,
     MPI2_IRQn                     =  86,
-    MPI3_IRQn                     =  87,
-    NPU_IRQ                       =  88,
+    Interrupt87_IRQn              =  87,
+    Interrupt88_IRQn              =  88,
     EZIP_IRQn                     =  89,
     AUDPRC_IRQn                   =  90,
     TSEN_IRQn                     =  91,
@@ -171,13 +171,14 @@ typedef enum IRQn
     DCMI_IRQn                     =  97,
     SECU1_IRQn                    =  98,
     JPEGD_IRQn                    =  99,
-    HASH_IRQn                     =  100,
-    USART4_IRQn                   =  101,
-    EPIC_TL_IRQn                  =  102,
-    DMAC1_CH9_IRQn                =  103,
-    DMAC1_CH10_IRQn               =  104,
+    Interrupt100_IRQn             = 100,
+    Interrupt101_IRQn             = 101,
+    Interrupt102_IRQn             = 102,
+    I2S2_IRQn                     = 103,
+    Interrupt104_IRQn             = 104,
+    PWM1_IRQn                     = 105,
     HCPU2LCPU_IRQn                =  -1,
-    /* Interrupts 100 .. 479 are left out */
+    /* Interrupts 106 .. 479 are left out */
 } IRQn_Type;
 
 #define GPDMA1_CH1_IRQn    DMAC1_CH1_IRQn
@@ -188,8 +189,6 @@ typedef enum IRQn
 #define GPDMA1_CH6_IRQn    DMAC1_CH6_IRQn
 #define GPDMA1_CH7_IRQn    DMAC1_CH7_IRQn
 #define GPDMA1_CH8_IRQn    DMAC1_CH8_IRQn
-#define GPDMA1_CH9_IRQn     DMAC1_CH9_IRQn
-#define GPDMA1_CH10_IRQn    DMAC1_CH10_IRQn
 #define GPDMA1_CH1_Handler DMAC1_CH1_Handler
 #define GPDMA1_CH2_Handler DMAC1_CH2_Handler
 #define GPDMA1_CH3_Handler DMAC1_CH3_Handler
@@ -198,8 +197,6 @@ typedef enum IRQn
 #define GPDMA1_CH6_Handler DMAC1_CH6_Handler
 #define GPDMA1_CH7_Handler DMAC1_CH7_Handler
 #define GPDMA1_CH8_Handler DMAC1_CH8_Handler
-#define GPDMA1_CH9_Handler  DMAC1_CH9_Handler
-#define GPDMA1_CH10_Handler DMAC1_CH10_Handler
 
 /* ================================================================================ */
 /* ================      Processor and Core Peripheral Section     ================ */
@@ -252,10 +249,7 @@ typedef enum IRQn
 #include "core_mstar.h"                     /* cache related functions */
 
 
-
 #elif defined(SOC_BF0_LCPU)
-
-
 
 /* =========================================================================================================================== */
 /* ================                                Interrupt Number Definition                                ================ */
@@ -263,234 +257,110 @@ typedef enum IRQn
 
 typedef enum IRQn
 {
-    /* =======================================  Nuclei Core Specific Interrupt Numbers  ======================================== */
+    /* -------------------  Processor Exceptions Numbers  ----------------------------- */
+    NonMaskableInt_IRQn           = -14,     /*  2 Non Maskable Interrupt */
+    HardFault_IRQn                = -13,     /*  3 HardFault Interrupt */
+    MemoryManagement_IRQn         = -12,     /*  4 Memory Management Interrupt */
+    BusFault_IRQn                 = -11,     /*  5 Bus Fault Interrupt */
+    UsageFault_IRQn               = -10,     /*  6 Usage Fault Interrupt */
+    SecureFault_IRQn              =  -9,     /*  7 Secure Fault Interrupt */
+    SVCall_IRQn                   =  -5,     /* 11 SV Call Interrupt */
+    DebugMonitor_IRQn             =  -4,     /* 12 Debug Monitor Interrupt */
+    PendSV_IRQn                   =  -2,     /* 14 Pend SV Interrupt */
+    SysTick_IRQn                  =  -1,     /* 15 System Tick Interrupt */
 
-    Reserved0_IRQn            =   0,
-    Reserved1_IRQn            =   1,
-    Reserved2_IRQn            =   2,
-    Msip_IRQn                 =   3,
-    Reserved3_IRQn            =   4,
-    Reserved4_IRQn            =   5,
-    Reserved5_IRQn            =   6,
-    SysTimer_IRQn             =   7,
-    Reserved6_IRQn            =   8,
-    Reserved7_IRQn            =   9,
-    Reserved8_IRQn            =  10,
-    Reserved9_IRQn            =  11,
-    Reserved10_IRQn           =  12,
-    Reserved11_IRQn           =  13,
-    Reserved12_IRQn           =  14,
-    Reserved13_IRQn           =  15,
-    Reserved14_IRQn           =  16,
-    Bwei_IRQn                 =  17,
-    Pmovi_IRQn                =  18,
-
-    /* ===========================================  N300 Specific Interrupt Numbers  ========================================= */
-    /* interruput numbers */
-    AON_IRQn                  =  19,
-    BLE_MAC_IRQn              =  20,
-    DMAC2_CH1_IRQn            =  21,
-    DMAC2_CH2_IRQn            =  22,
-    DMAC2_CH3_IRQn            =  23,
-    DMAC2_CH4_IRQn            =  24,
-    DMAC2_CH5_IRQn            =  25,
-    DMAC2_CH6_IRQn            =  26,
-    DMAC2_CH7_IRQn            =  27,
-    DMAC2_CH8_IRQn            =  28,
-    PATCH_IRQn                =  29,
-    DM_MAC_IRQn               =  30,
-    USART4_IRQn               =  31,
-    USART5_IRQn               =  32,
-    SECU2_IRQn                =  33,
-    BT_MAC_IRQn               =  34,
-    BTIM3_IRQn                =  35,
-    BTIM4_IRQn                =  36,
-    PTC2_IRQn                 =  37,
-    LPTIM3_IRQn               =  38,
-    GPIO2_IRQn                =  39,
-    HPSYS0_IRQn               =  40,
-    HPSYS1_IRQn               =  41,
-    HCPU2LCPU_IRQn            =  42,
-    ACPU2LCPU_IRQn            =  43,
-    Interrupt25_IRQn          =  44,
-    Interrupt26_IRQn          =  45,
-    Interrupt27_IRQn          =  46,
-    Interrupt28_IRQn          =  47,
-    Interrupt29_IRQn          =  48,
-    Interrupt30_IRQn          =  49,
-    Interrupt31_IRQn          =  50,
-    SOC_INT_MAX,
-
-    // Not work on LCPU
-    LCPU2HCPU_IRQn = -1,
+    /* -------------------  Processor Interrupt Numbers  ------------------------------ */
+    AON_IRQn                      =   0,
+    BLE_MAC_IRQn                  =   1,
+    DMAC2_CH1_IRQn                =   2,
+    DMAC2_CH2_IRQn                =   3,
+    DMAC2_CH3_IRQn                =   4,
+    DMAC2_CH4_IRQn                =   5,
+    DMAC2_CH5_IRQn                =   6,
+    DMAC2_CH6_IRQn                =   7,
+    DMAC2_CH7_IRQn                =   8,
+    DMAC2_CH8_IRQn                =   9,
+    PATCH_IRQn                    =  10,
+    DM_MAC_IRQn                   =  11,
+    USART4_IRQn                   =  12,
+    USART5_IRQn                   =  13,
+    SECU2_IRQn                    =  14,
+    BT_MAC_IRQn                   =  15,
+    BTIM3_IRQn                    =  16,
+    BTIM4_IRQn                    =  17,
+    PTC2_IRQn                     =  18,
+    LPTIM3_IRQn                   =  19,
+    GPIO2_IRQn                    =  20,
+    HPSYS0_IRQn                   =  21,
+    HPSYS1_IRQn                   =  22,
+    HCPU2LCPU_IRQn                =  23,
+    Interrupt24_IRQn              =  24,
+    Interrupt25_IRQn              =  25,
+    Interrupt26_IRQn              =  26,
+    Interrupt27_IRQn              =  27,
+    Interrupt28_IRQn              =  28,
+    Interrupt29_IRQn              =  29,
+    Interrupt30_IRQn              =  30,
+    Interrupt31_IRQn              =  31,
+    USART1_IRQn                   =  -1,
+    LCPU2HCPU_IRQn                =  -1,
+    DMAC1_CH1_IRQn                =  -1,
+    DMAC1_CH2_IRQn                =  -1,
+    DMAC1_CH3_IRQn                =  -1,
+    DMAC1_CH4_IRQn                =  -1,
+    DMAC1_CH5_IRQn                =  -1,
+    DMAC1_CH6_IRQn                =  -1,
+    DMAC1_CH7_IRQn                =  -1,
+    DMAC1_CH8_IRQn                =  -1,
+    /* Interrupts 32 .. 479 are left out */
 } IRQn_Type;
+
 
 /* =========================================================================================================================== */
 /* ================                           Processor and Core Peripheral Section                           ================ */
 /* =========================================================================================================================== */
 
-/* ToDo: define the correct core features for the nuclei_soc */
-#define __ECLIC_PRESENT           1                     /*!< Set to 1 if ECLIC is present */
-//#define __ECLIC_BASEADDR          0x30020000UL          /*!< Set to ECLIC baseaddr of your device */
+/* -------  Start of section using anonymous unions and disabling warnings  ------- */
+#if   defined (__CC_ARM)
+#pragma push
+#pragma anon_unions
+#elif defined (__ICCARM__)
+#pragma language=extended
+#elif defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc11-extensions"
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#elif defined (__GNUC__)
+/* anonymous unions are enabled by default */
+#elif defined (__TMS470__)
+/* anonymous unions are enabled by default */
+#elif defined (__TASKING__)
+#pragma warning 586
+#elif defined (__CSMC__)
+/* anonymous unions are enabled by default */
+#else
+#warning Not supported compiler type
+#endif
+/* --------  Configuration of Core Peripherals  ----------------------------------- */
+#define __CM33_REV                0x0000U   /* Core revision r0p1 */
+#define __SAUREGION_PRESENT       0U        /* SAU regions present */
+#define __MPU_PRESENT             1U        /* MPU present */
+#define __VTOR_PRESENT            1U        /* VTOR present */
+#define __NVIC_PRIO_BITS          3U        /* Number of Bits used for Priority Levels */
+#define __Vendor_SysTickConfig    0U        /* Set to 1 if different SysTick Config is used */
+#define __FPU_PRESENT             0U        /* no FPU present */
+#define __DSP_PRESENT             1U        /* DSP extension present */
 
-#define __ECLIC_INTCTLBITS        3                     /*!< Set to 1 - 8, the number of hardware bits are actually implemented in the clicintctl registers. */
-#define __ECLIC_INTNUM            32                    /*!< Set to 1 - 1005, the external interrupt number of ECLIC Unit */
-#define __SYSTIMER_PRESENT        1                     /*!< Set to 1 if System Timer is present */
-//#define __SYSTIMER_BASEADDR       0x30030000UL          /*!< Set to SysTimer baseaddr of your device */
-
-/*!< Set to 0, 1, or 2, 0 not present, 1 single floating point unit present, 2 double floating point unit present */
-#define __FPU_PRESENT             1
-
-#define __DSP_PRESENT             1                     /*!< Set to 1 if DSP is present */
-#define __PMP_PRESENT             1                     /*!< Set to 1 if PMP is present */
-#define __PMP_ENTRY_NUM           8                     /*!< Set to 8 or 16, the number of PMP entries */
-#define __ICACHE_PRESENT          0                     /*!< Set to 1 if I-Cache is present */
-#define __DCACHE_PRESENT          0                     /*!< Set to 1 if D-Cache is present */
-#define __INC_INTRINSIC_API       0                     /*!< Set to 1 if intrinsic api header files need to be included */
-#define __Vendor_SysTickConfig    0                     /*!< Set to 1 if different SysTick Config is used */
-#define __Vendor_EXCEPTION        0                     /*!< Set to 1 if vendor exception hander is present */
-
-/** @} */ /* End of group Configuration_of_NMSIS */
-
-#define NVIC_ClearPendingIRQ  ECLIC_ClearPendingIRQ
-#define NVIC_EnableIRQ        ECLIC_EnableIRQ
-#define NVIC_DisableIRQ       ECLIC_DisableIRQ
-
-
-#include "nmsis_config.h"                       /*!< Nuclei N/NX class processor and core peripherals */
+#include "core_cm33.h"                      /* Processor and core peripherals */
 #include "system_bf0_ap.h"                 /* System Header */
 
-/* ToDo: include your system_nuclei_soc.h file
-         replace 'Device' with your device name */
+#define __ICACHE_PRESENT          0U
+#define __DCACHE_PRESENT          0U
 
+#define MPU_REGION_NUM        8
 
-/* ========================================  Start of section using anonymous unions  ======================================== */
-#if   defined (__GNUC__)
-/* anonymous unions are enabled by default */
-#else
-#warning Not supported compiler type
-#endif
+#include "core_mstar.h"                     /* cache related functions */
 
-/* =========================================  End of section using anonymous unions  ========================================= */
-#if defined (__GNUC__)
-/* anonymous unions are enabled by default */
-#else
-#warning Not supported compiler type
-#endif
-
-/* =========================================================================================================================== */
-/* ================                                  Peripheral declaration                                   ================ */
-/* =========================================================================================================================== */
-
-/* Macros for memory access operations */
-//#define _REG8P(p, i)                        ((volatile uint8_t *) ((uintptr_t)((p) + (i))))
-//#define _REG16P(p, i)                       ((volatile uint16_t *) ((uintptr_t)((p) + (i))))
-//#define _REG32P(p, i)                       ((volatile uint32_t *) ((uintptr_t)((p) + (i))))
-//#define _REG64P(p, i)                       ((volatile uint64_t *) ((uintptr_t)((p) + (i))))
-//#define _REG8(p, i)                         (*(_REG8P(p, i)))
-//#define _REG16(p, i)                        (*(_REG16P(p, i)))
-//#define _REG32(p, i)                        (*(_REG32P(p, i)))
-//#define _REG64(p, i)                        (*(_REG64P(p, i)))
-//#define REG8(addr)                          _REG8((addr), 0)
-//#define REG16(addr)                         _REG16((addr), 0)
-//#define REG32(addr)                         _REG32((addr), 0)
-//#define REG64(addr)                         _REG64((addr), 0)
-//
-///* Macros for address type convert and access operations */
-//#define ADDR16(addr)                        ((uint16_t)(uintptr_t)(addr))
-//#define ADDR32(addr)                        ((uint32_t)(uintptr_t)(addr))
-//#define ADDR64(addr)                        ((uint64_t)(uintptr_t)(addr))
-//#define ADDR8P(addr)                        ((uint8_t *)(uintptr_t)(addr))
-//#define ADDR16P(addr)                       ((uint16_t *)(uintptr_t)(addr))
-//#define ADDR32P(addr)                       ((uint32_t *)(uintptr_t)(addr))
-//#define ADDR64P(addr)                       ((uint64_t *)(uintptr_t)(addr))
-/* Macros for Bit Operations */
-#if __riscv_xlen == 32
-#define BITMASK_MAX                         0xFFFFFFFFUL
-#define BITOFS_MAX                          31
-#else
-#define BITMASK_MAX                         0xFFFFFFFFFFFFFFFFULL
-#define BITOFS_MAX                          63
-#endif
-
-// BIT/BITS only support bit mask for __riscv_xlen
-// For RISC-V 32 bit, it support mask 32 bit wide
-// For RISC-V 64 bit, it support mask 64 bit wide
-#define BIT(ofs)                            (0x1UL << (ofs))
-#define BITS(start, end)                    ((BITMASK_MAX) << (start) & (BITMASK_MAX) >> (BITOFS_MAX - (end)))
-#define GET_BIT(regval, bitofs)             (((regval) >> (bitofs)) & 0x1)
-#define CLR_BIT(regval, bitofs)             ((regval) &= (~BIT(bitofs)))
-#define FLIP_BIT(regval, bitofs)            ((regval) ^= BIT(bitofs))
-#define WRITE_BIT(regval, bitofs, val)      CLR_BIT(regval, bitofs); ((regval) |= ((val) << bitofs) & BIT(bitofs))
-#define CHECK_BIT(regval, bitofs)           (!!((regval) & (0x1UL<<(bitofs))))
-#define GET_BITS(regval, start, end)        (((regval) & BITS((start), (end))) >> (start))
-#define SET_BITS(regval, start, end)        ((regval) |= BITS((start), (end)))
-#define CLR_BITS(regval, start, end)        ((regval) &= (~BITS((start), (end))))
-#define FLIP_BITS(regval, start, end)       ((regval) ^= BITS((start), (end)))
-#define WRITE_BITS(regval, start, end, val) CLR_BITS(regval, start, end); ((regval) |= ((val) << start) & BITS((start), (end)))
-#define CHECK_BITS_ALL(regval, start, end)  (!((~(regval)) & BITS((start), (end))))
-#define CHECK_BITS_ANY(regval, start, end)  ((regval) & BITS((start), (end)))
-
-#define BITMASK_SET(regval, mask)           ((regval) |= (mask))
-#define BITMASK_CLR(regval, mask)           ((regval) &= (~(mask)))
-#define BITMASK_FLIP(regval, mask)          ((regval) ^= (mask))
-#define BITMASK_CHECK_ALL(regval, mask)     (!((~(regval)) & (mask)))
-#define BITMASK_CHECK_ANY(regval, mask)     ((regval) & (mask))
-
-/* ToDo: add here your device peripherals pointer definitions
-         following is an example for timer */
-/** @addtogroup Device_Peripheral_declaration
-  * @{
-  */
-
-// Interrupt Numbers
-//#define SOC_ECLIC_NUM_INTERRUPTS    86
-
-// Interrupt Handler Definitions
-//#define SOC_MTIMER_HANDLER          eclic_mtip_handler
-//#define SOC_SOFTINT_HANDLER         eclic_msip_handler
-
-typedef struct EXC_Frame
-{
-    unsigned long ra;                /* ra: x1, return address for jump */
-    unsigned long tp;                /* tp: x4, thread pointer */
-    unsigned long t0;                /* t0: x5, temporary register 0 */
-    unsigned long t1;                /* t1: x6, temporary register 1 */
-    unsigned long t2;                /* t2: x7, temporary register 2 */
-    unsigned long a0;                /* a0: x10, return value or function argument 0 */
-    unsigned long a1;                /* a1: x11, return value or function argument 1 */
-    unsigned long a2;                /* a2: x12, function argument 2 */
-    unsigned long a3;                /* a3: x13, function argument 3 */
-    unsigned long a4;                /* a4: x14, function argument 4 */
-    unsigned long a5;                /* a5: x15, function argument 5 */
-    unsigned long cause;             /* cause: machine cause csr register */
-    unsigned long epc;               /* epc: machine exception program counter csr register */
-    unsigned long msubm;             /* msubm: machine sub-mode csr register, nuclei customized */
-#ifndef __riscv_32e
-    unsigned long a6;                /* a6: x16, function argument 6 */
-    unsigned long a7;                /* a7: x17, function argument 7 */
-    unsigned long t3;                /* t3: x28, temporary register 3 */
-    unsigned long t4;                /* t4: x29, temporary register 4 */
-    unsigned long t5;                /* t5: x30, temporary register 5 */
-    unsigned long t6;                /* t6: x31, temporary register 6 */
-#endif
-} EXC_Frame_Type;
-
-
-/**
- * \brief Dump Exception Frame
- */
-void Exception_DumpFrame(unsigned long sp, uint8_t mode);
-
-/**
- * \brief Register an exception handler for exception code EXCn
- */
-extern void Exception_Register_EXC(uint32_t EXCn, unsigned long exc_handler);
-
-/**
- * \brief Get current exception handler for exception code EXCn
- */
-extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 
 #endif
 
@@ -555,12 +425,14 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #include "gpio1.h"
 #include "gpio2.h"
 #include "hpsys_pinmux.h"
+#include "lpsys_pinmux.h"
 #include "hpsys_aon.h"
 #include "lpsys_aon.h"
 #include "pmuc.h"
 #include "gpadc.h"
 #include "trng.h"
 #include "ptc.h"
+#include "ptm.h"
 #include "ezip.h"
 #include "patch.h"
 #include "wdt.h"
@@ -571,17 +443,19 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #include "tsen.h"
 #include "secu1.h"
 #include "secu2.h"
-#include "v2d_gpu.h"
 #include "dcmi.h"
 #include "can.h"
 
 /******************* Base Addresss Definition ******************/
 //================== MCU_HPSYS ===================
 #define HPSYS_RCC_BASE      0x50000000
+#define JPEGD_BASE          0x50001000
 #define SECU1_BASE          0x50002000
 #define PINMUX1_BASE        0x50003000
 #define ATIM1_BASE          0x50004000
 #define AUDPRC_BASE         0x50005000
+#define EZIP1_BASE          0x50006000
+#define EPIC_BASE           0x50007000
 #define LCDC1_BASE          0x50008000
 #define I2S1_BASE           0x50009000
 #define CAN1_BASE           0x5000a000
@@ -591,27 +465,27 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define I2S2_BASE           0x5000e000
 #define TRNG_BASE           0x5000f000
 //------------------------------------
-#define GPIO1_BASE          0x50040000
+#define DCMI_BASE           0x50040000
 #define MPI1_BASE           0x50041000
 #define MPI2_BASE           0x50042000
 #define MPI3_BASE           0x50043000
-#define MPI4_BASE           0x50044000
 #define SDMMC1_BASE         0x50045000
 #define SDMMC2_BASE         0x50046000
+#define USBC_BASE           0x50047000
 #define CRC1_BASE           0x50048000
+#define EPIC_RAM_BASE       0x50050000
 //------------------------------------
-#define PTC1_BASE           0x50080000
-#define GPDMA1_BASE         0x50081000
+#define DMAC1_BASE          0x50081000
+#define GPDMA1_BASE         DMAC1_BASE
 #define MAILBOX1_BASE       0x50082000
-#define DMAC2_BASE          0x50083000
 #define USART1_BASE         0x50084000
 #define USART2_BASE         0x50085000
 #define USART3_BASE         0x50086000
-#define USART4_BASE         0x50087000
 #define AUDCODEC_BASE       0x50088000
 #define TSEN_BASE           0x50089000
 #define GPTIM1_BASE         0x50090000
 #define BTIM1_BASE          0x50092000
+#define WDT1_BASE           0x50094000
 #define SPI1_BASE           0x50095000
 #define SPI2_BASE           0x50096000
 #define PDM1_BASE           0x5009a000
@@ -620,6 +494,8 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define I2C3_BASE           0x5009e000
 #define I2C4_BASE           0x5009f000
 //------------------------------------
+#define GPIO1_BASE          0x500a0000
+#define PTM1_BASE           0x500a1000
 //------------------------------------
 #define GPTIM2_BASE         0x500b0000
 #define BTIM2_BASE          0x500b1000
@@ -633,29 +509,23 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define RTC_BASE            0x500cb000
 #define IWDT_BASE           0x500cc000
 //TODO PMIC
-#define EZIP1_BASE          0x50100000
-#define EPIC_BASE           0x50101000
-#define JPEGD_BASE          0x50104000
-#define USBC_BASE           0x50140000
-#define DCMI_BASE           0x50141000
-#define V2D_GPU_BASE        0x50142000
-#define EPIC_RAM_BASE       0x50148000
 
 //================== MCU_LPSYS ===================
 #define LPSYS_RCC_BASE      0x40000000
-#define DMAC3_BASE          0x40001000
+#define DMAC2_BASE          0x40001000
 #define MAILBOX2_BASE       0x40002000
 #define PINMUX2_BASE        0x40003000
 #define PATCH_BASE          0x40004000
+#define USART4_BASE         0x40005000
 #define USART5_BASE         0x40006000
 #define SECU2_BASE          0x40007000
 #define BTIM3_BASE          0x40009000
 #define BTIM4_BASE          0x4000a000
+#define WDT2_BASE           0x4000b000
 #define PTC2_BASE           0x4000c000
 #define LPSYS_CFG_BASE      0x4000f000
 //------------------------------------
 #define LPSYS_AON_BASE      0x40040000
-#define WDT2_BASE           0x40041000
 #define LPTIM3_BASE         0x40042000
 //------------------------------------
 #define GPIO2_BASE          0x40080000
@@ -670,10 +540,9 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 /****************** Header Pointers Definition *****************/
 #define hwp_hpsys_rcc   ((HPSYS_RCC_TypeDef     *)    HPSYS_RCC_BASE)
 #define hwp_lpsys_rcc   ((LPSYS_RCC_TypeDef     *)    LPSYS_RCC_BASE)
-#define hwp_gpdma1      ((GPDMA_TypeDef         *)    GPDMA1_BASE)
-#define hwp_dmac1       ((GPDMA_TypeDef         *)    GPDMA1_BASE)
+#define hwp_gpdma1      ((GPDMA_TypeDef         *)    DMAC1_BASE)
+#define hwp_dmac1       ((GPDMA_TypeDef         *)    DMAC1_BASE)
 #define hwp_dmac2       ((DMAC_TypeDef          *)    DMAC2_BASE)
-#define hwp_dmac3       ((DMAC_TypeDef          *)    DMAC3_BASE)
 #define hwp_atim1       ((ATIM_TypeDef          *)    ATIM1_BASE)
 #define hwp_audprc      ((AUDPRC_TypeDef        *)    AUDPRC_BASE)
 #define hwp_audcodec    ((AUDCODEC_TypeDef      *)    AUDCODEC_BASE)
@@ -685,7 +554,6 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_btim4       ((BTIM_TypeDef          *)    BTIM4_BASE)
 #define hwp_pwm1        ((PWM_TypeDef           *)    PWM1_BASE)
 #define hwp_epic        ((EPIC_TypeDef          *)    EPIC_BASE)
-#define hwp_v2d_gpu     ((V2D_GPU_TypeDef       *)    V2D_GPU_BASE)
 #define hwp_spi1        ((SPI_TypeDef           *)    SPI1_BASE)
 #define hwp_spi2        ((SPI_TypeDef           *)    SPI2_BASE)
 #define hwp_usart1      ((USART_TypeDef         *)    USART1_BASE)
@@ -700,7 +568,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_i2c4        ((I2C_TypeDef           *)    I2C4_BASE)
 #define hwp_mailbox1    ((MAILBOX1_TypeDef      *)    MAILBOX1_BASE)
 #define hwp_mailbox2    ((MAILBOX2_TypeDef      *)    MAILBOX2_BASE)
-#define hwp_ptc1        ((PTC_TypeDef           *)    PTC1_BASE)
+#define hwp_ptm1        ((PTM_TypeDef           *)    PTM1_BASE)
 #define hwp_ptc2        ((PTC_TypeDef           *)    PTC2_BASE)
 #define hwp_ezip1       ((EZIP_TypeDef          *)    EZIP1_BASE)
 #define hwp_efusec      ((EFUSEC_TypeDef        *)    EFUSEC_BASE)
@@ -709,13 +577,13 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_mpi1        ((MPI_TypeDef           *)    MPI1_BASE)
 #define hwp_mpi2        ((MPI_TypeDef           *)    MPI2_BASE)
 #define hwp_mpi3        ((MPI_TypeDef           *)    MPI3_BASE)
-#define hwp_mpi4        ((MPI_TypeDef           *)    MPI4_BASE)
 #define hwp_lptim1      ((LPTIM_TypeDef         *)    LPTIM1_BASE)
 #define hwp_lptim2      ((LPTIM_TypeDef         *)    LPTIM2_BASE)
 #define hwp_lptim3      ((LPTIM_TypeDef         *)    LPTIM3_BASE)
 #define hwp_hpsys_cfg   ((HPSYS_CFG_TypeDef     *)    HPSYS_CFG_BASE)
 #define hwp_lpsys_cfg   ((LPSYS_CFG_TypeDef     *)    LPSYS_CFG_BASE)
 #define hwp_i2s1        ((I2S_TypeDef           *)    I2S1_BASE)
+#define hwp_i2s2        ((I2S_TypeDef           *)    I2S2_BASE)
 #define hwp_pdm1        ((PDM_TypeDef           *)    PDM1_BASE)
 #define hwp_crc1        ((CRC_TypeDef           *)    CRC1_BASE)
 #define hwp_crc2        ((CRC_TypeDef           *)    CRC2_BASE)
@@ -725,12 +593,12 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_sdmmc1      ((SD_TypeDef            *)    SDMMC1_BASE)
 #define hwp_sdmmc2      ((SD_TypeDef            *)    SDMMC2_BASE)
 #define hwp_aes_acc     ((AES_ACC_TypeDef       *)    AES_BASE)
-#define hwp_i2s2        ((I2S_TypeDef           *)    I2S2_BASE)
 #define hwp_gpio1       ((GPIO_TypeDef          *)    GPIO1_BASE)
 #define hwp_gpio2       ((GPIO_TypeDef          *)    GPIO2_BASE)
 #define hwp_usbc        ((USBC_X_Typedef        *)    USBC_BASE)
 #define hwp_dcmi        ((DCMI_TypeDef          *)    DCMI_BASE)
 #define hwp_pinmux1     ((HPSYS_PINMUX_TypeDef  *)    PINMUX1_BASE)
+#define hwp_pinmux2     ((LPSYS_PINMUX_TypeDef  *)    PINMUX2_BASE)
 #define hwp_hpsys_aon   ((HPSYS_AON_TypeDef     *)    HPSYS_AON_BASE)
 #define hwp_lpsys_aon   ((LPSYS_AON_TypeDef     *)    LPSYS_AON_BASE)
 #define hwp_gpadc       ((GPADC_TypeDef         *)    GPADC_BASE)
@@ -738,6 +606,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_bt_rfc      ((BT_RFC_TypeDef        *)    BT_RFC_REG_BASE)
 #define hwp_bt_phy      ((BT_PHY_TypeDef        *)    BT_PHY_BASE)
 #define hwp_bt_mac      ((BT_MAC_TypeDef        *)    BT_MAC_BASE)
+#define hwp_wdt1        ((WDT_TypeDef           *)    WDT1_BASE)
 #define hwp_wdt2        ((WDT_TypeDef           *)    WDT2_BASE)
 #define hwp_iwdt        ((WDT_TypeDef           *)    IWDT_BASE)
 #define hwp_tsen        ((TSEN_TypeDef          *)    TSEN_BASE)
@@ -750,7 +619,6 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define hwp_qspi1       hwp_mpi1
 #define hwp_qspi2       hwp_mpi2
 #define hwp_qspi3       hwp_mpi3
-#define hwp_qspi4       hwp_mpi4
 
 #define hwp_hmailbox    ((MAILBOX1_TypeDef       *)    MAILBOX1_BASE)
 #define hwp_lmailbox    ((MAILBOX2_TypeDef       *)    MAILBOX2_BASE)
@@ -776,7 +644,6 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define FLASH1        hwp_qspi1
 #define FLASH2        hwp_qspi2
 #define FLASH3        hwp_qspi3
-#define FLASH4        hwp_qspi4
 
 #define SDIO1          hwp_sdmmc1
 
@@ -841,8 +708,7 @@ extern unsigned long Exception_Get_EXC(uint32_t EXCn);
 #define DMA1_Channel6       ((DMA_Channel_TypeDef *) &DMA1->CCR6)
 #define DMA1_Channel7       ((DMA_Channel_TypeDef *) &DMA1->CCR7)
 #define DMA1_Channel8       ((DMA_Channel_TypeDef *) &DMA1->CCR8)
-//TODO: whether suitable for dynamic allocation?
-#define DMA1_CHANNEL_NUM    (10)
+#define DMA1_CHANNEL_NUM    (8)
 #define DMA1_CSELR          ((DMA_Request_TypeDef *) &DMA1->CSELR1)
 #define DMA2_Channel1       ((DMA_Channel_TypeDef *) &DMA2->CCR1)
 #define DMA2_Channel2       ((DMA_Channel_TypeDef *) &DMA2->CCR2)

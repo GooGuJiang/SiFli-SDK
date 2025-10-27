@@ -6,9 +6,11 @@ typedef struct
     __IO uint32_t PMR;
     __IO uint32_t CR1;
     __IO uint32_t CR2;
+    __IO uint32_t CR3;
     __IO uint32_t ACR;
     __IO uint32_t LSCR;
     __IO uint32_t DSCR;
+    __IO uint32_t SBCR;
     __IO uint32_t WER;
     __IO uint32_t WSR;
     __IO uint32_t WCR;
@@ -24,6 +26,9 @@ typedef struct
 #define HPSYS_AON_PMR_MODE_Pos          (0U)
 #define HPSYS_AON_PMR_MODE_Msk          (0x3UL << HPSYS_AON_PMR_MODE_Pos)
 #define HPSYS_AON_PMR_MODE              HPSYS_AON_PMR_MODE_Msk
+#define HPSYS_AON_PMR_FORCE_LCPU_Pos    (30U)
+#define HPSYS_AON_PMR_FORCE_LCPU_Msk    (0x1UL << HPSYS_AON_PMR_FORCE_LCPU_Pos)
+#define HPSYS_AON_PMR_FORCE_LCPU        HPSYS_AON_PMR_FORCE_LCPU_Msk
 #define HPSYS_AON_PMR_FORCE_SLEEP_Pos   (31U)
 #define HPSYS_AON_PMR_FORCE_SLEEP_Msk   (0x1UL << HPSYS_AON_PMR_FORCE_SLEEP_Pos)
 #define HPSYS_AON_PMR_FORCE_SLEEP       HPSYS_AON_PMR_FORCE_SLEEP_Msk
@@ -89,6 +94,23 @@ typedef struct
 #define HPSYS_AON_CR2_PIN15_MODE_Msk    (0x7UL << HPSYS_AON_CR2_PIN15_MODE_Pos)
 #define HPSYS_AON_CR2_PIN15_MODE        HPSYS_AON_CR2_PIN15_MODE_Msk
 
+/***************** Bit definition for HPSYS_AON_CR3 register ******************/
+#define HPSYS_AON_CR3_PIN16_MODE_Pos    (0U)
+#define HPSYS_AON_CR3_PIN16_MODE_Msk    (0x7UL << HPSYS_AON_CR3_PIN16_MODE_Pos)
+#define HPSYS_AON_CR3_PIN16_MODE        HPSYS_AON_CR3_PIN16_MODE_Msk
+#define HPSYS_AON_CR3_PIN17_MODE_Pos    (3U)
+#define HPSYS_AON_CR3_PIN17_MODE_Msk    (0x7UL << HPSYS_AON_CR3_PIN17_MODE_Pos)
+#define HPSYS_AON_CR3_PIN17_MODE        HPSYS_AON_CR3_PIN17_MODE_Msk
+#define HPSYS_AON_CR3_PIN18_MODE_Pos    (6U)
+#define HPSYS_AON_CR3_PIN18_MODE_Msk    (0x7UL << HPSYS_AON_CR3_PIN18_MODE_Pos)
+#define HPSYS_AON_CR3_PIN18_MODE        HPSYS_AON_CR3_PIN18_MODE_Msk
+#define HPSYS_AON_CR3_PIN19_MODE_Pos    (9U)
+#define HPSYS_AON_CR3_PIN19_MODE_Msk    (0x7UL << HPSYS_AON_CR3_PIN19_MODE_Pos)
+#define HPSYS_AON_CR3_PIN19_MODE        HPSYS_AON_CR3_PIN19_MODE_Msk
+#define HPSYS_AON_CR3_PIN20_MODE_Pos    (12U)
+#define HPSYS_AON_CR3_PIN20_MODE_Msk    (0x7UL << HPSYS_AON_CR3_PIN20_MODE_Pos)
+#define HPSYS_AON_CR3_PIN20_MODE        HPSYS_AON_CR3_PIN20_MODE_Msk
+
 /***************** Bit definition for HPSYS_AON_ACR register ******************/
 #define HPSYS_AON_ACR_HRC48_REQ_Pos     (0U)
 #define HPSYS_AON_ACR_HRC48_REQ_Msk     (0x1UL << HPSYS_AON_ACR_HRC48_REQ_Pos)
@@ -137,25 +159,42 @@ typedef struct
 #define HPSYS_AON_DSCR_EXTPWR_REQ_Msk   (0x1UL << HPSYS_AON_DSCR_EXTPWR_REQ_Pos)
 #define HPSYS_AON_DSCR_EXTPWR_REQ       HPSYS_AON_DSCR_EXTPWR_REQ_Msk
 
+/***************** Bit definition for HPSYS_AON_SBCR register *****************/
+#define HPSYS_AON_SBCR_HRC48_REQ_Pos    (0U)
+#define HPSYS_AON_SBCR_HRC48_REQ_Msk    (0x1UL << HPSYS_AON_SBCR_HRC48_REQ_Pos)
+#define HPSYS_AON_SBCR_HRC48_REQ        HPSYS_AON_SBCR_HRC48_REQ_Msk
+#define HPSYS_AON_SBCR_HXT48_REQ_Pos    (1U)
+#define HPSYS_AON_SBCR_HXT48_REQ_Msk    (0x1UL << HPSYS_AON_SBCR_HXT48_REQ_Pos)
+#define HPSYS_AON_SBCR_HXT48_REQ        HPSYS_AON_SBCR_HXT48_REQ_Msk
+#define HPSYS_AON_SBCR_PWR_REQ_Pos      (2U)
+#define HPSYS_AON_SBCR_PWR_REQ_Msk      (0x1UL << HPSYS_AON_SBCR_PWR_REQ_Pos)
+#define HPSYS_AON_SBCR_PWR_REQ          HPSYS_AON_SBCR_PWR_REQ_Msk
+#define HPSYS_AON_SBCR_EXTPWR_REQ_Pos   (3U)
+#define HPSYS_AON_SBCR_EXTPWR_REQ_Msk   (0x1UL << HPSYS_AON_SBCR_EXTPWR_REQ_Pos)
+#define HPSYS_AON_SBCR_EXTPWR_REQ       HPSYS_AON_SBCR_EXTPWR_REQ_Msk
+#define HPSYS_AON_SBCR_PD_RAM0_Pos      (6U)
+#define HPSYS_AON_SBCR_PD_RAM0_Msk      (0x1UL << HPSYS_AON_SBCR_PD_RAM0_Pos)
+#define HPSYS_AON_SBCR_PD_RAM0          HPSYS_AON_SBCR_PD_RAM0_Msk
+#define HPSYS_AON_SBCR_PD_RAM1_Pos      (7U)
+#define HPSYS_AON_SBCR_PD_RAM1_Msk      (0x1UL << HPSYS_AON_SBCR_PD_RAM1_Pos)
+#define HPSYS_AON_SBCR_PD_RAM1          HPSYS_AON_SBCR_PD_RAM1_Msk
+#define HPSYS_AON_SBCR_PD_RAM2_Pos      (8U)
+#define HPSYS_AON_SBCR_PD_RAM2_Msk      (0x1UL << HPSYS_AON_SBCR_PD_RAM2_Pos)
+#define HPSYS_AON_SBCR_PD_RAM2          HPSYS_AON_SBCR_PD_RAM2_Msk
+
 /***************** Bit definition for HPSYS_AON_WER register ******************/
 #define HPSYS_AON_WER_RTC_Pos           (0U)
 #define HPSYS_AON_WER_RTC_Msk           (0x1UL << HPSYS_AON_WER_RTC_Pos)
 #define HPSYS_AON_WER_RTC               HPSYS_AON_WER_RTC_Msk
-#define HPSYS_AON_WER_IWDT_Pos          (1U)
-#define HPSYS_AON_WER_IWDT_Msk          (0x1UL << HPSYS_AON_WER_IWDT_Pos)
-#define HPSYS_AON_WER_IWDT              HPSYS_AON_WER_IWDT_Msk
-#define HPSYS_AON_WER_GPIO1_Pos         (2U)
+#define HPSYS_AON_WER_GPIO1_Pos         (1U)
 #define HPSYS_AON_WER_GPIO1_Msk         (0x1UL << HPSYS_AON_WER_GPIO1_Pos)
 #define HPSYS_AON_WER_GPIO1             HPSYS_AON_WER_GPIO1_Msk
-#define HPSYS_AON_WER_LPTIM1_Pos        (3U)
+#define HPSYS_AON_WER_LPTIM1_Pos        (2U)
 #define HPSYS_AON_WER_LPTIM1_Msk        (0x1UL << HPSYS_AON_WER_LPTIM1_Pos)
 #define HPSYS_AON_WER_LPTIM1            HPSYS_AON_WER_LPTIM1_Msk
-#define HPSYS_AON_WER_LPTIM1OUT_Pos     (4U)
-#define HPSYS_AON_WER_LPTIM1OUT_Msk     (0x1UL << HPSYS_AON_WER_LPTIM1OUT_Pos)
-#define HPSYS_AON_WER_LPTIM1OUT         HPSYS_AON_WER_LPTIM1OUT_Msk
-#define HPSYS_AON_WER_LP2HP_WDT_Pos     (5U)
-#define HPSYS_AON_WER_LP2HP_WDT_Msk     (0x1UL << HPSYS_AON_WER_LP2HP_WDT_Pos)
-#define HPSYS_AON_WER_LP2HP_WDT         HPSYS_AON_WER_LP2HP_WDT_Msk
+#define HPSYS_AON_WER_PMUC_Pos          (3U)
+#define HPSYS_AON_WER_PMUC_Msk          (0x1UL << HPSYS_AON_WER_PMUC_Pos)
+#define HPSYS_AON_WER_PMUC              HPSYS_AON_WER_PMUC_Msk
 #define HPSYS_AON_WER_LP2HP_REQ_Pos     (6U)
 #define HPSYS_AON_WER_LP2HP_REQ_Msk     (0x1UL << HPSYS_AON_WER_LP2HP_REQ_Pos)
 #define HPSYS_AON_WER_LP2HP_REQ         HPSYS_AON_WER_LP2HP_REQ_Msk
@@ -210,23 +249,35 @@ typedef struct
 #define HPSYS_AON_WER_PIN15_Pos         (23U)
 #define HPSYS_AON_WER_PIN15_Msk         (0x1UL << HPSYS_AON_WER_PIN15_Pos)
 #define HPSYS_AON_WER_PIN15             HPSYS_AON_WER_PIN15_Msk
+#define HPSYS_AON_WER_PIN16_Pos         (24U)
+#define HPSYS_AON_WER_PIN16_Msk         (0x1UL << HPSYS_AON_WER_PIN16_Pos)
+#define HPSYS_AON_WER_PIN16             HPSYS_AON_WER_PIN16_Msk
+#define HPSYS_AON_WER_PIN17_Pos         (25U)
+#define HPSYS_AON_WER_PIN17_Msk         (0x1UL << HPSYS_AON_WER_PIN17_Pos)
+#define HPSYS_AON_WER_PIN17             HPSYS_AON_WER_PIN17_Msk
+#define HPSYS_AON_WER_PIN18_Pos         (26U)
+#define HPSYS_AON_WER_PIN18_Msk         (0x1UL << HPSYS_AON_WER_PIN18_Pos)
+#define HPSYS_AON_WER_PIN18             HPSYS_AON_WER_PIN18_Msk
+#define HPSYS_AON_WER_PIN19_Pos         (27U)
+#define HPSYS_AON_WER_PIN19_Msk         (0x1UL << HPSYS_AON_WER_PIN19_Pos)
+#define HPSYS_AON_WER_PIN19             HPSYS_AON_WER_PIN19_Msk
+#define HPSYS_AON_WER_PIN20_Pos         (28U)
+#define HPSYS_AON_WER_PIN20_Msk         (0x1UL << HPSYS_AON_WER_PIN20_Pos)
+#define HPSYS_AON_WER_PIN20             HPSYS_AON_WER_PIN20_Msk
 
 /***************** Bit definition for HPSYS_AON_WSR register ******************/
 #define HPSYS_AON_WSR_RTC_Pos           (0U)
 #define HPSYS_AON_WSR_RTC_Msk           (0x1UL << HPSYS_AON_WSR_RTC_Pos)
 #define HPSYS_AON_WSR_RTC               HPSYS_AON_WSR_RTC_Msk
-#define HPSYS_AON_WSR_IWDT_Pos          (1U)
-#define HPSYS_AON_WSR_IWDT_Msk          (0x1UL << HPSYS_AON_WSR_IWDT_Pos)
-#define HPSYS_AON_WSR_IWDT              HPSYS_AON_WSR_IWDT_Msk
-#define HPSYS_AON_WSR_GPIO1_Pos         (2U)
+#define HPSYS_AON_WSR_GPIO1_Pos         (1U)
 #define HPSYS_AON_WSR_GPIO1_Msk         (0x1UL << HPSYS_AON_WSR_GPIO1_Pos)
 #define HPSYS_AON_WSR_GPIO1             HPSYS_AON_WSR_GPIO1_Msk
-#define HPSYS_AON_WSR_LPTIM1_Pos        (3U)
+#define HPSYS_AON_WSR_LPTIM1_Pos        (2U)
 #define HPSYS_AON_WSR_LPTIM1_Msk        (0x1UL << HPSYS_AON_WSR_LPTIM1_Pos)
 #define HPSYS_AON_WSR_LPTIM1            HPSYS_AON_WSR_LPTIM1_Msk
-#define HPSYS_AON_WSR_LP2HP_WDT_Pos     (5U)
-#define HPSYS_AON_WSR_LP2HP_WDT_Msk     (0x1UL << HPSYS_AON_WSR_LP2HP_WDT_Pos)
-#define HPSYS_AON_WSR_LP2HP_WDT         HPSYS_AON_WSR_LP2HP_WDT_Msk
+#define HPSYS_AON_WSR_PMUC_Pos          (3U)
+#define HPSYS_AON_WSR_PMUC_Msk          (0x1UL << HPSYS_AON_WSR_PMUC_Pos)
+#define HPSYS_AON_WSR_PMUC              HPSYS_AON_WSR_PMUC_Msk
 #define HPSYS_AON_WSR_LP2HP_REQ_Pos     (6U)
 #define HPSYS_AON_WSR_LP2HP_REQ_Msk     (0x1UL << HPSYS_AON_WSR_LP2HP_REQ_Pos)
 #define HPSYS_AON_WSR_LP2HP_REQ         HPSYS_AON_WSR_LP2HP_REQ_Msk
@@ -281,10 +332,27 @@ typedef struct
 #define HPSYS_AON_WSR_PIN15_Pos         (23U)
 #define HPSYS_AON_WSR_PIN15_Msk         (0x1UL << HPSYS_AON_WSR_PIN15_Pos)
 #define HPSYS_AON_WSR_PIN15             HPSYS_AON_WSR_PIN15_Msk
+#define HPSYS_AON_WSR_PIN16_Pos         (24U)
+#define HPSYS_AON_WSR_PIN16_Msk         (0x1UL << HPSYS_AON_WSR_PIN16_Pos)
+#define HPSYS_AON_WSR_PIN16             HPSYS_AON_WSR_PIN16_Msk
+#define HPSYS_AON_WSR_PIN17_Pos         (25U)
+#define HPSYS_AON_WSR_PIN17_Msk         (0x1UL << HPSYS_AON_WSR_PIN17_Pos)
+#define HPSYS_AON_WSR_PIN17             HPSYS_AON_WSR_PIN17_Msk
+#define HPSYS_AON_WSR_PIN18_Pos         (26U)
+#define HPSYS_AON_WSR_PIN18_Msk         (0x1UL << HPSYS_AON_WSR_PIN18_Pos)
+#define HPSYS_AON_WSR_PIN18             HPSYS_AON_WSR_PIN18_Msk
+#define HPSYS_AON_WSR_PIN19_Pos         (27U)
+#define HPSYS_AON_WSR_PIN19_Msk         (0x1UL << HPSYS_AON_WSR_PIN19_Pos)
+#define HPSYS_AON_WSR_PIN19             HPSYS_AON_WSR_PIN19_Msk
+#define HPSYS_AON_WSR_PIN20_Pos         (28U)
+#define HPSYS_AON_WSR_PIN20_Msk         (0x1UL << HPSYS_AON_WSR_PIN20_Pos)
+#define HPSYS_AON_WSR_PIN20             HPSYS_AON_WSR_PIN20_Msk
 #define HPSYS_AON_WSR_PIN_ALL           (HPSYS_AON_WSR_PIN0 | HPSYS_AON_WSR_PIN1 | HPSYS_AON_WSR_PIN2 | HPSYS_AON_WSR_PIN3      \
                                          | HPSYS_AON_WSR_PIN4 | HPSYS_AON_WSR_PIN5 | HPSYS_AON_WSR_PIN6 | HPSYS_AON_WSR_PIN7    \
                                          | HPSYS_AON_WSR_PIN8 | HPSYS_AON_WSR_PIN9 | HPSYS_AON_WSR_PIN10 | HPSYS_AON_WSR_PIN11  \
-                                         | HPSYS_AON_WSR_PIN12 | HPSYS_AON_WSR_PIN13 | HPSYS_AON_WSR_PIN14 | HPSYS_AON_WSR_PIN15)
+                                         | HPSYS_AON_WSR_PIN12 | HPSYS_AON_WSR_PIN13 | HPSYS_AON_WSR_PIN14 | HPSYS_AON_WSR_PIN15 \
+                                         | HPSYS_AON_WSR_PIN16 | HPSYS_AON_WSR_PIN17 | HPSYS_AON_WSR_PIN18 | HPSYS_AON_WSR_PIN19 \
+                                         | HPSYS_AON_WSR_PIN20)
 #define HPSYS_AON_WSR_PIN_NUM           (21)
 
 /***************** Bit definition for HPSYS_AON_WCR register ******************/
@@ -336,6 +404,21 @@ typedef struct
 #define HPSYS_AON_WCR_PIN15_Pos         (23U)
 #define HPSYS_AON_WCR_PIN15_Msk         (0x1UL << HPSYS_AON_WCR_PIN15_Pos)
 #define HPSYS_AON_WCR_PIN15             HPSYS_AON_WCR_PIN15_Msk
+#define HPSYS_AON_WCR_PIN16_Pos         (24U)
+#define HPSYS_AON_WCR_PIN16_Msk         (0x1UL << HPSYS_AON_WCR_PIN16_Pos)
+#define HPSYS_AON_WCR_PIN16             HPSYS_AON_WCR_PIN16_Msk
+#define HPSYS_AON_WCR_PIN17_Pos         (25U)
+#define HPSYS_AON_WCR_PIN17_Msk         (0x1UL << HPSYS_AON_WCR_PIN17_Pos)
+#define HPSYS_AON_WCR_PIN17             HPSYS_AON_WCR_PIN17_Msk
+#define HPSYS_AON_WCR_PIN18_Pos         (26U)
+#define HPSYS_AON_WCR_PIN18_Msk         (0x1UL << HPSYS_AON_WCR_PIN18_Pos)
+#define HPSYS_AON_WCR_PIN18             HPSYS_AON_WCR_PIN18_Msk
+#define HPSYS_AON_WCR_PIN19_Pos         (27U)
+#define HPSYS_AON_WCR_PIN19_Msk         (0x1UL << HPSYS_AON_WCR_PIN19_Pos)
+#define HPSYS_AON_WCR_PIN19             HPSYS_AON_WCR_PIN19_Msk
+#define HPSYS_AON_WCR_PIN20_Pos         (28U)
+#define HPSYS_AON_WCR_PIN20_Msk         (0x1UL << HPSYS_AON_WCR_PIN20_Pos)
+#define HPSYS_AON_WCR_PIN20             HPSYS_AON_WCR_PIN20_Msk
 #define HPSYS_AON_WCR_AON_Pos           (31U)
 #define HPSYS_AON_WCR_AON_Msk           (0x1UL << HPSYS_AON_WCR_AON_Pos)
 #define HPSYS_AON_WCR_AON               HPSYS_AON_WCR_AON_Msk
@@ -355,7 +438,10 @@ typedef struct
 #define HPSYS_AON_ISSR_LP_ACTIVE        HPSYS_AON_ISSR_LP_ACTIVE_Msk
 
 /**************** Bit definition for HPSYS_AON_ANACR register *****************/
-#define HPSYS_AON_ANACR_VHP_ISO_Pos     (0U)
+#define HPSYS_AON_ANACR_PA_ISO_Pos      (0U)
+#define HPSYS_AON_ANACR_PA_ISO_Msk      (0x1UL << HPSYS_AON_ANACR_PA_ISO_Pos)
+#define HPSYS_AON_ANACR_PA_ISO          HPSYS_AON_ANACR_PA_ISO_Msk
+#define HPSYS_AON_ANACR_VHP_ISO_Pos     (1U)
 #define HPSYS_AON_ANACR_VHP_ISO_Msk     (0x1UL << HPSYS_AON_ANACR_VHP_ISO_Pos)
 #define HPSYS_AON_ANACR_VHP_ISO         HPSYS_AON_ANACR_VHP_ISO_Msk
 

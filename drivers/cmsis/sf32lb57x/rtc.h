@@ -28,7 +28,8 @@ typedef struct
     __IO uint32_t PBRCR;
     __IO uint32_t PBR0R;
     __IO uint32_t PBR1R;
-    __IO uint32_t PAWK0R;
+    __IO uint32_t PBR2R;
+    __IO uint32_t PBR3R;
     __IO uint32_t PAWK1R;
     __IO uint32_t PAWK2R;
     __IO uint32_t PAWK3R;
@@ -391,16 +392,31 @@ typedef struct
 #define RTC_PBR0R_OE_Pos                (1U)
 #define RTC_PBR0R_OE_Msk                (0x1UL << RTC_PBR0R_OE_Pos)
 #define RTC_PBR0R_OE                    RTC_PBR0R_OE_Msk
-#define RTC_PBR0R_SR_Pos                (2U)
+#define RTC_PBR0R_IE_Pos                (2U)
+#define RTC_PBR0R_IE_Msk                (0x1UL << RTC_PBR0R_IE_Pos)
+#define RTC_PBR0R_IE                    RTC_PBR0R_IE_Msk
+#define RTC_PBR0R_PE_Pos                (3U)
+#define RTC_PBR0R_PE_Msk                (0x1UL << RTC_PBR0R_PE_Pos)
+#define RTC_PBR0R_PE                    RTC_PBR0R_PE_Msk
+#define RTC_PBR0R_PS_Pos                (4U)
+#define RTC_PBR0R_PS_Msk                (0x1UL << RTC_PBR0R_PS_Pos)
+#define RTC_PBR0R_PS                    RTC_PBR0R_PS_Msk
+#define RTC_PBR0R_IS_Pos                (5U)
+#define RTC_PBR0R_IS_Msk                (0x1UL << RTC_PBR0R_IS_Pos)
+#define RTC_PBR0R_IS                    RTC_PBR0R_IS_Msk
+#define RTC_PBR0R_SR_Pos                (6U)
 #define RTC_PBR0R_SR_Msk                (0x1UL << RTC_PBR0R_SR_Pos)
 #define RTC_PBR0R_SR                    RTC_PBR0R_SR_Msk
-#define RTC_PBR0R_DS0_Pos               (3U)
+#define RTC_PBR0R_DS0_Pos               (7U)
 #define RTC_PBR0R_DS0_Msk               (0x1UL << RTC_PBR0R_DS0_Pos)
 #define RTC_PBR0R_DS0                   RTC_PBR0R_DS0_Msk
-#define RTC_PBR0R_DS1_Pos               (4U)
+#define RTC_PBR0R_DS1_Pos               (8U)
 #define RTC_PBR0R_DS1_Msk               (0x1UL << RTC_PBR0R_DS1_Pos)
 #define RTC_PBR0R_DS1                   RTC_PBR0R_DS1_Msk
-#define RTC_PBR0R_SEL_Pos               (8U)
+#define RTC_PBR0R_IN_Pos                (9U)
+#define RTC_PBR0R_IN_Msk                (0x1UL << RTC_PBR0R_IN_Pos)
+#define RTC_PBR0R_IN                    RTC_PBR0R_IN_Msk
+#define RTC_PBR0R_SEL_Pos               (12U)
 #define RTC_PBR0R_SEL_Msk               (0x7UL << RTC_PBR0R_SEL_Pos)
 #define RTC_PBR0R_SEL                   RTC_PBR0R_SEL_Msk
 #define RTC_PBR0R_FORCE1_Pos            (31U)
@@ -414,40 +430,117 @@ typedef struct
 #define RTC_PBR1R_OE_Pos                (1U)
 #define RTC_PBR1R_OE_Msk                (0x1UL << RTC_PBR1R_OE_Pos)
 #define RTC_PBR1R_OE                    RTC_PBR1R_OE_Msk
-#define RTC_PBR1R_SR_Pos                (2U)
+#define RTC_PBR1R_IE_Pos                (2U)
+#define RTC_PBR1R_IE_Msk                (0x1UL << RTC_PBR1R_IE_Pos)
+#define RTC_PBR1R_IE                    RTC_PBR1R_IE_Msk
+#define RTC_PBR1R_PE_Pos                (3U)
+#define RTC_PBR1R_PE_Msk                (0x1UL << RTC_PBR1R_PE_Pos)
+#define RTC_PBR1R_PE                    RTC_PBR1R_PE_Msk
+#define RTC_PBR1R_PS_Pos                (4U)
+#define RTC_PBR1R_PS_Msk                (0x1UL << RTC_PBR1R_PS_Pos)
+#define RTC_PBR1R_PS                    RTC_PBR1R_PS_Msk
+#define RTC_PBR1R_IS_Pos                (5U)
+#define RTC_PBR1R_IS_Msk                (0x1UL << RTC_PBR1R_IS_Pos)
+#define RTC_PBR1R_IS                    RTC_PBR1R_IS_Msk
+#define RTC_PBR1R_SR_Pos                (6U)
 #define RTC_PBR1R_SR_Msk                (0x1UL << RTC_PBR1R_SR_Pos)
 #define RTC_PBR1R_SR                    RTC_PBR1R_SR_Msk
-#define RTC_PBR1R_DS0_Pos               (3U)
+#define RTC_PBR1R_DS0_Pos               (7U)
 #define RTC_PBR1R_DS0_Msk               (0x1UL << RTC_PBR1R_DS0_Pos)
 #define RTC_PBR1R_DS0                   RTC_PBR1R_DS0_Msk
-#define RTC_PBR1R_DS1_Pos               (4U)
+#define RTC_PBR1R_DS1_Pos               (8U)
 #define RTC_PBR1R_DS1_Msk               (0x1UL << RTC_PBR1R_DS1_Pos)
 #define RTC_PBR1R_DS1                   RTC_PBR1R_DS1_Msk
-#define RTC_PBR1R_SEL_Pos               (8U)
+#define RTC_PBR1R_IN_Pos                (9U)
+#define RTC_PBR1R_IN_Msk                (0x1UL << RTC_PBR1R_IN_Pos)
+#define RTC_PBR1R_IN                    RTC_PBR1R_IN_Msk
+#define RTC_PBR1R_SEL_Pos               (12U)
 #define RTC_PBR1R_SEL_Msk               (0x7UL << RTC_PBR1R_SEL_Pos)
 #define RTC_PBR1R_SEL                   RTC_PBR1R_SEL_Msk
-#define RTC_PBR1R_FORCE1_Pos            (31U)
-#define RTC_PBR1R_FORCE1_Msk            (0x1UL << RTC_PBR1R_FORCE1_Pos)
-#define RTC_PBR1R_FORCE1                RTC_PBR1R_FORCE1_Msk
 
-/******************* Bit definition for RTC_PAWK0R register *******************/
-#define RTC_PAWK0R_IE_Pos               (0U)
-#define RTC_PAWK0R_IE_Msk               (0xFFFFUL << RTC_PAWK0R_IE_Pos)
-#define RTC_PAWK0R_IE                   RTC_PAWK0R_IE_Msk
+/******************* Bit definition for RTC_PBR2R register ********************/
+#define RTC_PBR2R_OUT_Pos               (0U)
+#define RTC_PBR2R_OUT_Msk               (0x1UL << RTC_PBR2R_OUT_Pos)
+#define RTC_PBR2R_OUT                   RTC_PBR2R_OUT_Msk
+#define RTC_PBR2R_OE_Pos                (1U)
+#define RTC_PBR2R_OE_Msk                (0x1UL << RTC_PBR2R_OE_Pos)
+#define RTC_PBR2R_OE                    RTC_PBR2R_OE_Msk
+#define RTC_PBR2R_IE_Pos                (2U)
+#define RTC_PBR2R_IE_Msk                (0x1UL << RTC_PBR2R_IE_Pos)
+#define RTC_PBR2R_IE                    RTC_PBR2R_IE_Msk
+#define RTC_PBR2R_PE_Pos                (3U)
+#define RTC_PBR2R_PE_Msk                (0x1UL << RTC_PBR2R_PE_Pos)
+#define RTC_PBR2R_PE                    RTC_PBR2R_PE_Msk
+#define RTC_PBR2R_PS_Pos                (4U)
+#define RTC_PBR2R_PS_Msk                (0x1UL << RTC_PBR2R_PS_Pos)
+#define RTC_PBR2R_PS                    RTC_PBR2R_PS_Msk
+#define RTC_PBR2R_IS_Pos                (5U)
+#define RTC_PBR2R_IS_Msk                (0x1UL << RTC_PBR2R_IS_Pos)
+#define RTC_PBR2R_IS                    RTC_PBR2R_IS_Msk
+#define RTC_PBR2R_SR_Pos                (6U)
+#define RTC_PBR2R_SR_Msk                (0x1UL << RTC_PBR2R_SR_Pos)
+#define RTC_PBR2R_SR                    RTC_PBR2R_SR_Msk
+#define RTC_PBR2R_DS0_Pos               (7U)
+#define RTC_PBR2R_DS0_Msk               (0x1UL << RTC_PBR2R_DS0_Pos)
+#define RTC_PBR2R_DS0                   RTC_PBR2R_DS0_Msk
+#define RTC_PBR2R_DS1_Pos               (8U)
+#define RTC_PBR2R_DS1_Msk               (0x1UL << RTC_PBR2R_DS1_Pos)
+#define RTC_PBR2R_DS1                   RTC_PBR2R_DS1_Msk
+#define RTC_PBR2R_IN_Pos                (9U)
+#define RTC_PBR2R_IN_Msk                (0x1UL << RTC_PBR2R_IN_Pos)
+#define RTC_PBR2R_IN                    RTC_PBR2R_IN_Msk
+#define RTC_PBR2R_SEL_Pos               (12U)
+#define RTC_PBR2R_SEL_Msk               (0x7UL << RTC_PBR2R_SEL_Pos)
+#define RTC_PBR2R_SEL                   RTC_PBR2R_SEL_Msk
+
+/******************* Bit definition for RTC_PBR3R register ********************/
+#define RTC_PBR3R_OUT_Pos               (0U)
+#define RTC_PBR3R_OUT_Msk               (0x1UL << RTC_PBR3R_OUT_Pos)
+#define RTC_PBR3R_OUT                   RTC_PBR3R_OUT_Msk
+#define RTC_PBR3R_OE_Pos                (1U)
+#define RTC_PBR3R_OE_Msk                (0x1UL << RTC_PBR3R_OE_Pos)
+#define RTC_PBR3R_OE                    RTC_PBR3R_OE_Msk
+#define RTC_PBR3R_IE_Pos                (2U)
+#define RTC_PBR3R_IE_Msk                (0x1UL << RTC_PBR3R_IE_Pos)
+#define RTC_PBR3R_IE                    RTC_PBR3R_IE_Msk
+#define RTC_PBR3R_PE_Pos                (3U)
+#define RTC_PBR3R_PE_Msk                (0x1UL << RTC_PBR3R_PE_Pos)
+#define RTC_PBR3R_PE                    RTC_PBR3R_PE_Msk
+#define RTC_PBR3R_PS_Pos                (4U)
+#define RTC_PBR3R_PS_Msk                (0x1UL << RTC_PBR3R_PS_Pos)
+#define RTC_PBR3R_PS                    RTC_PBR3R_PS_Msk
+#define RTC_PBR3R_IS_Pos                (5U)
+#define RTC_PBR3R_IS_Msk                (0x1UL << RTC_PBR3R_IS_Pos)
+#define RTC_PBR3R_IS                    RTC_PBR3R_IS_Msk
+#define RTC_PBR3R_SR_Pos                (6U)
+#define RTC_PBR3R_SR_Msk                (0x1UL << RTC_PBR3R_SR_Pos)
+#define RTC_PBR3R_SR                    RTC_PBR3R_SR_Msk
+#define RTC_PBR3R_DS0_Pos               (7U)
+#define RTC_PBR3R_DS0_Msk               (0x1UL << RTC_PBR3R_DS0_Pos)
+#define RTC_PBR3R_DS0                   RTC_PBR3R_DS0_Msk
+#define RTC_PBR3R_DS1_Pos               (8U)
+#define RTC_PBR3R_DS1_Msk               (0x1UL << RTC_PBR3R_DS1_Pos)
+#define RTC_PBR3R_DS1                   RTC_PBR3R_DS1_Msk
+#define RTC_PBR3R_IN_Pos                (9U)
+#define RTC_PBR3R_IN_Msk                (0x1UL << RTC_PBR3R_IN_Pos)
+#define RTC_PBR3R_IN                    RTC_PBR3R_IN_Msk
+#define RTC_PBR3R_SEL_Pos               (12U)
+#define RTC_PBR3R_SEL_Msk               (0x7UL << RTC_PBR3R_SEL_Pos)
+#define RTC_PBR3R_SEL                   RTC_PBR3R_SEL_Msk
 
 /******************* Bit definition for RTC_PAWK1R register *******************/
 #define RTC_PAWK1R_PE_Pos               (0U)
-#define RTC_PAWK1R_PE_Msk               (0xFFFFUL << RTC_PAWK1R_PE_Pos)
+#define RTC_PAWK1R_PE_Msk               (0x1FFFFUL << RTC_PAWK1R_PE_Pos)
 #define RTC_PAWK1R_PE                   RTC_PAWK1R_PE_Msk
 
 /******************* Bit definition for RTC_PAWK2R register *******************/
 #define RTC_PAWK2R_PS_Pos               (0U)
-#define RTC_PAWK2R_PS_Msk               (0xFFFFUL << RTC_PAWK2R_PS_Pos)
+#define RTC_PAWK2R_PS_Msk               (0x1FFFFUL << RTC_PAWK2R_PS_Pos)
 #define RTC_PAWK2R_PS                   RTC_PAWK2R_PS_Msk
 
 /******************* Bit definition for RTC_PAWK3R register *******************/
 #define RTC_PAWK3R_IS_Pos               (0U)
-#define RTC_PAWK3R_IS_Msk               (0xFFFFUL << RTC_PAWK3R_IS_Pos)
+#define RTC_PAWK3R_IS_Msk               (0x1FFFFUL << RTC_PAWK3R_IS_Pos)
 #define RTC_PAWK3R_IS                   RTC_PAWK3R_IS_Msk
 
 #endif

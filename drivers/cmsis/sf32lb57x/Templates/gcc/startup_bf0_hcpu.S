@@ -81,14 +81,14 @@ __Vectors:
                 .long     Interrupt29_IRQHandler                 /*  29 Interrupt 29 */
                 .long     Interrupt30_IRQHandler                 /*  30 Interrupt 30 */
                 .long     Interrupt31_IRQHandler                 /*  31 Interrupt 31 */
-                .long     Interrupt32_IRQHandler                 /*  32 Interrupt 32 */
-                .long     Interrupt33_IRQHandler                 /*  33 Interrupt 33 */    
-                .long     Interrupt34_IRQHandler                 /*  34 Interrupt 34 */   
-                .long     Interrupt35_IRQHandler                 /*  35 Interrupt 35 */                  
-                .long     Interrupt36_IRQHandler                 /*  36 Interrupt 36 */                  
-                .long     Interrupt37_IRQHandler                 /*  37 Interrupt 37 */
-                .long     Interrupt38_IRQHandler                 /*  38 Interrupt 38 */                  
-                .long     Interrupt39_IRQHandler                 /*  39 Interrupt 39 */
+                .long     PTM1_CORE0_IRQHandler                  /*  32 Interrupt 32 */
+                .long     PTM1_CORE1_IRQHandler                  /*  33 Interrupt 33 */    
+                .long     PTM1_CORE2_IRQHandler                  /*  34 Interrupt 34 */   
+                .long     PTM1_CORE3_IRQHandler                  /*  35 Interrupt 35 */                  
+                .long     PTM1_CORE4_IRQHandler                  /*  36 Interrupt 36 */                  
+                .long     PTM1_CORE5_IRQHandler                  /*  37 Interrupt 37 */
+                .long     PTM1_CORE6_IRQHandler                  /*  38 Interrupt 38 */                  
+                .long     PTM1_CORE7_IRQHandler                  /*  39 Interrupt 39 */
                 .long     Interrupt40_IRQHandler                 /*  40 Interrupt 40 */                  
                 .long     Interrupt41_IRQHandler                 /*  41 Interrupt 41 */
                 .long     Interrupt42_IRQHandler                 /*  42 Interrupt 42 */
@@ -129,10 +129,10 @@ __Vectors:
                 .long     EXTDMA_IRQHandler                      /*  77 Interrupt 77 */
                 .long     I2C4_IRQHandler                        /*  78 Interrupt 78 */
                 .long     SDMMC1_IRQHandler                      /*  79 Interrupt 79 */
-                .long     Interrupt80_IRQHandler                 /*  80 Interrupt 80 */
-                .long     Interrupt81_IRQHandler                 /*  81 Interrupt 81 */
+                .long     ACPU2HCPU_IRQHandler                   /*  80 Interrupt 80 */
+                .long     SDMMC2_IRQHandler                      /*  81 Interrupt 81 */
                 .long     PDM1_IRQHandler                        /*  82 Interrupt 82 */
-                .long     Interrupt83_IRQHandler                 /*  83 Interrupt 83 */ 
+                .long     CAN1_IRQHandler                        /*  83 Interrupt 83 */ 
                 .long     GPIO1_IRQHandler                       /*  84 Interrupt 84 */ 
                 .long     QSPI1_IRQHandler                       /*  85 Interrupt 85 */
                 .long     QSPI2_IRQHandler                       /*  86 Interrupt 86 */
@@ -146,10 +146,16 @@ __Vectors:
                 .long     ATIM1_IRQHandler                     	 /*  94 Interrupt 94 */
                 .long     USART3_IRQHandler                      /*  95 Interrupt 95 */
                 .long     AUD_HP_IRQHandler                      /*  96 Interrupt 96 */
-                .long     Interrupt97_IRQHandler                 /*  97 Interrupt 97 */
+                .long     DCMI_IRQHandler                        /*  97 Interrupt 97 */
                 .long     SECU1_IRQHandler                     	 /*  98 Interrupt 98 */
-                                                                                     
-                .space   (13 * 4)                                /* Interrupts 99 .. 111 are left out */
+                .long     JPEGD_IRQHandler                     	 /*  99 Interrupt 99 */
+                .long     Interrupt100_IRQHandler                /*  100 Interrupt 100 */
+                .long     Interrupt101_IRQHandler                /*  101 Interrupt 101 */
+                .long     Interrupt102_IRQHandler                /*  102 Interrupt 102 */
+                .long     I2S2_IRQHandler                        /*  103 Interrupt 103 */
+                .long     Interrupt104_IRQHandler                /*  104 Interrupt 104 */
+                .long     PWM1_IRQHandler                        /*  105 Interrupt 105 */
+                .space    (6 * 4)                                /* Interrupts 106 .. 111 are left out */
 
 __Vectors_End:
                 .equ     __Vectors_Size, __Vectors_End - __Vectors
@@ -290,14 +296,14 @@ Default_Handler:
                 Set_Default_Handler      Interrupt29_IRQHandler       
                 Set_Default_Handler      Interrupt30_IRQHandler       
                 Set_Default_Handler      Interrupt31_IRQHandler       
-                Set_Default_Handler      Interrupt32_IRQHandler       
-                Set_Default_Handler      Interrupt33_IRQHandler       
-                Set_Default_Handler      Interrupt34_IRQHandler       
-                Set_Default_Handler      Interrupt35_IRQHandler       
-                Set_Default_Handler      Interrupt36_IRQHandler       
-                Set_Default_Handler      Interrupt37_IRQHandler       
-                Set_Default_Handler      Interrupt38_IRQHandler       
-                Set_Default_Handler      Interrupt39_IRQHandler
+                Set_Default_Handler      PTM1_CORE0_IRQHandler       
+                Set_Default_Handler      PTM1_CORE1_IRQHandler       
+                Set_Default_Handler      PTM1_CORE2_IRQHandler       
+                Set_Default_Handler      PTM1_CORE3_IRQHandler       
+                Set_Default_Handler      PTM1_CORE4_IRQHandler       
+                Set_Default_Handler      PTM1_CORE5_IRQHandler       
+                Set_Default_Handler      PTM1_CORE6_IRQHandler       
+                Set_Default_Handler      PTM1_CORE7_IRQHandler
                 Set_Default_Handler      Interrupt40_IRQHandler       
                 Set_Default_Handler      Interrupt41_IRQHandler       
                 Set_Default_Handler      Interrupt42_IRQHandler       
@@ -338,10 +344,10 @@ Default_Handler:
                 Set_Default_Handler      EXTDMA_IRQHandler     
                 Set_Default_Handler      I2C4_IRQHandler     
                 Set_Default_Handler      SDMMC1_IRQHandler      
-                Set_Default_Handler      Interrupt80_IRQHandler       
-                Set_Default_Handler      Interrupt81_IRQHandler      
+                Set_Default_Handler      ACPU2HCPU_IRQHandler       
+                Set_Default_Handler      SDMMC2_IRQHandler      
                 Set_Default_Handler      PDM1_IRQHandler        
-                Set_Default_Handler      Interrupt83_IRQHandler    
+                Set_Default_Handler      CAN1_IRQHandler    
                 Set_Default_Handler      GPIO1_IRQHandler      
                 Set_Default_Handler      QSPI1_IRQHandler      
                 Set_Default_Handler      QSPI2_IRQHandler      
@@ -355,8 +361,15 @@ Default_Handler:
                 Set_Default_Handler      ATIM1_IRQHandler 
                 Set_Default_Handler      USART3_IRQHandler          
                 Set_Default_Handler      AUD_HP_IRQHandler 
-                Set_Default_Handler      Interrupt97_IRQHandler  
+                Set_Default_Handler      DCMI_IRQHandler  
                 Set_Default_Handler      SECU1_IRQHandler 
+                Set_Default_Handler      JPEGD_IRQHandler 
+                Set_Default_Handler      Interrupt100_IRQHandler
+                Set_Default_Handler      Interrupt101_IRQHandler
+                Set_Default_Handler      Interrupt102_IRQHandler
+                Set_Default_Handler      I2S2_IRQHandler
+                Set_Default_Handler      Interrupt104_IRQHandler
+                Set_Default_Handler      PWM1_IRQHandler
 
 
                 .end

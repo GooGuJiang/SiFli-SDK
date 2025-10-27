@@ -65,9 +65,6 @@ typedef struct
 #define DCMI_CR_EDM_Pos                 (10U)
 #define DCMI_CR_EDM_Msk                 (0x7UL << DCMI_CR_EDM_Pos)
 #define DCMI_CR_EDM                     DCMI_CR_EDM_Msk
-#define DCMI_CR_SPI_CLKEG_Pos           (13U)
-#define DCMI_CR_SPI_CLKEG_Msk           (0x1UL << DCMI_CR_SPI_CLKEG_Pos)
-#define DCMI_CR_SPI_CLKEG               DCMI_CR_SPI_CLKEG_Msk
 #define DCMI_CR_ENABLE_Pos              (14U)
 #define DCMI_CR_ENABLE_Msk              (0x1UL << DCMI_CR_ENABLE_Pos)
 #define DCMI_CR_ENABLE                  DCMI_CR_ENABLE_Msk

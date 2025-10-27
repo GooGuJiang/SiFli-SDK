@@ -3511,6 +3511,9 @@ static void SPI_AUX_RST_HW_FSM(void)
 
 static void SPI_AUX_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
 {
+    //TODO:
+#ifdef hwp_ptc1
+
     uint32_t prescaler_value_1us;
     uint32_t ptc_delay_1us = HAL_RCC_GetHCLKFreq(CORE_ID_HCPU) / 1000000;
 
@@ -3562,7 +3565,6 @@ static void SPI_AUX_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     PTC_btim->PSC = prescaler_value_1us; //set time tick to 1us
     PTC_btim->ARR = porch_interval;
     PTC_btim->EGR |= BTIM_EGR_UG;
-
 
     p_DMACH0->CPAR = (uint32_t) & (hwp_ptc1->TCR1);
     p_DMACH0->CM0AR = (uint32_t) PTC_PHASE_ADDR(0);
@@ -3745,12 +3747,14 @@ static void SPI_AUX_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     NVIC_EnableIRQ(PTC_IRQ_NUM);
     hwp_ptc1->TCR1 |= PTC_TCR1_SWTRIG;
 
-
+#endif /* hwp_ptc1 */
 
 }
 
 static HAL_StatusTypeDef WAIT_EXECUTE_CODE_DONE(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
     for (uint32_t start_tick = HAL_GetTick(); (RAMLESS_DONE_MASK & hwp_ptc1->MEM3) != RAMLESS_DONE_MAGIC_FLAG;)
     {
         if (HAL_GetTick() - start_tick > LCDC_TIMEOUT_SECONDS * 1000)
@@ -3758,12 +3762,16 @@ static HAL_StatusTypeDef WAIT_EXECUTE_CODE_DONE(LCDC_HandleTypeDef *lcdc)
             if ((RAMLESS_DONE_MASK & hwp_ptc1->MEM3) != RAMLESS_DONE_MAGIC_FLAG) return HAL_TIMEOUT;
         }
     }
+#endif /* hwp_ptc1 */
 
     return HAL_OK;
 }
 
 static void SPI_AUX_HW_FSM_STOP(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     PTC_PHASE_INIT();
 
     //Stop it at end of one frame
@@ -3784,11 +3792,15 @@ static void SPI_AUX_HW_FSM_STOP(LCDC_HandleTypeDef *lcdc)
     *p_uint32_t = (uint32_t) PTC_PHASE_ADDR(9);//Start it!
 
     HAL_LCDC_ASSERT(HAL_OK == WAIT_EXECUTE_CODE_DONE(lcdc));
+#endif /* hwp_ptc1 */
 }
 
 
 static HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_START(LCDC_HandleTypeDef *lcdc, uint32_t freq, uint32_t addr, uint32_t addr_len, uint32_t data_len)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     uint32_t prev_clk_div, lcdc_clk;
 
     HAL_LCDC_ASSERT(lcdc);
@@ -3909,12 +3921,17 @@ static HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_START(LCDC_HandleTypeDef *lcd
     uint32_t *p_uint32_t = PTC_CH_DATA_CODE_ADDR(8, 7);
     *p_uint32_t = (uint32_t) PTC_PHASE_ADDR(9);//Start it!
 
+#endif /* hwp_ptc1 */
 
     return HAL_OK;
 }
 
 static HAL_StatusTypeDef RAMLESS_HW_FSM_WRITE_DATAS_START(LCDC_HandleTypeDef *lcdc, uint32_t addr, uint32_t addr_len, uint8_t *p_data, uint32_t data_len)
 {
+//TODO:
+#ifdef hwp_ptc1
+
+
     HAL_LCDC_ASSERT(4 == addr_len);
     HAL_LCDC_ASSERT(6 == data_len);
 
@@ -4000,6 +4017,8 @@ static HAL_StatusTypeDef RAMLESS_HW_FSM_WRITE_DATAS_START(LCDC_HandleTypeDef *lc
     uint32_t *p_uint32_t = PTC_CH_DATA_CODE_ADDR(8, 7);
     *p_uint32_t = (uint32_t) PTC_PHASE_ADDR(9);//Start it!
 
+#endif /* hwp_ptc1 */
+
     return HAL_OK;
 
 }
@@ -4007,9 +4026,13 @@ static HAL_StatusTypeDef RAMLESS_HW_FSM_WRITE_DATAS_START(LCDC_HandleTypeDef *lc
 
 static HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_END(LCDC_HandleTypeDef *lcdc, uint8_t *p_data, uint32_t data_len)
 {
+
     uint32_t i;
     uint32_t data;
     HAL_StatusTypeDef err = HAL_OK;
+//TODO:
+#ifdef hwp_ptc1
+
 
     HAL_LCDC_ASSERT((NULL != lcdc) && (NULL != p_data));
 
@@ -4032,6 +4055,7 @@ static HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_END(LCDC_HandleTypeDef *lcdc,
             err = HAL_BUSY;
         }
     }
+#endif /* hwp_ptc1 */
     return err;
 }
 
@@ -4420,6 +4444,9 @@ static void DPI_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
 
 static void DPI_HW_FSM_STOP(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     //Stop it at end of one frame
     hwp_ptc1->MEM3 = RAMLESS_STOP_MAGIC_FLAG;
     uint32_t *p_uint32_t = PTC_CH_DATA_CODE_ADDR(8, 8);
@@ -4428,6 +4455,7 @@ static void DPI_HW_FSM_STOP(LCDC_HandleTypeDef *lcdc)
     HAL_LCDC_ASSERT(HAL_OK == WAIT_EXECUTE_CODE_DONE(lcdc));
 
     NVIC_DisableIRQ(PTC_IRQ_NUM);
+#endif /* hwp_ptc1 */
 }
 
 static void DPI_HW_FSM_UPDATE_LAYER_DATA(LCDC_HandleTypeDef *lcdc)
@@ -5386,6 +5414,9 @@ __weak void HAL_RAMLESS_LCD_FullScreenCbk(void)
 
 static void SPI_AUX_FSM_IRQHandler(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     uint32_t cur_line, half_valid_line_num;
 
     hwp_ptc1->IER = 0x00;
@@ -5449,12 +5480,15 @@ static void SPI_AUX_FSM_IRQHandler(LCDC_HandleTypeDef *lcdc)
         }
 
     }
-
+#endif /* hwp_ptc1 */
 }
 
 #ifdef LCDC_SUPPORT_DPI
 static void DPI_AUX_FSM_IRQHandler(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     hwp_ptc1->IER = 0x00;
 
     //frame done interrupt
@@ -5470,7 +5504,7 @@ static void DPI_AUX_FSM_IRQHandler(LCDC_HandleTypeDef *lcdc)
             LCDC_TransCpltCallback(lcdc);
         }
     }
-
+#endif /* hwp_ptc1 */
 
 }
 #endif /* LCDC_SUPPORT_DPI */
@@ -5703,6 +5737,9 @@ __HAL_ROM_USED void HAL_LCDC_TE_IRQHandler(LCDC_HandleTypeDef *lcdc)
 
 void HAL_LCDC_PTC_IRQHandler(LCDC_HandleTypeDef *lcdc)
 {
+//TODO:
+#ifdef hwp_ptc1
+
     uint32_t isr;
     isr = hwp_ptc1->ISR;
     hwp_ptc1->ICR = 0xFF;
@@ -5729,6 +5766,8 @@ void HAL_LCDC_PTC_IRQHandler(LCDC_HandleTypeDef *lcdc)
         HAL_RAMLESS_LCD_IRQHandler(lcdc);
 #endif /* HAL_RAMLESS_LCD_ENABLED */
     }
+#endif /* hwp_ptc1 */
+
 }
 
 

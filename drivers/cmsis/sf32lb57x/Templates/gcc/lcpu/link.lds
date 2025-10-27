@@ -34,233 +34,267 @@
     <o1> Flash Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
   -----------------------------------------------------------------------------*/
-#ifdef ROM_ATTR
-__ROM_BASE = LPSYS_ROM_BASE;
-__ROM_SIZE = LPSYS_ROM_SIZE;
-#else
-__ROM_BASE = LPSYS_RAM_CODE_START_ADDR;
-__ROM_SIZE = LPSYS_RAM_CODE_SIZE;
-#endif
+__ROM_BASE = LCPU_RAM_CODE_START_ADDR;
+__ROM_SIZE = LCPU_RAM_CODE_SIZE*2;
+
+
 /*--------------------- Embedded RAM Configuration ----------------------------
   <h> RAM Configuration
     <o0> RAM Base Address    <0x0-0xFFFFFFFF:8>
     <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
  -----------------------------------------------------------------------------*/
-#ifdef ROM_ATTR
-__RAM_BASE = LCPU_RAM_DATA_START_ADDR;
-__RAM_SIZE = LCPU_RAM_DATA_SIZE;
-#else
-__RAM_BASE = LCPU_RAM_DATA_START_ADDR;
-__RAM_SIZE = LCPU_RAM_DATA_SIZE;
-#endif
+__RAM_BASE = LPSYS_RAM_BASE;
+__RAM_SIZE = LPSYS_RAM_SIZE-LCPU_MBOX_SIZE;
 
-ENTRY(_start)
+/*--------------------- Stack / Heap Configuration ----------------------------
+  <h> Stack / Heap Configuration
+    <o0> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
+    <o1> Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
+  </h>
+  -----------------------------------------------------------------------------*/
+__STACK_SIZE = 0x00000400;
+__HEAP_SIZE  = 0x00000000;
 
-/* Define base address and length of flash and ram */
+/*
+ *-------------------- <<< end of configuration section >>> -------------------
+ */
 MEMORY
 {
-  flash (rx) : ORIGIN = __ROM_BASE, LENGTH = __ROM_SIZE
-  ram (wxa!r) : ORIGIN = __RAM_BASE, LENGTH = __RAM_SIZE
+    ROM (rx)  : ORIGIN = __ROM_BASE,  LENGTH = __ROM_SIZE
+    RAM (rw)  : ORIGIN = __RAM_BASE,  LENGTH = __RAM_SIZE
 }
 
-REGION_ALIAS("ROM", flash)
-REGION_ALIAS("RAM", ram)
+/* Linker script to place sections and symbol values. Should be used together
+ * with other linker script that defines memory regions FLASH and RAM.
+ * It references following symbols, which must be defined in code:
+ *   Reset_Handler : Entry of reset handler
+ *
+ * It defines following symbols, which code can use without definition:
+ *   __exidx_start
+ *   __exidx_end
+ *   __copy_table_start__
+ *   __copy_table_end__
+ *   __zero_table_start__
+ *   __zero_table_end__
+ *   __etext
+ *   __data_start__
+ *   __preinit_array_start
+ *   __preinit_array_end
+ *   __init_array_start
+ *   __init_array_end
+ *   __fini_array_start
+ *   __fini_array_end
+ *   __data_end__
+ *   __bss_start__
+ *   __bss_end__
+ *   __end__
+ *   end
+ *   __HeapLimit
+ *   __StackLimit
+ *   __StackTop
+ *   __stack
+ */
+ENTRY(Reset_Handler)
 
 SECTIONS
 {
-  /* To provide symbol __STACK_SIZE, __HEAP_SIZE */
-  PROVIDE(__STACK_SIZE = 2K);
-  PROVIDE(__HEAP_SIZE = 16);
-  __TOT_STACK_SIZE = __STACK_SIZE;
-
-  .init           :
+  .text :
   {
-    /* vector table locate at ROM */
-    *(.vtable)
-    KEEP (*(SORT_NONE(.init)))
-    . = ALIGN(4);
-  } >ROM AT>ROM
+    _stext = ABSOLUTE(.);
+    KEEP(*(.vectors))
 
-  /* Code section located at ROM */
-  .text           :
-  {
-    *(.text.unlikely .text.unlikely.*)
-    *(.text.startup .text.startup.*)
-    *(.text .text.*)
-    *(.gnu.linkonce.t.*)
-    /* readonly data placed in ROM */
-    . = ALIGN(8);
-    *(.srodata.cst16)
-    *(.srodata.cst8)
-    *(.srodata.cst4)
-    *(.srodata.cst2)
-    *(.srodata .srodata.*)
-    *(.rdata)
-    *(.rodata .rodata.*)
-    *(.gnu.linkonce.r.*)
-    /* below sections are used for rt-thread */
-    . = ALIGN(4);
-    __rt_init_start = .;
-    KEEP(*(SORT(.rti_fn*)))
-    __rt_init_end = .;
+    *(.text*)
+    *(.rodata*)
+
+    * (.*l1_ret_text_*)
+    * (.*l1_ret_rodata_*)
+
+    KEEP(*(.init))
+    KEEP(*(.fini))
+
+    /* section information for finsh shell */
     . = ALIGN(4);
     __fsymtab_start = .;
     KEEP(*(FSymTab))
     __fsymtab_end = .;
+
     . = ALIGN(4);
     __vsymtab_start = .;
     KEEP(*(VSymTab))
     __vsymtab_end = .;
-  } >ROM AT>ROM
 
-  .fini           :
-  {
-    KEEP (*(SORT_NONE(.fini)))
-  } >ROM AT>ROM
-
-  .preinit_array  :
-  {
-    PROVIDE_HIDDEN (__preinit_array_start = .);
-    KEEP (*(.preinit_array))
-    PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >ROM AT>ROM
-
-  .init_array     :
-  {
-    PROVIDE_HIDDEN (__init_array_start = .);
-    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
-    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
-    PROVIDE_HIDDEN (__init_array_end = .);
-  } >ROM AT>ROM
-
-  .fini_array     :
-  {
-    PROVIDE_HIDDEN (__fini_array_start = .);
-    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
-    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
-    PROVIDE_HIDDEN (__fini_array_end = .);
-  } >ROM AT>ROM
-
-  .ctors          :
-  {
-    /* gcc uses crtbegin.o to find the start of
-     * the constructors, so we make sure it is
-     * first.  Because this is a wildcard, it
-     * doesn't matter if the user does not
-     * actually link against crtbegin.o; the
-     * linker won't look for a file to match a
-     * wildcard.  The wildcard also means that it
-     * doesn't matter which directory crtbegin.o
-     * is in.
-     */
-    KEEP (*crtbegin.o(.ctors))
-    KEEP (*crtbegin?.o(.ctors))
-    /* We don't want to include the .ctor section from
-     * the crtend.o file until after the sorted ctors.
-     * The .ctor section from the crtend file contains the
-     * end of ctors marker and it must be last
-     */
-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
-    KEEP (*(SORT(.ctors.*)))
-    KEEP (*(.ctors))
-  } >ROM AT>ROM
-
-  .dtors          :
-  {
-    KEEP (*crtbegin.o(.dtors))
-    KEEP (*crtbegin?.o(.dtors))
-    KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
-    KEEP (*(SORT(.dtors.*)))
-    KEEP (*(.dtors))
-  } >ROM AT>ROM
-
-  PROVIDE( _ilm_lma = LOADADDR(.text) );
-  PROVIDE( _ilm = ADDR(.text) );
-  PROVIDE( _eilm = . );
-  PROVIDE( _text_lma = LOADADDR(.text) );
-  PROVIDE( _text = ADDR(.text) );
-  PROVIDE (_etext = .);
-  PROVIDE (__etext = .);
-  PROVIDE (etext = .);
-
-  .data            : ALIGN(8)
-  {
-    KEEP(*(.data.ctest*))
-    *(.data .data.*)
-    *(.gnu.linkonce.d.*)
-    . = ALIGN(8);
-    PROVIDE( __global_pointer$ = . + 0x800 );
-    *(.sdata .sdata.* .sdata*)
-    *(.gnu.linkonce.s.*)
-    . = ALIGN(8);
-  } >RAM AT>ROM
-
-  .tdata           : ALIGN(8)
-  {
-    PROVIDE( __tls_base = . );
-    *(.tdata .tdata.* .gnu.linkonce.td.*)
-  } >RAM AT>ROM
-
-  PROVIDE( _data_lma = LOADADDR(.data) );
-  PROVIDE( _data = ADDR(.data) );
-  PROVIDE( _edata = . );
-  PROVIDE( edata = . );
-
-  PROVIDE( _fbss = . );
-  PROVIDE( __bss_start = . );
-
-  .tbss (NOLOAD)   : ALIGN(8)
-  {
-    *(.tbss .tbss.* .gnu.linkonce.tb.*)
-    *(.tcommon)
-    PROVIDE( __tls_end = . );
-  } >RAM AT>RAM
-
-  .tbss_space (NOLOAD) : ALIGN(8)
-  {
-    . = . + SIZEOF(.tbss);
-  } >RAM AT>RAM
-
-  .bss (NOLOAD)   : ALIGN(8)
-  {
-    *(.sbss*)
-    *(.gnu.linkonce.sb.*)
-    *(.bss .bss.*)
-    *(.gnu.linkonce.b.*)
-    *(COMMON)
-    PROVIDE( __bss_end = . );    
     . = ALIGN(4);
-  } >RAM AT>RAM
+    __rt_utest_tc_tab_start = .;
+    KEEP(*(UtestTcTab))
+    __rt_utest_tc_tab_end = .;
 
-  PROVIDE( _end = . );
-  PROVIDE( end = . );
+    /* section information for initial. */
+    . = ALIGN(4);
+    __rt_init_start = .;
+    KEEP(*(SORT(.rti_fn*)))
+    __rt_init_end = .;
 
-  /* Nuclei C Runtime Library requirements:
-   * 1. heap need to be align at 16 bytes
-   * 2. __heap_start and __heap_end symbol need to be defined
-   * 3. reserved at least __HEAP_SIZE space for heap
+    . = ALIGN(4);
+    __SerialTranExport_start__ = .;
+    KEEP(*(SerialTranExport))
+    __SerialTranExport_end__ = .;
+
+    . = ALIGN(4);
+    __sifli_reg_start__ = .;
+    KEEP(*(SORT(.sifli_reg*)))
+    __sifli_reg_end__ = .;
+
+
+    KEEP(*(.eh_frame*))
+    _etext = ABSOLUTE(.);
+  } > ROM
+
+  /*
+   * SG veneers:
+   * All SG veneers are placed in the special output section .gnu.sgstubs. Its start address
+   * must be set, either with the command line option `--section-start` or in a linker script,
+   * to indicate where to place these veneers in memory.
    */
-  .heap (NOLOAD)   : ALIGN(16)
+/*
+  .gnu.sgstubs :
   {
-    . = ALIGN(16);
-    PROVIDE( __heap_start = . );
-    . += __HEAP_SIZE;
-    . = ALIGN(16);
-    PROVIDE( __heap_limit = . );
-  } >RAM AT>RAM
+    . = ALIGN(32);
+  } > ROM
+*/
+  .ARM.extab :
+  {
+    *(.ARM.extab* .gnu.linkonce.armextab.*)
+  } > ROM
 
-  .stack ORIGIN(RAM) + LENGTH(RAM) - __TOT_STACK_SIZE (NOLOAD) :
+  __exidx_start = .;
+  .ARM.exidx :
   {
-    . = ALIGN(16);
-    PROVIDE( _heap_end = . );
-    PROVIDE( __heap_end = . );
-    PROVIDE( __StackLimit = . );
-    PROVIDE( __StackBottom = . );
-    . += __TOT_STACK_SIZE;
-    . = ALIGN(16);
-    PROVIDE( __StackTop = . );
-    PROVIDE( _sp = . );
-  } >RAM AT>RAM
+    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+  } > ROM
+  __exidx_end = .;
+  
+  .copy.table :
+  {
+    . = ALIGN(4);
+    __copy_table_start__ = .;
+    /* no need to copy .data as it's at the same space as load region */
+    /*
+     * LONG (LOADADDR(.data))
+     * LONG (ADDR(.data))
+     * LONG (SIZEOF(.data))    
+     */ 
+
+    __copy_table_end__ = .;
+  } > ROM
+
+  .zero.table :
+  {
+    . = ALIGN(4);
+    __zero_table_start__ = .;
+    /* Add each additional bss section here */
+    
+    LONG (__bss_start__)
+    LONG (__bss_end__ - __bss_start__)    
+    __zero_table_end__ = .;
+  } > ROM
+
+  /**
+   * Location counter can end up 2byte aligned with narrow Thumb code but
+   * __etext is assumed by startup code to be the LMA of a section in RAM
+   * which must be 4byte aligned 
+   */
+  __etext = ALIGN (4);
+  
+  .data (__etext - __ROM_BASE + __RAM_BASE) :
+  {
+    _sdata = ABSOLUTE(.);    
+    __data_start__ = .;
+    __RW_IRAM1_start__ = .;
+    *(vtable)
+    *(.data)
+    *(.data.*)
+    *(.l1_ret_data_*)
+
+    . = ALIGN(4);
+    /* preinit data */
+    PROVIDE_HIDDEN (__preinit_array_start = .);
+    KEEP(*(.preinit_array))
+    PROVIDE_HIDDEN (__preinit_array_end = .);
+
+    . = ALIGN(4);
+    /* init data */
+    _sinit = ABSOLUTE(.);
+    PROVIDE(__ctors_start__ = .);
+    PROVIDE_HIDDEN (__init_array_start = .);
+    /* old GCC version uses .ctors */
+    KEEP(*(SORT(.ctors.*)))
+    KEEP(*(.ctors))
+    /* new GCC version uses .init_array */
+    KEEP(*(SORT(.init_array.*)))
+    KEEP(*(.init_array))
+    _einit = ABSOLUTE(.);
+    PROVIDE_HIDDEN (__init_array_end = .);
+    PROVIDE(__ctors_end__ = .);
+
+
+    . = ALIGN(4);
+    /* finit data */
+    PROVIDE(__dtors_start__ = .);
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    
+    KEEP(*(SORT(.dtors.*)))
+    KEEP(*(.dtors))
+
+    KEEP(*(SORT(.fini_array.*)))
+    KEEP(*(.fini_array))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+    PROVIDE(__dtors_end__ = .);
+
+    KEEP(*(.jcr*))
+    . = ALIGN(4);
+    /* All data end */
+    __data_end__ = .;
+    __RW_IRAM1_end__ = .;
+    _edata = ABSOLUTE(.);    
+  } > RAM AT > ROM
+
+  .stack :
+  {
+    . = ALIGN(8);
+    __StackLimit = .;
+    . = . + __STACK_SIZE;
+    . = ALIGN(8);
+    __StackTop = .;
+  } > RAM
+  PROVIDE(__stack = __StackTop);
+
+  .heap :
+  {
+    . = ALIGN(8);
+    __end__ = .;
+    PROVIDE(end = .);
+    . = . + __HEAP_SIZE;
+    . = ALIGN(8);
+    __HeapLimit = .;
+  } > RAM
+
+  .bss :
+  {
+    _sbss = ABSOLUTE(.);
+    . = ALIGN(4);
+    __bss_start__ = .;
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    *(.l1_ret_bss_*)   
+    . = ALIGN(4);
+    __bss_end__ = .;
+    __bss_end = .;
+    _ebss = ABSOLUTE(.);
+    __end__ = .;
+    PROVIDE(end = .);
+  } > RAM AT > RAM
+  ASSERT((LOADADDR(.data) | 0x20000000) == ADDR(.data), "not aligned")
+
 }
-

@@ -34,7 +34,10 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_QSPI_Init(FLASH_HandleTypeDef *hflash, qspi
     hflash->base = cfg->base;
     hflash->size = cfg->msize * 0x100000;
 
-    hflash->Instance->TIMR = 0xFF;
+//TODO: disable timeout for now as it results in read error
+    // hflash->Instance->TIMR = 0xFF;
+    hflash->Instance->TIMR = 0;
+
     hflash->Instance->CIR = 0x50005000;
     hflash->Instance->ABR1 = 0xFF;
     hflash->Instance->HRABR = 0xff;
@@ -58,7 +61,10 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_PreInit(FLASH_HandleTypeDef *hflash)
     //hflash->base = cfg->base;
     //hflash->size = cfg->msize * 0x100000;
 
-    hflash->Instance->TIMR = 0xFF;
+//TODO: disable timeout for now as it results in read error
+    // hflash->Instance->TIMR = 0xFF;
+    hflash->Instance->TIMR = 0;
+
     hflash->Instance->CIR = 0x50005000;
     hflash->Instance->ABR1 = 0xFF;
     hflash->Instance->HRABR = 0xff;
@@ -747,7 +753,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_FLASH_SET_X16_MODE(FLASH_HandleTypeDef *hfl
 __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_EN_FIXLAT(FLASH_HandleTypeDef *hflash, uint8_t fix)
 {
 #ifdef MPI_DCR_FIXLAT
-//TODO: 
+//TODO:
     if (hflash == NULL)
         return HAL_ERROR;
 
@@ -782,7 +788,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_ENABLE_DQS(FLASH_HandleTypeDef *hflash,
         return HAL_ERROR;
 
 //TODO:
-#ifdef MPI_DCR_DQSE    
+#ifdef MPI_DCR_DQSE
     if (dqs)
         hflash->Instance->DCR |= MPI_DCR_DQSE;
     else
@@ -820,8 +826,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_SET_SCK(FLASH_HandleTypeDef *hflash, ui
 
 __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_CFG_DTR(FLASH_HandleTypeDef *hflash, uint8_t en, uint8_t rclk_inv_delay)
 {
-#ifdef MPI_MISCR_DTRPRE	
-	//TODO:
+#ifdef MPI_MISCR_DTRPRE
+    //TODO:
     uint32_t value;
     if (hflash == NULL)
         return HAL_ERROR;
@@ -1466,7 +1472,7 @@ __HAL_ROM_USED void HAL_QSPI_SET_RXDELAY(uint8_t qspi_id, uint8_t clk_inv, uint8
                  | ((clk_inv << MPI_MISCR_RXCLKINV_Pos)& MPI_MISCR_RXCLKINV_Msk);
         handle->MISCR = value;
     }
-#endif /* MPI_MISCR_RXCLKDLY */		
+#endif /* MPI_MISCR_RXCLKDLY */
 }
 
 __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t clk_inv, uint8_t clk_delay)
@@ -1475,7 +1481,7 @@ __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t cl
     if (hflash == NULL)
         return;
 
-//TODO:	
+//TODO:
 #ifdef MPI_MISCR_RXCLKDLY
 
     if (hflash->Instance != NULL)
@@ -1486,8 +1492,8 @@ __HAL_ROM_USED void HAL_QSPI_SET_CLK_INV(FLASH_HandleTypeDef *hflash, uint8_t cl
         hflash->Instance->MISCR = value;
     }
 #else
-	hflash->Instance->MISCR |= MPI_MISCR_SCKINV;		
-#endif /* MPI_MISCR_RXCLKDLY */		
+    hflash->Instance->MISCR |= MPI_MISCR_SCKINV;
+#endif /* MPI_MISCR_RXCLKDLY */
 }
 
 
@@ -1740,11 +1746,11 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_CFG_PREFETCH(FLASH_HandleTypeDef *hflas
         return HAL_ERROR;
 
 #ifdef MPI_PRSAR_SA
-//TODO：		
+//TODO：
     hflash->Instance->PRSAR = start;
     hflash->Instance->PREAR = start + len;
 #endif /* MPI_PRSAR_SA */
-		
+
     return HAL_OK;
 }
 
@@ -1754,13 +1760,13 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_MPI_EN_PREFETCH(FLASH_HandleTypeDef *hflash
         return HAL_ERROR;
 
 #ifdef MPI_PRSAR_SA
-//TODO：				
+//TODO：
     if (en)
         hflash->Instance->CR |= MPI_CR_PREFE;
     else
         hflash->Instance->CR &= (~MPI_CR_PREFE);
 #endif /* MPI_PRSAR_SA */
-		
+
     return HAL_OK;
 }
 

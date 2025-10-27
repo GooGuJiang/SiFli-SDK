@@ -4,6 +4,7 @@
 typedef struct
 {
     __IO uint32_t ADC_CFG_REG1;
+    __IO uint32_t ADC_CFG_REG2;
     __IO uint32_t ADC_SLOT0_REG;
     __IO uint32_t ADC_SLOT1_REG;
     __IO uint32_t ADC_SLOT2_REG;
@@ -12,10 +13,16 @@ typedef struct
     __IO uint32_t ADC_SLOT5_REG;
     __IO uint32_t ADC_SLOT6_REG;
     __IO uint32_t ADC_SLOT7_REG;
+    __IO uint32_t ADC_SLOT8_REG;
+    __IO uint32_t ADC_SLOT9_REG;
+    __IO uint32_t ADC_SLOT10_REG;
+    __IO uint32_t ADC_SLOT11_REG;
     __IO uint32_t ADC_RDATA0;
     __IO uint32_t ADC_RDATA1;
     __IO uint32_t ADC_RDATA2;
     __IO uint32_t ADC_RDATA3;
+    __IO uint32_t ADC_RDATA4;
+    __IO uint32_t ADC_RDATA5;
     __IO uint32_t ADC_DMA_RDATA;
     __IO uint32_t ADC_CTRL_REG;
     __IO uint32_t ADC_CTRL_REG2;

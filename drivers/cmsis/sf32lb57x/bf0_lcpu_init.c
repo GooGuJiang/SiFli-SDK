@@ -54,9 +54,11 @@
     #define bt_rf_cal()
 #else
     #if defined(FPGA)
-        #define bt_rf_cal bt_rf_cal_9364
+        // TODO: need to enanble after ble_rf_fulcal_ad9364 is available
+        // #define bt_rf_cal bt_rf_cal_9364
+        #define bt_rf_cal()
     #endif
-    extern void bt_rf_cal(void);
+    // extern void bt_rf_cal(void);
 #endif
 
 
