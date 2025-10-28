@@ -186,6 +186,7 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
@@ -510,16 +511,16 @@
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>ARMCM33_DSP_FP</Device>
+          <Device>ARMv8MML_DSP_SP</Device>
           <Vendor>ARM</Vendor>
           <PackID>ARM.CMSIS.5.7.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP CLOCK(12000000) ESEL ELITTLE</Cpu>
+          <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("ARMV8MML") FPU3(SFPU) DSP TZ CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
           <FlashDriverDll>UL2V8M(-S0 -C0 -P0 -FD20000000 -FC1000)</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile>$$Device:ARMCM33_DSP_FP$Device\ARM\ARMCM33\Include\ARMCM33_DSP_FP.h</RegisterFile>
+          <RegisterFile>$$Device:ARMv8MML_DSP_SP$Device\ARM\ARMv8MML\Include\ARMv8MML_DSP_SP.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -612,7 +613,7 @@
           <TargetDllName>SARMV8M.DLL</TargetDllName>
           <TargetDllArguments> -MPU</TargetDllArguments>
           <TargetDlgDll>TCM.DLL</TargetDlgDll>
-          <TargetDlgDllArguments>-pCM33</TargetDlgDllArguments>
+          <TargetDlgDllArguments>-pV8MML</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
           <OPTHX>
@@ -634,7 +635,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2V8M.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp>Applications</pFcarmGrp>
@@ -670,7 +671,7 @@
             <AdsLsxf>1</AdsLsxf>
             <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
-            <AdsCpuType>"Cortex-M33"</AdsCpuType>
+            <AdsCpuType>"ARMV8MML"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
             <mOS>0</mOS>
             <uocRom>0</uocRom>
@@ -682,6 +683,7 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
@@ -833,9 +835,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>-march=armv8-m.main+cdecp1</MiscControls>
-              <Define>SOC_BF0_HCPU, USE_HAL_DRIVER, SF32LB57X, ARM_MATH_LOOPUNROLL,JLINK,JLINK_FLASH_2,_USE_PRODUCTLINE</Define>
+              <Define>SOC_BF0_HCPU, USE_HAL_DRIVER, SF32LB57X, ARM_MATH_LOOPUNROLL,JLINK,JLINK_FLASH_2,_USE_PRODUCTLINE,HAL_TICK_PER_SECOND=1000</Define>
               <Undefine></Undefine>
-              <IncludePath>.;.\src;..\..\..\..\customer\boards\include;..\..\..\..\drivers\cmsis\sf32lb57x;..\..\..\..\drivers\cmsis\Include;..\..\..\..\external\CMSIS\Include;..\..\..\..\drivers\Include;..\..\..\..\customer\boards\include\config\sf32lb57x;..\..\src</IncludePath>
+              <IncludePath>.;.\src;..\..\..\..\customer\boards\include;..\..\..\..\drivers\cmsis\sf32lb57x;..\..\..\..\drivers\cmsis\Include;..\..\..\..\external\CMSIS\Include;..\..\..\..\drivers\Include;..\..\..\..\customer\boards\include\config\sf32lb57x;..\..\src;..\..\..\..\middleware\sifli_matrix</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1006,16 +1008,16 @@
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>ARMCM33_DSP_FP</Device>
+          <Device>ARMv8MML_DSP_SP</Device>
           <Vendor>ARM</Vendor>
           <PackID>ARM.CMSIS.5.7.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP CLOCK(12000000) ESEL ELITTLE</Cpu>
+          <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("ARMV8MML") FPU3(SFPU) DSP TZ CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
           <FlashDriverDll>UL2V8M(-S0 -C0 -P0 -FD20000000 -FC1000)</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile>$$Device:ARMCM33_DSP_FP$Device\ARM\ARMCM33\Include\ARMCM33_DSP_FP.h</RegisterFile>
+          <RegisterFile>$$Device:ARMv8MML_DSP_SP$Device\ARM\ARMv8MML\Include\ARMv8MML_DSP_SP.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -1108,7 +1110,7 @@
           <TargetDllName>SARMV8M.DLL</TargetDllName>
           <TargetDllArguments> -MPU</TargetDllArguments>
           <TargetDlgDll>TCM.DLL</TargetDlgDll>
-          <TargetDlgDllArguments>-pCM33</TargetDlgDllArguments>
+          <TargetDlgDllArguments>-pV8MML</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
           <OPTHX>
@@ -1166,7 +1168,7 @@
             <AdsLsxf>1</AdsLsxf>
             <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
-            <AdsCpuType>"Cortex-M33"</AdsCpuType>
+            <AdsCpuType>"ARMV8MML"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
             <mOS>0</mOS>
             <uocRom>0</uocRom>
@@ -1178,6 +1180,7 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
@@ -1329,9 +1332,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>-march=armv8-m.main+cdecp1</MiscControls>
-              <Define>SOC_BF0_HCPU, USE_HAL_DRIVER, SF32LB57X, ARM_MATH_LOOPUNROLL,JLINK,JLINK_FLASH_3,_USE_PRODUCTLINE</Define>
+              <Define>SOC_BF0_HCPU, USE_HAL_DRIVER, SF32LB57X, ARM_MATH_LOOPUNROLL,JLINK,JLINK_FLASH_3,_USE_PRODUCTLINE,HAL_TICK_PER_SECOND=1000</Define>
               <Undefine></Undefine>
-              <IncludePath>.;.\src;..\..\..\..\customer\boards\include;..\..\..\..\drivers\cmsis\sf32lb57x;..\..\..\..\drivers\cmsis\Include;..\..\..\..\external\CMSIS\Include;..\..\..\..\drivers\Include;..\..\..\..\customer\boards\include\config\sf32lb57x;..\..\src</IncludePath>
+              <IncludePath>.;.\src;..\..\..\..\customer\boards\include;..\..\..\..\drivers\cmsis\sf32lb57x;..\..\..\..\drivers\cmsis\Include;..\..\..\..\external\CMSIS\Include;..\..\..\..\drivers\Include;..\..\..\..\customer\boards\include\config\sf32lb57x;..\..\src;..\..\..\..\middleware\sifli_matrix</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1674,6 +1677,7 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
@@ -2170,6 +2174,7 @@
             <RvdsVP>2</RvdsVP>
             <RvdsMve>0</RvdsMve>
             <RvdsCdeCp>0</RvdsCdeCp>
+            <nBranchProt>0</nBranchProt>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>1</hadIROM2>
             <StupSel>8</StupSel>
