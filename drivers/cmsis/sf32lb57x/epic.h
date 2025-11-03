@@ -159,12 +159,14 @@ typedef struct
     __IO uint32_t V_SRC;
     __IO uint32_t COEF0;
     __IO uint32_t COEF1;
-    __IO uint32_t CM_CONF0;
-    __IO uint32_t CM_CONF1;
-    __IO uint32_t CM_CONF2;
-    __IO uint32_t CM_CONF3;
-    __IO uint32_t CM_CONF4;
-    __IO uint32_t CM_CONF5;
+    __IO uint32_t CM_ENG_CONF0;
+    __IO uint32_t CM_ENG_CONF1;
+    __IO uint32_t CM_ENG_CONF2;
+    __IO uint32_t CM_ENG_CONF3;
+    __IO uint32_t CM_ENG_CONF4;
+    __IO uint32_t CM_ENG_CONF5;
+    __IO uint32_t CM_ENG_CONF6;
+    __IO uint32_t CM_ENG_CONF7;
     __IO uint32_t DITHER_CONF;
     __IO uint32_t DITHER_LFSR;
     __IO uint32_t GREY_CONV;
@@ -436,9 +438,6 @@ typedef struct
 #define EPIC_VL_FILL_ENDIAN_Pos         (25U)
 #define EPIC_VL_FILL_ENDIAN_Msk         (0x1UL << EPIC_VL_FILL_ENDIAN_Pos)
 #define EPIC_VL_FILL_ENDIAN             EPIC_VL_FILL_ENDIAN_Msk
-#define EPIC_VL_FILL_RECOLOR_EN_Pos     (26U)
-#define EPIC_VL_FILL_RECOLOR_EN_Msk     (0x1UL << EPIC_VL_FILL_RECOLOR_EN_Pos)
-#define EPIC_VL_FILL_RECOLOR_EN         EPIC_VL_FILL_RECOLOR_EN_Msk
 #define EPIC_VL_FILL_FIX_COLOR_Pos      (27U)
 #define EPIC_VL_FILL_FIX_COLOR_Msk      (0x1UL << EPIC_VL_FILL_FIX_COLOR_Pos)
 #define EPIC_VL_FILL_FIX_COLOR          EPIC_VL_FILL_FIX_COLOR_Msk
@@ -554,9 +553,6 @@ typedef struct
 #define EPIC_L0_FILL_ENDIAN_Pos         (25U)
 #define EPIC_L0_FILL_ENDIAN_Msk         (0x1UL << EPIC_L0_FILL_ENDIAN_Pos)
 #define EPIC_L0_FILL_ENDIAN             EPIC_L0_FILL_ENDIAN_Msk
-#define EPIC_L0_FILL_RECOLOR_EN_Pos     (26U)
-#define EPIC_L0_FILL_RECOLOR_EN_Msk     (0x1UL << EPIC_L0_FILL_RECOLOR_EN_Pos)
-#define EPIC_L0_FILL_RECOLOR_EN         EPIC_L0_FILL_RECOLOR_EN_Msk
 #define EPIC_L0_FILL_FIX_COLOR_Pos      (27U)
 #define EPIC_L0_FILL_FIX_COLOR_Msk      (0x1UL << EPIC_L0_FILL_FIX_COLOR_Pos)
 #define EPIC_L0_FILL_FIX_COLOR          EPIC_L0_FILL_FIX_COLOR_Msk
@@ -646,9 +642,6 @@ typedef struct
 #define EPIC_L1_FILL_ENDIAN_Pos         (25U)
 #define EPIC_L1_FILL_ENDIAN_Msk         (0x1UL << EPIC_L1_FILL_ENDIAN_Pos)
 #define EPIC_L1_FILL_ENDIAN             EPIC_L1_FILL_ENDIAN_Msk
-#define EPIC_L1_FILL_RECOLOR_EN_Pos     (26U)
-#define EPIC_L1_FILL_RECOLOR_EN_Msk     (0x1UL << EPIC_L1_FILL_RECOLOR_EN_Pos)
-#define EPIC_L1_FILL_RECOLOR_EN         EPIC_L1_FILL_RECOLOR_EN_Msk
 #define EPIC_L1_FILL_FIX_COLOR_Pos      (27U)
 #define EPIC_L1_FILL_FIX_COLOR_Msk      (0x1UL << EPIC_L1_FILL_FIX_COLOR_Pos)
 #define EPIC_L1_FILL_FIX_COLOR          EPIC_L1_FILL_FIX_COLOR_Msk
@@ -738,9 +731,6 @@ typedef struct
 #define EPIC_L2_FILL_ENDIAN_Pos         (25U)
 #define EPIC_L2_FILL_ENDIAN_Msk         (0x1UL << EPIC_L2_FILL_ENDIAN_Pos)
 #define EPIC_L2_FILL_ENDIAN             EPIC_L2_FILL_ENDIAN_Msk
-#define EPIC_L2_FILL_RECOLOR_EN_Pos     (26U)
-#define EPIC_L2_FILL_RECOLOR_EN_Msk     (0x1UL << EPIC_L2_FILL_RECOLOR_EN_Pos)
-#define EPIC_L2_FILL_RECOLOR_EN         EPIC_L2_FILL_RECOLOR_EN_Msk
 #define EPIC_L2_FILL_FIX_COLOR_Pos      (27U)
 #define EPIC_L2_FILL_FIX_COLOR_Msk      (0x1UL << EPIC_L2_FILL_FIX_COLOR_Pos)
 #define EPIC_L2_FILL_FIX_COLOR          EPIC_L2_FILL_FIX_COLOR_Msk
@@ -889,6 +879,12 @@ typedef struct
 #define EPIC_COENG_CFG_JPEG_CH_SEL_Pos  (10U)
 #define EPIC_COENG_CFG_JPEG_CH_SEL_Msk  (0x3UL << EPIC_COENG_CFG_JPEG_CH_SEL_Pos)
 #define EPIC_COENG_CFG_JPEG_CH_SEL      EPIC_COENG_CFG_JPEG_CH_SEL_Msk
+#define EPIC_COENG_CFG_CM_EN_Pos        (12U)
+#define EPIC_COENG_CFG_CM_EN_Msk        (0x1UL << EPIC_COENG_CFG_CM_EN_Pos)
+#define EPIC_COENG_CFG_CM_EN            EPIC_COENG_CFG_CM_EN_Msk
+#define EPIC_COENG_CFG_CM_CH_SEL_Pos    (13U)
+#define EPIC_COENG_CFG_CM_CH_SEL_Msk    (0x3UL << EPIC_COENG_CFG_CM_CH_SEL_Pos)
+#define EPIC_COENG_CFG_CM_CH_SEL        EPIC_COENG_CFG_CM_CH_SEL_Msk
 
 /*************** Bit definition for EPIC_JPEG_ENG_CFG0 register ***************/
 #define EPIC_JPEG_ENG_CFG0_FUB_Pos      (0U)
@@ -1027,56 +1023,81 @@ typedef struct
 #define EPIC_COEF1_FVR_Msk              (0x3FFUL << EPIC_COEF1_FVR_Pos)
 #define EPIC_COEF1_FVR                  EPIC_COEF1_FVR_Msk
 
-/***************** Bit definition for EPIC_CM_CONF0 register ******************/
-#define EPIC_CM_CONF0_COEF_A0_Pos       (0U)
-#define EPIC_CM_CONF0_COEF_A0_Msk       (0xFFFUL << EPIC_CM_CONF0_COEF_A0_Pos)
-#define EPIC_CM_CONF0_COEF_A0           EPIC_CM_CONF0_COEF_A0_Msk
-#define EPIC_CM_CONF0_COEF_B0_Pos       (12U)
-#define EPIC_CM_CONF0_COEF_B0_Msk       (0xFFFUL << EPIC_CM_CONF0_COEF_B0_Pos)
-#define EPIC_CM_CONF0_COEF_B0           EPIC_CM_CONF0_COEF_B0_Msk
-#define EPIC_CM_CONF0_ENABLE_Pos        (24U)
-#define EPIC_CM_CONF0_ENABLE_Msk        (0x1UL << EPIC_CM_CONF0_ENABLE_Pos)
-#define EPIC_CM_CONF0_ENABLE            EPIC_CM_CONF0_ENABLE_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF0 register ****************/
+#define EPIC_CM_ENG_CONF0_COEF_A0_Pos   (0U)
+#define EPIC_CM_ENG_CONF0_COEF_A0_Msk   (0x3FFUL << EPIC_CM_ENG_CONF0_COEF_A0_Pos)
+#define EPIC_CM_ENG_CONF0_COEF_A0       EPIC_CM_ENG_CONF0_COEF_A0_Msk
+#define EPIC_CM_ENG_CONF0_COEF_B0_Pos   (10U)
+#define EPIC_CM_ENG_CONF0_COEF_B0_Msk   (0x3FFUL << EPIC_CM_ENG_CONF0_COEF_B0_Pos)
+#define EPIC_CM_ENG_CONF0_COEF_B0       EPIC_CM_ENG_CONF0_COEF_B0_Msk
+#define EPIC_CM_ENG_CONF0_COEF_C0_Pos   (20U)
+#define EPIC_CM_ENG_CONF0_COEF_C0_Msk   (0x3FFUL << EPIC_CM_ENG_CONF0_COEF_C0_Pos)
+#define EPIC_CM_ENG_CONF0_COEF_C0       EPIC_CM_ENG_CONF0_COEF_C0_Msk
 
-/***************** Bit definition for EPIC_CM_CONF1 register ******************/
-#define EPIC_CM_CONF1_COEF_C0_Pos       (0U)
-#define EPIC_CM_CONF1_COEF_C0_Msk       (0xFFFUL << EPIC_CM_CONF1_COEF_C0_Pos)
-#define EPIC_CM_CONF1_COEF_C0           EPIC_CM_CONF1_COEF_C0_Msk
-#define EPIC_CM_CONF1_COEF_D0_Pos       (12U)
-#define EPIC_CM_CONF1_COEF_D0_Msk       (0xFFFFFUL << EPIC_CM_CONF1_COEF_D0_Pos)
-#define EPIC_CM_CONF1_COEF_D0           EPIC_CM_CONF1_COEF_D0_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF1 register ****************/
+#define EPIC_CM_ENG_CONF1_COEF_D0_Pos   (0U)
+#define EPIC_CM_ENG_CONF1_COEF_D0_Msk   (0x3FFUL << EPIC_CM_ENG_CONF1_COEF_D0_Pos)
+#define EPIC_CM_ENG_CONF1_COEF_D0       EPIC_CM_ENG_CONF1_COEF_D0_Msk
+#define EPIC_CM_ENG_CONF1_COEF_E0_Pos   (10U)
+#define EPIC_CM_ENG_CONF1_COEF_E0_Msk   (0x3FFFFUL << EPIC_CM_ENG_CONF1_COEF_E0_Pos)
+#define EPIC_CM_ENG_CONF1_COEF_E0       EPIC_CM_ENG_CONF1_COEF_E0_Msk
 
-/***************** Bit definition for EPIC_CM_CONF2 register ******************/
-#define EPIC_CM_CONF2_COEF_A1_Pos       (0U)
-#define EPIC_CM_CONF2_COEF_A1_Msk       (0xFFFUL << EPIC_CM_CONF2_COEF_A1_Pos)
-#define EPIC_CM_CONF2_COEF_A1           EPIC_CM_CONF2_COEF_A1_Msk
-#define EPIC_CM_CONF2_COEF_B1_Pos       (12U)
-#define EPIC_CM_CONF2_COEF_B1_Msk       (0xFFFUL << EPIC_CM_CONF2_COEF_B1_Pos)
-#define EPIC_CM_CONF2_COEF_B1           EPIC_CM_CONF2_COEF_B1_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF2 register ****************/
+#define EPIC_CM_ENG_CONF2_COEF_A1_Pos   (0U)
+#define EPIC_CM_ENG_CONF2_COEF_A1_Msk   (0x3FFUL << EPIC_CM_ENG_CONF2_COEF_A1_Pos)
+#define EPIC_CM_ENG_CONF2_COEF_A1       EPIC_CM_ENG_CONF2_COEF_A1_Msk
+#define EPIC_CM_ENG_CONF2_COEF_B1_Pos   (10U)
+#define EPIC_CM_ENG_CONF2_COEF_B1_Msk   (0x3FFUL << EPIC_CM_ENG_CONF2_COEF_B1_Pos)
+#define EPIC_CM_ENG_CONF2_COEF_B1       EPIC_CM_ENG_CONF2_COEF_B1_Msk
+#define EPIC_CM_ENG_CONF2_COEF_C1_Pos   (20U)
+#define EPIC_CM_ENG_CONF2_COEF_C1_Msk   (0x3FFUL << EPIC_CM_ENG_CONF2_COEF_C1_Pos)
+#define EPIC_CM_ENG_CONF2_COEF_C1       EPIC_CM_ENG_CONF2_COEF_C1_Msk
 
-/***************** Bit definition for EPIC_CM_CONF3 register ******************/
-#define EPIC_CM_CONF3_COEF_C1_Pos       (0U)
-#define EPIC_CM_CONF3_COEF_C1_Msk       (0xFFFUL << EPIC_CM_CONF3_COEF_C1_Pos)
-#define EPIC_CM_CONF3_COEF_C1           EPIC_CM_CONF3_COEF_C1_Msk
-#define EPIC_CM_CONF3_COEF_D1_Pos       (12U)
-#define EPIC_CM_CONF3_COEF_D1_Msk       (0xFFFFFUL << EPIC_CM_CONF3_COEF_D1_Pos)
-#define EPIC_CM_CONF3_COEF_D1           EPIC_CM_CONF3_COEF_D1_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF3 register ****************/
+#define EPIC_CM_ENG_CONF3_COEF_D1_Pos   (0U)
+#define EPIC_CM_ENG_CONF3_COEF_D1_Msk   (0x3FFUL << EPIC_CM_ENG_CONF3_COEF_D1_Pos)
+#define EPIC_CM_ENG_CONF3_COEF_D1       EPIC_CM_ENG_CONF3_COEF_D1_Msk
+#define EPIC_CM_ENG_CONF3_COEF_E1_Pos   (10U)
+#define EPIC_CM_ENG_CONF3_COEF_E1_Msk   (0x3FFFFUL << EPIC_CM_ENG_CONF3_COEF_E1_Pos)
+#define EPIC_CM_ENG_CONF3_COEF_E1       EPIC_CM_ENG_CONF3_COEF_E1_Msk
 
-/***************** Bit definition for EPIC_CM_CONF4 register ******************/
-#define EPIC_CM_CONF4_COEF_A2_Pos       (0U)
-#define EPIC_CM_CONF4_COEF_A2_Msk       (0xFFFUL << EPIC_CM_CONF4_COEF_A2_Pos)
-#define EPIC_CM_CONF4_COEF_A2           EPIC_CM_CONF4_COEF_A2_Msk
-#define EPIC_CM_CONF4_COEF_B2_Pos       (12U)
-#define EPIC_CM_CONF4_COEF_B2_Msk       (0xFFFUL << EPIC_CM_CONF4_COEF_B2_Pos)
-#define EPIC_CM_CONF4_COEF_B2           EPIC_CM_CONF4_COEF_B2_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF4 register ****************/
+#define EPIC_CM_ENG_CONF4_COEF_A2_Pos   (0U)
+#define EPIC_CM_ENG_CONF4_COEF_A2_Msk   (0x3FFUL << EPIC_CM_ENG_CONF4_COEF_A2_Pos)
+#define EPIC_CM_ENG_CONF4_COEF_A2       EPIC_CM_ENG_CONF4_COEF_A2_Msk
+#define EPIC_CM_ENG_CONF4_COEF_B2_Pos   (10U)
+#define EPIC_CM_ENG_CONF4_COEF_B2_Msk   (0x3FFUL << EPIC_CM_ENG_CONF4_COEF_B2_Pos)
+#define EPIC_CM_ENG_CONF4_COEF_B2       EPIC_CM_ENG_CONF4_COEF_B2_Msk
+#define EPIC_CM_ENG_CONF4_COEF_C2_Pos   (20U)
+#define EPIC_CM_ENG_CONF4_COEF_C2_Msk   (0x3FFUL << EPIC_CM_ENG_CONF4_COEF_C2_Pos)
+#define EPIC_CM_ENG_CONF4_COEF_C2       EPIC_CM_ENG_CONF4_COEF_C2_Msk
 
-/***************** Bit definition for EPIC_CM_CONF5 register ******************/
-#define EPIC_CM_CONF5_COEF_C2_Pos       (0U)
-#define EPIC_CM_CONF5_COEF_C2_Msk       (0xFFFUL << EPIC_CM_CONF5_COEF_C2_Pos)
-#define EPIC_CM_CONF5_COEF_C2           EPIC_CM_CONF5_COEF_C2_Msk
-#define EPIC_CM_CONF5_COEF_D2_Pos       (12U)
-#define EPIC_CM_CONF5_COEF_D2_Msk       (0xFFFFFUL << EPIC_CM_CONF5_COEF_D2_Pos)
-#define EPIC_CM_CONF5_COEF_D2           EPIC_CM_CONF5_COEF_D2_Msk
+/*************** Bit definition for EPIC_CM_ENG_CONF5 register ****************/
+#define EPIC_CM_ENG_CONF5_COEF_D2_Pos   (0U)
+#define EPIC_CM_ENG_CONF5_COEF_D2_Msk   (0x3FFUL << EPIC_CM_ENG_CONF5_COEF_D2_Pos)
+#define EPIC_CM_ENG_CONF5_COEF_D2       EPIC_CM_ENG_CONF5_COEF_D2_Msk
+#define EPIC_CM_ENG_CONF5_COEF_E2_Pos   (10U)
+#define EPIC_CM_ENG_CONF5_COEF_E2_Msk   (0x3FFFFUL << EPIC_CM_ENG_CONF5_COEF_E2_Pos)
+#define EPIC_CM_ENG_CONF5_COEF_E2       EPIC_CM_ENG_CONF5_COEF_E2_Msk
+
+/*************** Bit definition for EPIC_CM_ENG_CONF6 register ****************/
+#define EPIC_CM_ENG_CONF6_COEF_A3_Pos   (0U)
+#define EPIC_CM_ENG_CONF6_COEF_A3_Msk   (0x3FFUL << EPIC_CM_ENG_CONF6_COEF_A3_Pos)
+#define EPIC_CM_ENG_CONF6_COEF_A3       EPIC_CM_ENG_CONF6_COEF_A3_Msk
+#define EPIC_CM_ENG_CONF6_COEF_B3_Pos   (10U)
+#define EPIC_CM_ENG_CONF6_COEF_B3_Msk   (0x3FFUL << EPIC_CM_ENG_CONF6_COEF_B3_Pos)
+#define EPIC_CM_ENG_CONF6_COEF_B3       EPIC_CM_ENG_CONF6_COEF_B3_Msk
+#define EPIC_CM_ENG_CONF6_COEF_C3_Pos   (20U)
+#define EPIC_CM_ENG_CONF6_COEF_C3_Msk   (0x3FFUL << EPIC_CM_ENG_CONF6_COEF_C3_Pos)
+#define EPIC_CM_ENG_CONF6_COEF_C3       EPIC_CM_ENG_CONF6_COEF_C3_Msk
+
+/*************** Bit definition for EPIC_CM_ENG_CONF7 register ****************/
+#define EPIC_CM_ENG_CONF7_COEF_D3_Pos   (0U)
+#define EPIC_CM_ENG_CONF7_COEF_D3_Msk   (0x3FFUL << EPIC_CM_ENG_CONF7_COEF_D3_Pos)
+#define EPIC_CM_ENG_CONF7_COEF_D3       EPIC_CM_ENG_CONF7_COEF_D3_Msk
+#define EPIC_CM_ENG_CONF7_COEF_E3_Pos   (10U)
+#define EPIC_CM_ENG_CONF7_COEF_E3_Msk   (0x3FFFFUL << EPIC_CM_ENG_CONF7_COEF_E3_Pos)
+#define EPIC_CM_ENG_CONF7_COEF_E3       EPIC_CM_ENG_CONF7_COEF_E3_Msk
 
 /**************** Bit definition for EPIC_DITHER_CONF register ****************/
 #define EPIC_DITHER_CONF_RD_EN_Pos      (0U)
