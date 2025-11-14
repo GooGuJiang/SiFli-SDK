@@ -6,8 +6,7 @@
 
 #include "bf0_hal.h"
 #include "string.h"
-//#include "utest.h"
-//#include "rtthread.h"
+
 
 /** @addtogroup BF0_HAL_Driver
   * @{
@@ -143,6 +142,9 @@ static void EPIC_DEBUG_PRINT_FLOAT_MATRIX(const char *s, const sifli_matrix_3x3_
 #define RETURN_ERROR(hepic,ret_v) \
         do{ (hepic)->ErrorCode = __LINE__;  return ret_v; }while(0)
 
+#if defined(SF32LB52X) || defined(SF32LB57X)
+    #define EPIC_L2_L1_INVALID
+#endif
 
 
 
@@ -479,6 +481,12 @@ static void EPIC_DISABLE(EPIC_HandleTypeDef *hepic)
     hepic->PerfCnt += hw_cnt;
     hepic->HalCnt  += HAL_GetElapsedTick(hepic->start_tick, hepic->end_tick) - hw_cnt;
 #endif /* EPIC_PERF_CNT_VAL */
+}
+
+static inline void EPIC_RUN(EPIC_HandleTypeDef *hepic)
+{
+    //__asm("B .");
+    hepic->Instance->COMMAND |= EPIC_COMMAND_START;
 }
 /*
    return the bits of a pixel in a color mode.
@@ -1604,7 +1612,7 @@ static HAL_StatusTypeDef EPIC_ConfigLayer(EPIC_HandleTypeDef *hepic, EPIC_LAYER_
     {
         RETURN_ERROR(hepic, HAL_ERROR);
     }
-#if defined(SF32LB52X)
+#if defined(EPIC_L2_L1_INVALID)
     HAL_ASSERT(layer_idx < EPIC_LAYER_IDX_1);
 #elif !defined(SF32LB55X)
     HAL_ASSERT(layer_idx < EPIC_LAYER_IDX_2);
@@ -1784,7 +1792,7 @@ static HAL_StatusTypeDef EPIC_ContConfigLayer(EPIC_HandleTypeDef *hepic, uint32_
 
     EPIC_LAYER_IDX layer_idx = hepic->api_cfg.cont_cfg.epic_layer[idx];
 
-#if defined(SF32LB52X)
+#if defined(EPIC_L2_L1_INVALID)
     HAL_ASSERT(layer_idx < EPIC_LAYER_IDX_1);
 #elif !defined(SF32LB55X)
     HAL_ASSERT(layer_idx < EPIC_LAYER_IDX_2);
@@ -1916,7 +1924,7 @@ static inline void EPIC_DisableOutputLayer(EPIC_TypeDef *epic)
 {
     epic->CANVAS_BG = 0;
 #ifdef EPIC_SUPPORT_COLOR_MATRIX
-    epic->CM_CONF0 &= ~EPIC_CM_CONF0_ENABLE;
+    epic->CM_ENG_CONF0 &= ~EPIC_CM_ENG_CONF0_ENABLE;
 #endif /* EPIC_SUPPORT_COLOR_MATRIX */
 
 #ifdef EPIC_SUPPORT_DITHER
@@ -1941,18 +1949,18 @@ static void EPIC_ConfigColorMatrix(EPIC_TypeDef *epic, uint32_t *color_matrix)
      *  | Ba    Bb    Bc   Bd  |
      */
 
-    reg_conf = &epic->CM_CONF0;
+    reg_conf = &epic->CM_ENG_CONF0;
     for (i = 0; i < 3; i++)
     {
-        reg_conf[0] = MAKE_REG_VAL(color_matrix[0], EPIC_CM_CONF0_COEF_A0_Msk, EPIC_CM_CONF0_COEF_A0_Pos)
-                      | MAKE_REG_VAL(color_matrix[1], EPIC_CM_CONF0_COEF_B0_Msk, EPIC_CM_CONF0_COEF_B0_Pos);
-        reg_conf[1] = MAKE_REG_VAL(color_matrix[2], EPIC_CM_CONF1_COEF_C0_Msk, EPIC_CM_CONF1_COEF_C0_Pos)
-                      | MAKE_REG_VAL(color_matrix[3], EPIC_CM_CONF1_COEF_D0_Msk, EPIC_CM_CONF1_COEF_D0_Pos);
+        reg_conf[0] = MAKE_REG_VAL(color_matrix[0], EPIC_CM_ENG_CONF0_COEF_A0_Msk, EPIC_CM_ENG_CONF0_COEF_A0_Pos)
+                      | MAKE_REG_VAL(color_matrix[1], EPIC_CM_ENG_CONF0_COEF_B0_Msk, EPIC_CM_ENG_CONF0_COEF_B0_Pos);
+        reg_conf[1] = MAKE_REG_VAL(color_matrix[2], EPIC_CM_ENG_CONF1_COEF_C0_Msk, EPIC_CM_ENG_CONF1_COEF_C0_Pos)
+                      | MAKE_REG_VAL(color_matrix[3], EPIC_CM_ENG_CONF1_COEF_D0_Msk, EPIC_CM_ENG_CONF1_COEF_D0_Pos);
 
         reg_conf += 2;
         color_matrix += 4;
     }
-    epic->CM_CONF0 |= EPIC_CM_CONF0_ENABLE;
+    epic->CM_ENG_CONF0 |= EPIC_CM_ENG_CONF0_ENABLE;
 }
 #endif /* EPIC_SUPPORT_COLOR_MATRIX */
 
@@ -4315,14 +4323,14 @@ HAL_StatusTypeDef HAL_EPIC_BlendStart(EPIC_HandleTypeDef *epic,
     HAL_StatusTypeDef ret = HAL_OK;
 
 
-#ifdef SF32LB52X
+#ifdef EPIC_L2_L1_INVALID
     EPIC_TransformCfgTypeDef rot_cfg;
 
     HAL_EPIC_RotDataInit(&rot_cfg);
 
     return HAL_EPIC_Rotate(epic, &rot_cfg, fg, bg, dst, alpha);
 
-#endif /* SF32LB52X */
+#endif /* EPIC_L2_L1_INVALID */
 
 
     if (HAL_EPIC_STATE_READY != epic->State)
@@ -4356,7 +4364,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStart(EPIC_HandleTypeDef *epic,
         goto __EXIT;
     }
 
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
     EPIC_WaitDone(epic);
     while (epic->coeng_state)
     {
@@ -4400,14 +4408,14 @@ HAL_StatusTypeDef HAL_EPIC_BlendStart_IT(EPIC_HandleTypeDef *epic,
     EPIC_BlendingDataType fg_bak;
     EPIC_BlendingDataType dst_bak;
 
-#ifdef SF32LB52X
+#ifdef EPIC_L2_L1_INVALID
     EPIC_TransformCfgTypeDef rot_cfg;
 
     HAL_EPIC_RotDataInit(&rot_cfg);
 
     return HAL_EPIC_Rotate_IT(epic, &rot_cfg, fg, bg, dst, alpha);
 
-#endif /* SF32LB52X */
+#endif /* EPIC_L2_L1_INVALID */
 
     HAL_ASSERT(NULL == epic->IntXferCpltCallback);
 
@@ -4455,7 +4463,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStart_IT(EPIC_HandleTypeDef *epic,
     /* unmask */
     epic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
     return HAL_OK;
 }
@@ -4521,7 +4529,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStartEx(EPIC_HandleTypeDef *epic,
     }
 
 
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
     EPIC_WaitDone(epic);
     while (epic->coeng_state)
     {
@@ -4612,7 +4620,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStartEx_IT(EPIC_HandleTypeDef *epic,
     /* unmask */
     epic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
     return HAL_OK;
 }
@@ -4686,7 +4694,7 @@ HAL_StatusTypeDef HAL_EPIC_Rotate(EPIC_HandleTypeDef *epic, EPIC_TransformCfgTyp
         ret = EPIC_ConfigRotation(epic, &rot_cfg_bak, &fg_bak, &bg_bak, &dst_bak, alpha);
         if (HAL_OK == ret)
         {
-            epic->Instance->COMMAND |= EPIC_COMMAND_START;
+            EPIC_RUN(epic);
             EPIC_WaitDone(epic);
 
             while (epic->coeng_state)
@@ -4802,7 +4810,7 @@ HAL_StatusTypeDef HAL_EPIC_Rotate_IT(EPIC_HandleTypeDef *epic, EPIC_TransformCfg
             epic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
 
             /* trigger epic */
-            epic->Instance->COMMAND |= EPIC_COMMAND_START;
+            EPIC_RUN(epic);
         }
         else if (HAL_EPIC_NOTHING_TO_DO == ret)
         {
@@ -4882,7 +4890,7 @@ HAL_StatusTypeDef HAL_EPIC_FillStart_IT(EPIC_HandleTypeDef *epic, EPIC_FillingCf
     epic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
 
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
 __EXIT:
 
@@ -4917,7 +4925,7 @@ HAL_StatusTypeDef HAL_EPIC_FillStart(EPIC_HandleTypeDef *epic, EPIC_FillingCfgTy
     }
 
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
     /* wait complete */
     EPIC_WaitDone(epic);
@@ -4945,12 +4953,6 @@ HAL_StatusTypeDef HAL_EPIC_Copy_IT(EPIC_HandleTypeDef *epic, EPIC_BlendingDataTy
     EPIC_LAYER_IDX src_layer_idx;
     EPIC_TransformResultDef trans_result;
 
-#if 0
-#ifndef SF32LB52X
-    EPIC_TransformResultDef trans_result;
-#endif /* SF32LB52X */
-#endif /* if 0 */
-
     HAL_ASSERT(NULL == epic->IntXferCpltCallback);
     if (!EPIC_SUPPROT_OUT_FORMAT(dst->color_mode)) RETURN_ERROR(epic, HAL_ERROR);
 
@@ -4971,7 +4973,7 @@ HAL_StatusTypeDef HAL_EPIC_Copy_IT(EPIC_HandleTypeDef *epic, EPIC_BlendingDataTy
     memcpy(&dst_bak, dst, sizeof(dst_bak));
 
 //TODO:
-#ifndef SF32LB52X
+#ifndef EPIC_L2_L1_INVALID
     src_layer_idx = EPIC_LAYER_IDX_1;
 
 #else
@@ -4988,7 +4990,7 @@ HAL_StatusTypeDef HAL_EPIC_Copy_IT(EPIC_HandleTypeDef *epic, EPIC_BlendingDataTy
 
     ret = EPIC_ConfigVideoLayer(epic, EPIC_LAYER_IDX_VL, &trans_result, &src_bak, 255);
 #endif /* if 0 */
-#endif /* SF32LB52X */
+#endif /* EPIC_L2_L1_INVALID */
 
     EPIC_MakeAllLayerCoordValid(&src_bak, &dst_bak, NULL);
 
@@ -5043,7 +5045,7 @@ HAL_StatusTypeDef HAL_EPIC_Copy_IT(EPIC_HandleTypeDef *epic, EPIC_BlendingDataTy
     //HAL_ASSERT(0);
 
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
     //rt_mutex_release(&epic_mutex);
 
@@ -5108,7 +5110,7 @@ HAL_StatusTypeDef HAL_EPIC_FillGrad_IT(EPIC_HandleTypeDef *epic, EPIC_GradCfgTyp
     epic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
 
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
 __EXIT:
 
@@ -5147,7 +5149,7 @@ HAL_StatusTypeDef HAL_EPIC_FillGrad(EPIC_HandleTypeDef *epic, EPIC_GradCfgTypeDe
     }
 
     /* trigger epic */
-    epic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(epic);
 
     /* wait complete */
     EPIC_WaitDone(epic);
@@ -5275,7 +5277,7 @@ HAL_StatusTypeDef HAL_EPIC_ContBlendStart(EPIC_HandleTypeDef *hepic,
 
 
 
-    hepic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(hepic);
 
 
 __EXIT:
@@ -5344,7 +5346,7 @@ HAL_StatusTypeDef HAL_EPIC_ContBlendRepeat(EPIC_HandleTypeDef *hepic,
         ret_v = EPIC_ContConfigOutputLayer(hepic, output_layer);
         if (HAL_OK != ret_v) goto __EXIT;
 
-        hepic->Instance->COMMAND |= EPIC_COMMAND_START;
+        EPIC_RUN(hepic);
 
 __EXIT:
         //Restore
@@ -5500,7 +5502,7 @@ HAL_StatusTypeDef HAL_EPIC_TransStart(EPIC_HandleTypeDef *hepic,
                 else if (HAL_OK == ret)
                 {
                     EPIC_CommitInstance(hepic);
-                    hepic->Instance->COMMAND |= EPIC_COMMAND_START;
+                    EPIC_RUN(hepic);
                 }
                 else
                 {
@@ -5679,7 +5681,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendFastStart_IT(EPIC_HandleTypeDef *hepic, EPIC_Han
     /* unmask */
     hepic->Instance->SETTING |= EPIC_SETTING_EOF_IRQ_MASK;
     /* trigger hepic */
-    hepic->Instance->COMMAND |= EPIC_COMMAND_START;
+    EPIC_RUN(hepic);
 
     return HAL_OK;
 }
@@ -5752,7 +5754,7 @@ static void EPIC_RotationCpltCallback(EPIC_HandleTypeDef *epic)
 
 static void EPIC_CopyCpltCallback(EPIC_HandleTypeDef *epic)
 {
-#ifndef SF32LB52X
+#ifndef EPIC_L2_L1_INVALID
     /* disable layer 1 */
     EPIC_DisableLayer(epic->Instance, EPIC_LAYER_IDX_1);
 #else
@@ -5762,7 +5764,7 @@ static void EPIC_CopyCpltCallback(EPIC_HandleTypeDef *epic)
     /* disable video layer */
     EPIC_DisableVideoLayer(epic->Instance);
 #endif /* if 0 */
-#endif /* SF32LB52X */
+#endif /* EPIC_L2_L1_INVALID */
 #ifndef SF32LB55X
     epic->Instance->CANVAS_BG &= ~EPIC_CANVAS_BG_ALL_BLENDING_BYPASS;
 #endif
@@ -6176,10 +6178,8 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
     uint8_t jpeg_num = 0;
 #endif /* EPIC_SUPPORT_JPEGD */
 
-#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X) || defined(SF32LB57X)
+#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X)
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_2;
-#elif defined(SF32LB57X)
-    cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_1;
 #else
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_0;
 #endif /* SF32LB56X || SF32LB58X || SF32LB55X */
