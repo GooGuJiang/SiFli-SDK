@@ -160,7 +160,10 @@
 #define BOOTLOADER_RAM_DATA_END_ADDR        (END_ADDR(BOOTLOADER_RAM_DATA_START_ADDR, BOOTLOADER_RAM_DATA_SIZE))
 
 // Bootloader Patch
-#define BOOTLOADER_PATCH_CODE_ADDR          (BOOTLOADER_RAM_DATA_END_ADDR + 1)      //0x20010000, Bootloader patch code in RAM start from 2nd 64k bytes of RAM
+#define BOOTLOADER_PATCH_CODE_ADDR          (0x20050000)      // Bootloader patch code
+#if BOOTLOADER_PATCH_CODE_ADDR <= BOOTLOADER_RAM_DATA_END_ADDR
+    #error "bootloader patch code overlapped with bootloader ram data"
+#endif
 #define BOOTLOADER_PATCH_CODE_END_ADDR      (END_ADDR(BOOTLOADER_PATCH_CODE_ADDR, BOOTLOADER_PATCH_CODE_SIZE))
 #define BOOTLOADER_PATCH_DATA_ADDR          (BOOTLOADER_PATCH_CODE_END_ADDR + 1)    //0x20020000, Bootloader patch data in RAM start from 3th 64k bytes of RAM
 #define BOOTLOADER_PATCH_DATA_END_ADDR      (END_ADDR(BOOTLOADER_PATCH_DATA_ADDR, BOOTLOADER_PATCH_DATA_SIZE))

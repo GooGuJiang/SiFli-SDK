@@ -11,13 +11,32 @@
 #include <rtconfig.h>
 #include <board.h>
 #include <string.h>
+#include "stdlib.h"
 #include "register.h"
 #include "../dfu/dfu.h"
 #include "boot_flash.h"
 #include "secboot.h"
 #include "../dfu/dfu_protocol.h"
 
+#define CMD_BUF_SIZE 32
+#define CMD_ARG_MAX 3
+
+typedef struct
+{
+    uint8_t pos;
+    char buf[CMD_BUF_SIZE];
+} cmd_buf_t;
+
+uint32_t rx_data_buf_len(void);
+uint32_t rx_data_buf_get(uint8_t *buf, uint32_t len);
+
+static cmd_buf_t cmd_buf;
+static uint8_t dfu_data[DFU_MAX_BLK_SIZE];
+
 void HAL_MspInit(void);
+
+void cdc_acm_data_send_with_dtr_test(uint8_t *buf, uint32_t len);
+extern void cdc_acm_init(uint8_t busid, uintptr_t base);
 
 extern flash_read_func g_flash_read;
 extern flash_write_func g_flash_write;
@@ -371,7 +390,221 @@ void hw_preinit0(void)
     boot_ram();
 }
 
-/**************************main**************************************/
+#ifdef __CC_ARM                                                 /*ARMCC*/
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#elif defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050) /*ARMCLANG*/
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#elif __ICCARM__                                                /*IAR**/
+#error Not support yet
+#else                                                           /*GCC*/
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+int _write(int fd, char *ptr, int len)
+{
+    if (fd > 2)
+    {
+        return -1;
+    }
+    boot_uart_tx(hwp_usart1, (uint8_t *)ptr, len);
+    return len;
+}
+#endif
+
+#ifdef PKG_USING_CHERRYUSB
+
+PUTCHAR_PROTOTYPE
+{
+    boot_uart_tx(hwp_usart1, (uint8_t *)&ch, 1);
+    return ch;
+}
+
+static uint32_t cmd_split(char *cmd, uint32_t length, char *argv[CMD_ARG_MAX])
+{
+    char *ptr;
+    uint32_t position;
+    uint32_t argc;
+    uint32_t i;
+
+    ptr = cmd;
+    position = 0;
+    argc = 0;
+
+    while (position < length)
+    {
+        /* strip bank and tab */
+        while ((*ptr == ' ' || *ptr == '\t') && position < length)
+        {
+            *ptr = '\0';
+            ptr ++;
+            position ++;
+        }
+
+        if (argc >= CMD_ARG_MAX)
+        {
+            printf("Too many args ! We only Use:\n");
+            for (i = 0; i < argc; i++)
+            {
+                printf("%s ", argv[i]);
+            }
+            printf("\n");
+            break;
+        }
+
+        if (position >= length) break;
+
+        /* handle string */
+        if (*ptr == '"')
+        {
+            ptr ++;
+            position ++;
+            argv[argc] = ptr;
+            argc ++;
+
+            /* skip this string */
+            while (*ptr != '"' && position < length)
+            {
+                if (*ptr == '\\')
+                {
+                    if (*(ptr + 1) == '"')
+                    {
+                        ptr ++;
+                        position ++;
+                    }
+                }
+                ptr ++;
+                position ++;
+            }
+            if (position >= length) break;
+
+            /* skip '"' */
+            *ptr = '\0';
+            ptr ++;
+            position ++;
+        }
+        else
+        {
+            argv[argc] = ptr;
+            argc ++;
+            while ((*ptr != ' ' && *ptr != '\t') && position < length)
+            {
+                ptr ++;
+                position ++;
+            }
+            if (position >= length) break;
+        }
+    }
+
+    return argc;
+}
+
+int32_t handle_cmd_dfu_recv(uint32_t argc, char **argv)
+{
+    int r = DFU_FAIL;
+    int32_t offset = 0;
+    int32_t delta;
+
+    printf("handle pkt\n");
+    if (argc == 2)
+    {
+        int len = atoi(argv[1]);
+        if (len < DFU_MAX_BLK_SIZE)
+        {
+            while (offset < len)
+            {
+                delta = rx_data_buf_get(&dfu_data[offset], len - offset);
+                offset += delta;
+            }
+            r = dfu_receive_pkt(len, dfu_data);
+        }
+    }
+    printf("handle pkt done\n");
+    if (r == DFU_SUCCESS)
+    {
+        cdc_acm_data_send_with_dtr_test("OK\n", 3);
+    }
+    else
+    {
+        cdc_acm_data_send_with_dtr_test("Fail\n", 5);
+    }
+
+    return r;
+
+}
+
+
+void handle_cmd(char *cmd, uint32_t len)
+{
+    char *argv[CMD_ARG_MAX];
+    uint32_t argc;
+
+    if (len == 0)
+    {
+        return;
+    }
+
+    /* strim the beginning of command */
+    while ((*cmd  == ' ') || (*cmd == '\t'))
+    {
+        cmd++;
+        len--;
+    }
+
+    if (len == 0)
+    {
+        return;
+    }
+
+    memset(argv, 0x0, sizeof(argv));
+    argc = cmd_split(cmd, len, argv);
+    if (argc == 0)
+    {
+        return;
+    }
+
+    if (strncmp((const char *)argv[0], "dfu_recv", 8) == 0)
+    {
+        handle_cmd_dfu_recv(argc, argv);
+    }
+}
+
+void handle_rx_data(void)
+{
+    char ch;
+    uint32_t len;
+
+    while (1)
+    {
+        len = rx_data_buf_get((uint8_t *)&ch, 1);
+        if (len == 0)
+        {
+            break;
+        }
+        if ((ch == '\r') || (ch == '\n'))
+        {
+            handle_cmd(cmd_buf.buf, cmd_buf.pos);
+            memset(cmd_buf.buf, 0, CMD_BUF_SIZE);
+            cmd_buf.pos = 0;
+        }
+        if (cmd_buf.pos >= CMD_BUF_SIZE)
+        {
+            cmd_buf.pos = 0;
+        }
+        if (((ch >= 'a') && (ch <= 'z'))
+                || ((ch >= 'A') && (ch <= 'Z'))
+                || ((ch >= '0') && (ch <= '9'))
+                || (ch == ' ') || (ch == '\t') || (ch == '_'))
+        {
+            cmd_buf.buf[cmd_buf.pos] = ch;
+            cmd_buf.pos++;
+            /* leave one byte for null terminator */
+            if (cmd_buf.pos >= CMD_BUF_SIZE)
+            {
+                cmd_buf.pos = 0;
+            }
+        }
+    }
+}
+#endif /* PKG_USING_CHERRYUSB */
+
 
 #if defined(__CC_ARM) || defined(__CLANG_ARM)
     int main(void)
@@ -383,11 +616,15 @@ void hw_preinit0(void)
 {
     HAL_Delay_us(0);
 
+    //TODO: need to be removed
+    board_pinmux_uart();
+
     // 3. Power on flash.
     board_flash_power_on();
 
     // 4. Check boot mode.
     HAL_MspInit();
+
 
     // 5. Boot images
 #ifdef CFG_BOOTROM
@@ -403,8 +640,27 @@ void hw_preinit0(void)
         boot_images_help();
     }
 
+    //TODO:
+    if (RCC_SYSCLK_HRC48 == HAL_RCC_HCPU_GetClockSrc(RCC_CLK_MOD_SYS))
+    {
+        HAL_HPAON_EnableXT48();
+        HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_SYS, RCC_SYSCLK_HXT48);
+    }
+
+    dfu_init();
+
+#ifdef PKG_USING_CHERRYUSB
+    cdc_acm_init(0, (uintptr_t)USBC_BASE);
+#endif /* PKG_USING_CHERRYUSB */
     while (1)
-        ;
+    {
+#ifdef PKG_USING_CHERRYUSB
+        if (rx_data_buf_len() > 0)
+        {
+            handle_rx_data();
+        }
+#endif /* PKG_USING_CHERRYUSB */
+    }
 
     return HAL_OK;
 }

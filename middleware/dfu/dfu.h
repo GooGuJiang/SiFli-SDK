@@ -70,12 +70,12 @@ extern "C" {
 #define DFU_FLASH_PARTITION     16
 
 #ifdef BSP_USING_DFU_COMPRESS
-    #define DFU_FLASH_COMPRESS_CONFIG 17
-    #define DFU_FLASH_COMPRESS        18
-    #define DFU_FLASH_COMPRESS_IMG_HCPU 19
+#define DFU_FLASH_COMPRESS_CONFIG 17
+#define DFU_FLASH_COMPRESS        18
+#define DFU_FLASH_COMPRESS_IMG_HCPU 19
 
-    #define DFU_FLASH_IMG_COMPRESS_IDX(flash_id) (((flash_id & 0xC0)>>6) + DFU_FLASH_IMG_LCPU)
-    #define DFU_FLASH_IMG_COMPRESS_FLASH(flash_id) (flash_id & 0x3F)
+#define DFU_FLASH_IMG_COMPRESS_IDX(flash_id) (((flash_id & 0xC0)>>6) + DFU_FLASH_IMG_LCPU)
+#define DFU_FLASH_IMG_COMPRESS_FLASH(flash_id) (flash_id & 0x3F)
 #endif
 
 #define DFU_FLASH_IMAGE        20
@@ -83,8 +83,8 @@ extern "C" {
 
 #ifdef BSP_USING_DFU_COMPRESS
 
-    #define DFU_FLASH_IMAGE_COMPRESS      22
-    #define DFU_FLASH_FONT_COMPRESS       23
+#define DFU_FLASH_IMAGE_COMPRESS      22
+#define DFU_FLASH_FONT_COMPRESS       23
 
 #endif
 
@@ -93,23 +93,23 @@ extern "C" {
 
 // nand only ota
 #if defined(BACKUP_FTAB_START_ADDR) && defined(FLASH_TABLE_START_ADDR)
-    #define DFU_FTAB_ADDR FLASH_TABLE_START_ADDR
-    #define DFU_BACKUP_FTAB_ADDR BACKUP_FTAB_START_ADDR
+#define DFU_FTAB_ADDR FLASH_TABLE_START_ADDR
+#define DFU_BACKUP_FTAB_ADDR BACKUP_FTAB_START_ADDR
 #else
-    #define DFU_FTAB_ADDR 0x62000000
-    #define DFU_BACKUP_FTAB_ADDR 0x62020000
+#define DFU_FTAB_ADDR 0x62000000
+#define DFU_BACKUP_FTAB_ADDR 0x62020000
 #endif
 #define DFU_INFO_OFFSET 0x3000 // 12K
 
 #ifndef DFU_RAM_RUN_STATE_START_ADDR
-    #define DFU_RAM_RUN_STATE_START_ADDR 0xFFFFFFFF
+#define DFU_RAM_RUN_STATE_START_ADDR 0xFFFFFFFF
 #endif
 #define DFU_RAM_RUN_ADDR DFU_RAM_RUN_STATE_START_ADDR
 #ifndef DFU_DOWNLOAD_REGION_START_ADDR
-    #define DFU_DOWNLOAD_REGION_START_ADDR 0xFFFFFFFF
+#define DFU_DOWNLOAD_REGION_START_ADDR 0xFFFFFFFF
 #endif
 #ifndef DFU_INFO_REGION_START_ADDR
-    #define DFU_INFO_REGION_START_ADDR 0xFFFFFFFF
+#define DFU_INFO_REGION_START_ADDR 0xFFFFFFFF
 #endif
 
 #define DFU_FLASH_IMG_IDX(flash_id)  ((flash_id)-(DFU_FLASH_IMG_LCPU))
@@ -301,15 +301,15 @@ typedef struct
 #define DFU_END_NO_ENC      8
 
 #ifdef BSP_USING_DFU_COMPRESS
-    #define DFU_IMG_HDR_COMPRESS  1
-    #define DFU_COMPRESS_RESUNME  2
-    #define DFU_IMG_BODY_COMPRESS 3
-    #define DFU_IMG_END           4
-    #define DFU_DOWNLOAD_END      5
+#define DFU_IMG_HDR_COMPRESS  1
+#define DFU_COMPRESS_RESUNME  2
+#define DFU_IMG_BODY_COMPRESS 3
+#define DFU_IMG_END           4
+#define DFU_DOWNLOAD_END      5
 
-    #define DFU_COMPRESS_IDLE   0
-    #define DFU_COMPRESS_START  1
-    #define DFU_COMPRESS_READY  2
+#define DFU_COMPRESS_IDLE   0
+#define DFU_COMPRESS_START  1
+#define DFU_COMPRESS_READY  2
 #endif
 
 #define DFU_CONFIG_UID          1
@@ -319,6 +319,7 @@ typedef struct
 #define DFU_CONFIG_FLASH_TABLE  8
 #define DFU_CONFIG_SIG          9
 #define DFU_CONFIG_BOOT_PATCH_SIG    10
+#define DFU_CONFIG_BOOT_PATCH_ADDR   11
 
 #define DFU_STATE_BIN_NOT_EXISTED   0
 #define DFU_STATE_BIN_READY         1
@@ -419,18 +420,18 @@ struct dfu_compress_configuration
 #endif
 
 #ifndef SF32LB55X
-    //TODO: LCPU RAM not available yet
-    extern struct sec_configuration sec_config_cache;
-    extern struct sec_configuration backup_sec_config;
-    extern dfu_nand_info dfu_info;
-    #define FLASH_SEC_CACHE ((uint8_t *)&sec_config_cache)
-    #define FLASH_SEC_CACHE_SIZE  (sizeof(sec_config_cache))
+//TODO: LCPU RAM not available yet
+extern struct sec_configuration sec_config_cache;
+extern struct sec_configuration backup_sec_config;
+extern dfu_nand_info dfu_info;
+#define FLASH_SEC_CACHE ((uint8_t *)&sec_config_cache)
+#define FLASH_SEC_CACHE_SIZE  (sizeof(sec_config_cache))
 #else
-    #define FLASH_SEC_CACHE (LCPU_RAM_DATA_START_ADDR)
+#define FLASH_SEC_CACHE (LCPU_RAM_DATA_START_ADDR)
 #endif
 
 #ifdef BSP_USING_DFU_COMPRESS
-    #define FLASH_DFU_COMPRESS_START       DFU_RES_FLASH_CODE_START_ADDR
+#define FLASH_DFU_COMPRESS_START       DFU_RES_FLASH_CODE_START_ADDR
 #endif
 
 #ifndef HW_EFUSE
@@ -450,7 +451,7 @@ struct sec_efuse
 extern struct sec_configuration *g_sec_config;
 
 #ifdef BSP_USING_DFU_COMPRESS
-    extern volatile struct dfu_compress_configuration *g_dfu_compress_config;
+extern volatile struct dfu_compress_configuration *g_dfu_compress_config;
 #endif
 
 void sec_flash_init(void);
@@ -477,6 +478,7 @@ void sifli_hw_enc_with_key(uint8_t *key, uint8_t *in_data, uint8_t *out_data, in
 void sifli_hw_init_xip_key(uint8_t *enc_img_key);
 
 void dfu_flash_init(void);
+void dfu_init(void);
 int  dfu_receive_pkt(int len, uint8_t *data);
 void dfu_boot_img(int flashid);
 void dfu_boot_img_in_flash(int flashid);
