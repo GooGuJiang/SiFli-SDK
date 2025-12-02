@@ -449,9 +449,9 @@ static uint32_t DMA_CalcTransCounts(DMA_HandleTypeDef *hdma, uint32_t SrcAddress
     uint32_t trans_bytes;
 #endif /* SF32LB55X || SF32LB58X || SF32LB56X */
 
-    if (TotalCounts > DMAC_CNDTR1_NDT)
+    if (TotalCounts > DMA_MAX_TRANSFER_SIZE(hdma))
     {
-        trans_counts = DMAC_CNDTR1_NDT;
+        trans_counts = DMA_MAX_TRANSFER_SIZE(hdma);
     }
     else
     {
@@ -895,7 +895,12 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint3
 {
     HAL_StatusTypeDef status = HAL_OK;
 
-#ifndef DMA_SUPPORT_DYN_CHANNEL_ALLOC
+#ifdef DMA_SUPPORT_DYN_CHANNEL_ALLOC
+    if (DMA_CIRCULAR == hdma->Init.Mode)
+    {
+        HAL_ASSERT(IS_DMA_BUFFER_SIZE(hdma, Counts));
+    }
+#else
     /* Check the parameters */
     HAL_ASSERT(IS_DMA_BUFFER_SIZE(hdma, Counts));
 #endif /* !DMA_SUPPORT_DYN_CHANNEL_ALLOC */

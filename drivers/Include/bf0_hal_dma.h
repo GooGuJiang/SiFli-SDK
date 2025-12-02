@@ -1101,7 +1101,8 @@ uint32_t             HAL_DMA_GetError(DMA_HandleTypeDef *hdma);
 #define DMA1_BUFFER_SIZE (0x10000UL)
 #endif /* GPDMA1_BASE */
 
-#define IS_DMA_BUFFER_SIZE(HANDLE, SIZE) (((SIZE) >= 0x1U) && (((HANDLE)->DmaBaseAddress == DMA2) ? ((SIZE) < 0x10000U) : ((SIZE) < DMA1_BUFFER_SIZE)))
+#define DMA_MAX_TRANSFER_SIZE(HANDLE) (((HANDLE)->DmaBaseAddress == DMA2) ? (0xFFFFUL) : (DMA1_BUFFER_SIZE - 1UL))
+#define IS_DMA_BUFFER_SIZE(HANDLE, SIZE) (((SIZE) >= 0x1U) && ((SIZE) < DMA_MAX_TRANSFER_SIZE(HANDLE)))
 
 #define IS_DMA_PERIPHERAL_INC_STATE(STATE) (((STATE) == DMA_PINC_ENABLE) || \
                                             ((STATE) == DMA_PINC_DISABLE))
