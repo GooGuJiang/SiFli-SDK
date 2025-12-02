@@ -939,14 +939,17 @@ static rt_err_t drv_pwm_set(struct bf0_pwm *pwm, struct rt_pwm_configuration *co
 
     if (pulse < MIN_PULSE)
     {
-        pulse = MIN_PULSE;
+        pulse = 0;
     }
-    else if (pulse >= period)       /*if pulse reach to 100%, need set pulse = period + 1, because pulse = period, the real percentage = 99.9983%  */
+    else if (pulse > period)
     {
-        pulse = period + 1;
+        pulse = period;
     }
 
-    __HAL_GPT_SET_COMPARE(htim, channel, pulse - 1);
+    /*
+        In PWM 1(OC1M is 6) and upcounter(DIR is 0) mode, PWM output high if  0 <= CNT < CCR, else output low.
+    */
+    __HAL_GPT_SET_COMPARE(htim, channel, pulse);
 
     //pulse compute conversion
     if (configuration->use_percentage)//If you need to perform ratio calculation on pulse
@@ -956,7 +959,7 @@ static rt_err_t drv_pwm_set(struct bf0_pwm *pwm, struct rt_pwm_configuration *co
             unsigned long long pulse_a = ((unsigned long long)configuration->pulse_dma_data[i] * gpt_clock / psc / 1000ULL) - 1;
             if (pulse_a < MIN_PULSE)
             {
-                pulse_a = MIN_PULSE;
+                pulse_a = 0;
             }
             else if (pulse_a > period)
             {
