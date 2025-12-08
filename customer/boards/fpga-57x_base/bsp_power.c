@@ -3,7 +3,7 @@
 
 void BSP_GPIO_Set(int pin, int val, int is_porta)
 {
-    GPIO_TypeDef *gpio = (is_porta) ? hwp_gpio1 : hwp_gpio2;
+    GPIO_TypeDef *gpio = hwp_gpio1;
     GPIO_InitTypeDef GPIO_InitStruct;
 
     // set sensor pin to output mode

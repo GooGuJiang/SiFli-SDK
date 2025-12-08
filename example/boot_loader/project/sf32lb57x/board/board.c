@@ -68,15 +68,20 @@ pin_function HAL_PIN_Idx2Func(int pad, int idx,  int hcpu)
 
 void board_pinmux_mpi1_puya_base()
 {
+//TODO:
+#if 0
     HAL_PIN_Set(PAD_SA01, MPI1_CS,   PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA07, MPI1_DIO0, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_NOPULL, 1);
+#endif
 }
 
 void board_pinmux_mpi1_puya_ext(int is64Mb)
 {
+//TODO:
+#if 0
     HAL_PIN_Set_Analog(PAD_SA04, 1);
     HAL_PIN_Set_Analog(PAD_SA05, 1);
     HAL_PIN_Set_Analog(PAD_SA06, 1);
@@ -94,10 +99,13 @@ void board_pinmux_mpi1_puya_ext(int is64Mb)
         HAL_PIN_Set_Analog(PAD_SA03, 1);
         HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
     }
+#endif
 }
 
 void board_pinmux_mpi1_gd()
 {
+//TODO:
+#if 0
     HAL_PIN_Set(PAD_SA04, MPI1_CS,   PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA11, MPI1_DIO0, PIN_PULLDOWN, 1);
@@ -112,7 +120,7 @@ void board_pinmux_mpi1_gd()
     HAL_PIN_Set_Analog(PAD_SA07, 1);
     HAL_PIN_Set_Analog(PAD_SA10, 1);
     HAL_PIN_Set_Analog(PAD_SA12, 1);
-
+#endif
 }
 
 void board_pinmux_mpi3()

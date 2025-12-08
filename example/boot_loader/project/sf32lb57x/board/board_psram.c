@@ -105,6 +105,8 @@ void board_pinmux_psram_func1_2_4(int func)
 /* APS 16p*/
 void board_pinmux_psram_func3()
 {
+//TODO:
+#if 0
     HAL_PIN_Set(PAD_SA09, MPI1_CLK, PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA08, MPI1_CS,  PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA05, MPI1_DIO0, PIN_PULLDOWN, 1);
@@ -119,6 +121,7 @@ void board_pinmux_psram_func3()
     HAL_PIN_Set_Analog(PAD_SA04, 1);
     HAL_PIN_Set_Analog(PAD_SA11, 1);
     HAL_PIN_Set_Analog(PAD_SA12, 1);
+#endif
 }
 
 

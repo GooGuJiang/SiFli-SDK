@@ -70,12 +70,15 @@ static void board_pinmux_psram_func1_2_4(int func)
 /* APS 16p*/
 static void board_pinmux_psram_func3()
 {
+//TODO:
+#if 0
     HAL_PIN_Set(PAD_SA09, MPI1_CLK, PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA08, MPI1_CS,  PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_SA05, MPI1_DIO0, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA07, MPI1_DIO1, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_SA06, MPI1_DIO2, PIN_PULLUP, 1);
     HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_PULLUP, 1);
+#endif
 
     HAL_PIN_Set_Analog(PAD_SA00, 1);
     HAL_PIN_Set_Analog(PAD_SA01, 1);
@@ -96,6 +99,8 @@ static void board_pinmux_mpi1_none(void)
     }
 }
 #endif
+
+
 void BSP_PIN_Init(void)
 {
 #ifdef SOC_BF0_HCPU
@@ -112,11 +117,14 @@ void BSP_PIN_Init(void)
     pid = 3;
     if (pid == 0)   // Puya flash
     {
+//TODO:
+#if 0
         HAL_PIN_Set(PAD_SA01, MPI1_CS,   PIN_NOPULL, 1);
         HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
         HAL_PIN_Set(PAD_SA07, MPI1_DIO0, PIN_PULLDOWN, 1);
         HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
         HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_NOPULL, 1);
+#endif
 
         if (PM_STANDBY_BOOT == SystemPowerOnModeGet())
         {
@@ -130,12 +138,15 @@ void BSP_PIN_Init(void)
     }
     else if (pid == 1)  // GD Flash
     {
+//TODO:
+#if 0
         HAL_PIN_Set(PAD_SA04, MPI1_CS,   PIN_NOPULL, 1);
         HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
         HAL_PIN_Set(PAD_SA11, MPI1_DIO0, PIN_PULLDOWN, 1);
         HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
         HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
         HAL_PIN_Set(PAD_SA08, MPI1_DIO3, PIN_PULLUP, 1);
+#endif
 
         HAL_PIN_Set_Analog(PAD_SA01, 1);
         HAL_PIN_Set_Analog(PAD_SA03, 1);
@@ -280,15 +291,6 @@ void BSP_PIN_Init(void)
 
     // LCPU pins
 
-    // UART4
-    HAL_PIN_Set(PAD_PB01, USART4_TXD, PIN_PULLUP, 0);
-    HAL_PIN_Set(PAD_PB00, USART4_RXD, PIN_PULLUP, 0);
-    //HAL_PIN_Set(PAD_PB18, USART5_TXD, PIN_PULLUP, 0);
-    //HAL_PIN_Set(PAD_PB17, USART5_RXD, PIN_PULLUP, 0);
-
-    // UART5
-    HAL_PIN_Set(PAD_PB03, USART5_TXD, PIN_PULLUP, 0);
-    HAL_PIN_Set(PAD_PB02, USART5_RXD, PIN_PULLUP, 0);
 
 }
 

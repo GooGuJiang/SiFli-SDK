@@ -423,7 +423,6 @@ typedef enum IRQn
 #include "sd.h"
 #include "aes_acc.h"
 #include "gpio1.h"
-#include "gpio2.h"
 #include "hpsys_pinmux.h"
 #include "lpsys_pinmux.h"
 #include "hpsys_aon.h"
@@ -516,7 +515,7 @@ typedef enum IRQn
 #define LPSYS_RCC_BASE      0x40000000
 #define DMAC2_BASE          0x40001000
 #define MAILBOX2_BASE       0x40002000
-#define PINMUX2_BASE        0x40003000
+// #define PINMUX2_BASE        0x40003000
 #define PATCH_BASE          0x40004000
 #define USART4_BASE         0x40005000
 #define USART5_BASE         0x40006000
@@ -530,7 +529,8 @@ typedef enum IRQn
 #define LPSYS_AON_BASE      0x40040000
 #define LPTIM3_BASE         0x40042000
 //------------------------------------
-#define GPIO2_BASE          0x40080000
+/** no GPIO2 module, placeholder for convenience*/
+#define GPIO2_BASE          0x00000000
 #define BT_RFC_MEM_BASE     0x40082000
 #define BT_RFC_REG_BASE     0x40082800
 #define BT_PHY_BASE         0x40084000
@@ -601,7 +601,7 @@ typedef enum IRQn
 #define hwp_usbc        ((USBC_X_Typedef        *)    USBC_BASE)
 #define hwp_dcmi        ((DCMI_TypeDef          *)    DCMI_BASE)
 #define hwp_pinmux1     ((HPSYS_PINMUX_TypeDef  *)    PINMUX1_BASE)
-#define hwp_pinmux2     ((LPSYS_PINMUX_TypeDef  *)    PINMUX2_BASE)
+// #define hwp_pinmux2     ((LPSYS_PINMUX_TypeDef  *)    PINMUX2_BASE)
 #define hwp_hpsys_aon   ((HPSYS_AON_TypeDef     *)    HPSYS_AON_BASE)
 #define hwp_lpsys_aon   ((LPSYS_AON_TypeDef     *)    LPSYS_AON_BASE)
 #define hwp_gpadc       ((GPADC_TypeDef         *)    GPADC_BASE)

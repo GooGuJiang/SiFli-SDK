@@ -33,6 +33,8 @@ def pinmux_parse_h(excel_file):
 """)
     print('#ifndef _BF0_PIN_CONST_H')
     print('#define _BF0_PIN_CONST_H')    
+    print('#include "stdint.h"')    
+    print('\n')
     print("/** @addtogroup PINMUX")
     print(" * @{")
     print(" */\n")
@@ -69,39 +71,13 @@ def pinmux_parse_h(excel_file):
             print("\t/** {} */".format(row[2]))
             print('\t'+row[2]+',')
     print('\tPIN_PAD_MAX_H,')
-    
-    #LCPU pads
-    ws=wb['LPSYS']
-    data=ws.values
-    data=list(data)
-    for row in data:        
-        if row[2]=='Pad Name':
-            print('\n\tPIN_PAD_UNDEF_L,')
-        elif row[2] is not None:
-            print("\t/** {} */".format(row[2]))
-            print('\t'+row[2]+',')
-    print('\tPIN_PAD_MAX_L,')
-    print('} pin_pad;\n')
 
-    print("#define PIN_FUNC_SEL_NUM  ({})".format(func_sel_num))
-    print("\n/** HCPU pad function definition table */")
-    print("extern const unsigned short pin_pad_func_hcpu[][{}];".format(func_sel_num))
-    print("/** LCPU pad function definition table */")
-    print("extern const unsigned short pin_pad_func_lcpu[][{}];".format(func_sel_num))
-    print("#ifdef PIN_DEBUG")    
-    print("    extern const char pin_function_str[][20];")
-    print("    extern const char pin_pad_str_hcpu[][20];")
-    print("    extern const char pin_pad_str_lcpu[][20];")
-    print("#endif")
-    
     print("/**   ")
     print(" * @}")
     print(" */\n")
     
     print('#endif')
 
-
-    
 
 def pinmux_parse_c(excel_file):
     wb=openpyxl.load_workbook(filename=excel_file)
@@ -113,21 +89,10 @@ def pinmux_parse_c(excel_file):
  * SPDX-License-Identifier: Apache-2.0
  */\n\
 """)
+    print('#include "bf0_hal_def.h"')
     print('#include "bf0_pin_const.h"')
-    print('#ifdef PIN_DEBUG')
+    print('')
 
-    # functions debug string
-    ws=wb['Functions']    
-    data=ws.values
-    data=list(data)
-    for row in data:
-        if row[2]=='Function Name ':
-            print('const char pin_function_str[][20] =\n{\n\t"UNDEF",')
-        elif (row[2] is not None) and (row[0] is None):
-            print('\t"'+row[2]+'",')
-    print('};')
-
-    # HCPU debug string
     ws=wb['HPSYS']
     data=ws.values
     data=list(data)
@@ -143,70 +108,90 @@ def pinmux_parse_c(excel_file):
                 pass    
 
         if (row[2]=='PAD_SA00'):
-            print('const char pin_pad_str_hcpu[][20] =\n{\n\t"UNDEF",')
             started=1
 
-        if (started==1) and (row[2] is not None) and ("PAD" in row[2]):
-            print('\t"'+row[2]+'",')
-    print('};')    
-    
-    #LCPU debug string
-    ws=wb['LPSYS']
-    data=ws.values
-    data=list(data)
+            
+    # Geneate each pad_xx_fsel_func_tbl
+    started=0
+    pad_cnt = 0
     for row in data:        
-        if row[2]=='Pad Name':
-            print('const char pin_pad_str_lcpu[][20] =\n{\n\t"UNDEF",')
-        elif row[2] is not None:
-            print('\t"'+row[2]+'",')
-    print('};')    
+        if (row[2]=='PAD_SA00'):
+            started=1
+        if (started==1) and (row[2] is not None) and ("PAD" in row[2]):
+            pad_cnt += 1
+            pad_name = row[2].replace('PAD_', '')
+            row=row[func_start_col:(func_start_col+func_sel_num)]
+            print('/* PAD_{} */'.format(pad_name)) 
+            print('const pin_fsel_function_t pad_{}_fsel_func_tbl[] = '.format(pad_name.lower()))
+            print('{')
+            for i in range(func_sel_num):
+                if (i >= len(row)) or (row[i]==None) or ('#' == row[i][0]) or ('x' == row[i][0]) or ('' == row[i].strip()
+                    or ('(' == row[i][0])):
+                    pass
+                elif 'I2C_UART' in row[i] or '_TIM' in row[i]:
+                    pass
+                else:
+                    func_name = row[i].replace('!', '')
+                    print('\t{{{}, {}}},'.format(i, func_name))
+            print('\t{{{}, {}}},'.format(0, 'PIN_FUNC_UNDEF'))
+            print('};\n')
+   
+    # Geneate each pad_fsel_func_tbls
+    print('const pin_fsel_function_t *const pad_fsel_func_tbls[HPSYS_PAD_NUM] = ')
+    print('{')
+    for row in data:        
+        if (row[2]=='PAD_SA00'):
+            started=1
+        if (started==1) and (row[2] is not None) and ("PAD" in row[2]):
+            pad_name = row[2].replace('PAD_', '')
+            row=row[func_start_col:(func_start_col+func_sel_num)]
+            print('\tpad_{}_fsel_func_tbl,'.format(pad_name.lower()))
+    print('};')
 
-    #end for debug strings
-    print('#endif')
-
-    #HCPU function mapping matrix
-    ws=wb['HPSYS']
-    data=ws.values
-    data=list(data)
+    # Geneate pin_function2_t enum
     started=0
     for row in data:        
         if (row[2]=='PAD_SA00'):
-            print('const unsigned short pin_pad_func_hcpu[][{}] =\n{{\n\t{{{}}},'.format(func_sel_num,','.join(['0']*func_sel_num)))
-            started=1            
+            print('typedef enum _pin_function2\n{')
+            print(
+"""\
+\t/****************************************************************************
+\t *  Dedicated pin function part
+\t *  Function could be assigned to specific pad
+\t ****************************************************************************/\
+""")
+            started=1
         if (started==1) and (row[2] is not None) and ("PAD" in row[2]):
+            pad_name = row[2].replace('PAD_', '')
             row=row[func_start_col:(func_start_col+func_sel_num)]
-            print('\t{', end='')
+            print('\n \t/* PAD_{} */'.format(pad_name)) 
             for i in range(func_sel_num):
-                if (i>0):
-                    print(',\t', end='')
                 if (i >= len(row)) or (row[i]==None) or ('#' == row[i][0]) or ('x' == row[i][0]) or ('' == row[i].strip()
                     or ('(' == row[i][0])):
-                    print('0', end='')
+                    pass
+                elif 'I2C_UART' in row[i] or '_TIM' in row[i] or 'SPI1' in row[i] or 'SPI2' in row[i] or 'I2S' in row[i] or 'PDM' in row[i]:
+                    pass
                 else:
-                    print(row[i].replace('!', ''), end='')
-            print('},')                    
-    print('};')    
-            
-    #LCPU function mapping matrix
-    ws=wb['LPSYS']
-    data=ws.values
-    data=list(data)
-    for row in data:        
-        if row[2]=='Pad Name':
-            print('const unsigned short pin_pad_func_lcpu[][{}] =\n{{\n\t{{{}}},'.format(func_sel_num,','.join(['0']*func_sel_num)))
-        elif (row[2] is not None) and ("PAD" in row[2]) and ((row[0] is None) or ("#" not in row[0])):
-            row=row[func_start_col:(func_start_col+func_sel_num)]
-            print('\t{', end='')
-            for i in range(func_sel_num):
-                if (i>0):
-                    print(',\t', end='')
-                if (i >= len(row)) or (row[i]==None) or ('#' == row[i][0])  or ('x' == row[i][0]) or ('' == row[i].strip()):
-                    print('0', end='')
-                else:
-                    print(row[i].replace('!', ''), end='')
-            print('},')                    
-    print('};')    
-            
+                    func_name = row[i].replace('!', '')
+                    print('\tPIN_FUNC_ENUM_DEF({}, {}, {}),'.format(pad_name, func_name, i))
+   
+    print('')
+    print(
+"""\
+\t/****************************************************************************
+\t * Arbitrary pin function part
+\t * Function in the PIN_ARBITRARY_FUNC_LIST could be assigned to any pad
+\t *****************************************************************************/
+
+\t/* Function name is like: PAD_PA00_I2C1_SCL*/\
+""")
+    for i in range(58):
+        print('\tFOREACH_FUNC(PIN_ARBITRARY_PINMUX_ENUM_DEF, PA{:02d}, PIN_ARBITRARY_FUNC_LIST),'.format(i))
+    
+    print('} pin_function2;')    
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="General Usage ", 
             formatter_class=argparse.RawDescriptionHelpFormatter,
