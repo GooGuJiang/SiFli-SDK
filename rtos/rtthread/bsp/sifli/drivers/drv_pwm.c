@@ -27,7 +27,7 @@
 
 #define MAX_PERIOD_GPT (0xFFFF)
 #define MAX_PERIOD_ATM (0xFFFFFFFF)
-#define MIN_PERIOD 3
+#define MIN_PERIOD 2
 #define MIN_PULSE 1
 
 //extern void HAL_GPT_MspPostInit(GPT_HandleTypeDef *htim);

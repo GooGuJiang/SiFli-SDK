@@ -1127,7 +1127,7 @@ static int gc0320_mclk_output(bool enable)
 {
     struct rt_device_pwm *device = RT_NULL;
     int pwm_channel = 1;
-    uint32_t period = 500; // 2MHz
+    uint32_t period = 84; // 12MHz
 
     device = (struct rt_device_pwm *)rt_device_find("pwm3");
     if (!device)

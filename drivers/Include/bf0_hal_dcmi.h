@@ -225,8 +225,8 @@ typedef void (*pDCMI_CallbackTypeDef)(DCMI_HandleTypeDef *hdcmi);
 /** @defgroup DCMI_PIXCK_Polarity DCMI PIXCK Polarity
   * @{
   */
-#define DCMI_PCKPOLARITY_FALLING    ((uint32_t)0x00000000U)      /*!< Pixel clock active on Falling edge */
-#define DCMI_PCKPOLARITY_RISING     ((uint32_t)DCMI_CR_PCKPOL)  /*!< Pixel clock active on Rising edge  */
+#define DCMI_PCKPOLARITY_FALLING    ((uint32_t)DCMI_CR_PCKPOL)      /*!< Pixel clock active on Falling edge */
+#define DCMI_PCKPOLARITY_RISING     ((uint32_t)0x00000000U)  /*!< Pixel clock active on Rising edge  */
 
 /**
   * @}
