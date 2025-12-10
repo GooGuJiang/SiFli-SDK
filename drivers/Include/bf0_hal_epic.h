@@ -146,7 +146,8 @@ extern "C" {
                                         || (EPIC_OUTPUT_GRAY4 == (cf)) || (EPIC_OUTPUT_GRAY2 == (cf)) \
                                         || (EPIC_OUTPUT_GRAY4_SWAP == (cf)) || (EPIC_OUTPUT_GRAY2_SWAP == (cf)))
 
-
+#define EPIC_OUTPUT_IS_TRANSLUCENT(cf)  ((EPIC_OUTPUT_ARGB8565 == (cf)) || (EPIC_OUTPUT_ARGB8888 == (cf)) \
+                                        || (EPIC_OUTPUT_A8 == (cf)))
 
 /** @defgroup EPIC_Input_Color_Mode EPIC Input Color Mode
   * @{

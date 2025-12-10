@@ -2020,8 +2020,7 @@ static HAL_StatusTypeDef EPIC_ClipAndSetupOutputLayer(EPIC_TypeDef *epic,
     if ((x0 <= x1) && (y0 <= y1))
     {
         if ((!output->color_en)   /* not filling using background color */
-                && ((EPIC_COLOR_ARGB8565 == output->color_mode)
-                    || (EPIC_COLOR_ARGB8888 == output->color_mode)))
+                && EPIC_OUTPUT_IS_TRANSLUCENT(output->color_mode))
         {
             /* don't blend with background color, output alpha directly */
             epic->CANVAS_BG |= EPIC_CANVAS_BG_BG_BLENDING_BYPASS;
