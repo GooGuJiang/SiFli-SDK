@@ -320,7 +320,7 @@ uint32_t rx_data_buf_len(void)
 
 void usbd_cdc_acm_bulk_out(uint8_t busid, uint8_t ep, uint32_t nbytes)
 {
-    USB_LOG_RAW("actual out len:%d\r\n", (unsigned int)nbytes);
+    // USB_LOG_RAW("actual out len:%d\r\n", (unsigned int)nbytes);
     //printf("RX:%s\r\n",read_buffer);
     rx_data_buf_put(read_buffer, nbytes);
     // memset(read_buffer, 0, USB_BUFF_MAX_LEN);
@@ -331,7 +331,7 @@ void usbd_cdc_acm_bulk_out(uint8_t busid, uint8_t ep, uint32_t nbytes)
 
 void usbd_cdc_acm_bulk_in(uint8_t busid, uint8_t ep, uint32_t nbytes)
 {
-    USB_LOG_RAW("actual in len:%d\r\n", (unsigned int)nbytes);
+    // USB_LOG_RAW("actual in len:%d\r\n", (unsigned int)nbytes);
 
     if ((nbytes % usbd_get_ep_mps(busid, ep)) == 0 && nbytes)
     {

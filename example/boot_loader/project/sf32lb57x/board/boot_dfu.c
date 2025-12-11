@@ -55,15 +55,10 @@ static uint8_t dfu_key1[DFU_KEY_SIZE];
 struct sec_configuration *g_config_cache;
 struct dfu_configuration *g_dfu_config;
 static uint8_t g_sig_hash_cache[DFU_SIG_HASH_SIZE];
-ALIGN(4)
-static uint8_t g_aes_ctr_iv[DFU_IV_LEN];
 static struct image_header_enc g_boot_patch_img_head;
 static uint8_t g_boot_patch_sig_pub_key[DFU_SIG_KEY_SIZE];
 static uint32_t g_boot_patch_addr = BOOTLOADER_PATCH_CODE_ADDR;
-static int img_flashid(int coreid)
-{
-    return coreid + 2;
-}
+
 //#define DFU_DEV
 #ifdef DFU_DEV
     extern int sifli_hw_efuse_write_din(uint8_t id, uint8_t *data, int size);
@@ -214,7 +209,6 @@ static int dfu_process_hdr_sec(uint8_t flashid, uint8_t *data, int size)
     size -= sizeof(struct image_cfg_hdr);
 
     d = sifli_dec_verify(NULL, 0, data, dfu_temp, size, hdr->hash);
-    printf("dec_verify:%p\n", d);
     if (d)          // Use root key to decode image header
     {
         struct image_header_enc *hdr = (struct image_header_enc *)d;
@@ -243,6 +237,10 @@ static int dfu_process_hdr_sec(uint8_t flashid, uint8_t *data, int size)
         sec_flash_erase(flashid, 0, hdr->length);
         r = DFU_SUCCESS;
     }
+    else
+    {
+        LOG_E("image header verify fail\n");
+    }
     return r;
 }
 
@@ -252,7 +250,6 @@ static int dfu_process_body_sec(uint8_t flashid, uint8_t *data, int size)
     struct image_body_hdr *hdr = (struct image_body_hdr *)data;
     uint8_t *key;
     uint8_t *d;
-    int flash_img_idx = DFU_FLASH_IMG_IDX(flashid);
     struct image_header_enc *img_hdr;
 
 #ifdef BSP_USING_DFU_COMPRESS
@@ -293,7 +290,6 @@ static int dfu_process_body_sec(uint8_t flashid, uint8_t *data, int size)
             sec_flash_write(flashid, hdr->offset, data, size);
         else
             sec_flash_write(flashid, hdr->offset, d, size);
-        LOG_I("%d \n", hdr->offset + size);
         r = DFU_SUCCESS;
     }
     else
@@ -356,7 +352,9 @@ static int dfu_process_config_sec(uint8_t keyid, uint8_t *data, int len)
     }
     else if (keyid == DFU_CONFIG_BOOT_PATCH_ADDR)
     {
-
+        g_boot_patch_addr = (uint32_t)data[0] | ((uint32_t)data[1] << 8)
+                            | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+        printf("config boot patch addr:0x%x", g_boot_patch_addr);
     }
     return r;
 }
@@ -465,7 +463,6 @@ static int dfu_end(uint8_t flashid)
         mbedtls_sha256_context ctx2;
         mbedtls_sha256_init(&ctx2);
         mbedtls_sha256_starts(&ctx2, 0); /* SHA-256, not 224 */
-        printf("img_hdr_len:%d\n", img_hdr->length);
         do
         {
             if (offset + sizeof(dfu_temp) > img_hdr->length)
@@ -487,7 +484,6 @@ static int dfu_end(uint8_t flashid)
     {
         // Verify signature
         mbedtls_pk_context pk;
-        uint8_t *key;
         mbedtls_pk_init(&pk);
         if (mbedtls_pk_parse_public_key(&pk, sig_pub_key, DFU_SIG_KEY_SIZE) == 0)
         {
@@ -803,8 +799,6 @@ int dfu_verify_body_sec(uint8_t flashid, uint8_t *data, int size)
     struct image_body_hdr *hdr = (struct image_body_hdr *)data;
     uint8_t *key;
     uint8_t *d;
-    int flash_img_idx = DFU_FLASH_IMG_IDX(flashid);
-    struct image_header_enc *img_hdr;
 
     if ((flashid >= DFU_FLASH_PARTITION)
             || (flashid < DFU_FLASH_IMG_LCPU))
@@ -866,9 +860,7 @@ int dfu_receive_pkt(int len, uint8_t *data)
 {
     int r;
     struct dfu_hdr *hdr = (struct dfu_hdr *)data;
-    int img_idx = DFU_FLASH_IMG_IDX(hdr->id);
 
-    LOG_I("command %d\n", hdr->command);
     switch (hdr->command)
     {
     case DFU_IMG_HDR_ENC:

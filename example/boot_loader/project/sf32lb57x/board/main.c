@@ -502,7 +502,6 @@ int32_t handle_cmd_dfu_recv(uint32_t argc, char **argv)
     int32_t offset = 0;
     int32_t delta;
 
-    printf("handle pkt\n");
     if (argc == 2)
     {
         int len = atoi(argv[1]);
@@ -516,7 +515,6 @@ int32_t handle_cmd_dfu_recv(uint32_t argc, char **argv)
             r = dfu_receive_pkt(len, dfu_data);
         }
     }
-    printf("handle pkt done\n");
     if (r == DFU_SUCCESS)
     {
         cdc_acm_data_send_with_dtr_test("OK\n", 3);
