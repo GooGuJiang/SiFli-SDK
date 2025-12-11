@@ -70,11 +70,11 @@ void board_pinmux_mpi1_puya_base()
 {
 //TODO:
 #if 0
-    HAL_PIN_Set(PAD_SA01, MPI1_CS,   PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA07, MPI1_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA01, MPI1_CS,   PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA07, MPI1_DIO0, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA10, MPI1_DIO3, PIN_NOPULL, 1);
 #endif
 }
 
@@ -92,12 +92,12 @@ void board_pinmux_mpi1_puya_ext(int is64Mb)
     if (is64Mb)
     {
         HAL_PIN_Set_Analog(PAD_SA00, 1);
-        HAL_PIN_Set(PAD_SA03, MPI1_DIO2, PIN_PULLUP, 1);
+        HAL_PIN_CompileTimeSet(PAD_SA03, MPI1_DIO2, PIN_PULLUP, 1);
     }
     else
     {
         HAL_PIN_Set_Analog(PAD_SA03, 1);
-        HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
+        HAL_PIN_CompileTimeSet(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
     }
 #endif
 }
@@ -106,12 +106,12 @@ void board_pinmux_mpi1_gd()
 {
 //TODO:
 #if 0
-    HAL_PIN_Set(PAD_SA04, MPI1_CS,   PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA11, MPI1_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_SA08, MPI1_DIO3, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA04, MPI1_CS,   PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA11, MPI1_DIO0, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_SA08, MPI1_DIO3, PIN_PULLUP, 1);
 
     HAL_PIN_Set_Analog(PAD_SA01, 1);
     HAL_PIN_Set_Analog(PAD_SA03, 1);
@@ -125,30 +125,30 @@ void board_pinmux_mpi1_gd()
 
 void board_pinmux_mpi3()
 {
-    HAL_PIN_Set(PAD_PA16, MPI3_CLK, PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA12, MPI3_CS,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA15, MPI3_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA13, MPI3_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_PA14, MPI3_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA17, MPI3_DIO3, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA16, MPI3_CLK, PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA12, MPI3_CS,  PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA15, MPI3_DIO0, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA13, MPI3_DIO1, PIN_PULLDOWN, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA14, MPI3_DIO2, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA17, MPI3_DIO3, PIN_PULLUP, 1);
 }
 
 void board_pinmux_sd()
 {
-    HAL_PIN_Set(PAD_PA15, SD1_CMD, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA15, SD1_CMD, PIN_PULLUP, 1);
     HAL_Delay_us(20);   // add a delay before clock setting to avoid wrong cmd happen
 
-    HAL_PIN_Set(PAD_PA14, SD1_CLK,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_PA16, SD1_DIO0, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA17, SD1_DIO1, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA12, SD1_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA13, SD1_DIO3, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA14, SD1_CLK,  PIN_NOPULL, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA16, SD1_DIO0, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA17, SD1_DIO1, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA12, SD1_DIO2, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA13, SD1_DIO3, PIN_PULLUP, 1);
 }
 
 void board_pinmux_uart()
 {
-    HAL_PIN_Set(PAD_PA19, USART1_TXD, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_PA18, USART1_RXD, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA19, USART1_TXD, PIN_PULLUP, 1);
+    HAL_PIN_CompileTimeSet(PAD_PA18, USART1_RXD, PIN_PULLUP, 1);
 }
 
 static void board_pinmux_mpi1_none(void)
