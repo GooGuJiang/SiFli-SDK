@@ -150,7 +150,7 @@ __Vectors:
                 .long     SECU1_IRQHandler                     	 /*  98 Interrupt 98 */
                 .long     JPEGD_IRQHandler                     	 /*  99 Interrupt 99 */
                 .long     CAN2_IRQHandler                        /*  100 Interrupt 100 */
-                .long     Interrupt101_IRQHandler                /*  101 Interrupt 101 */
+                .long     ATIM2_IRQHandler                       /*  101 Interrupt 101 */
                 .long     Interrupt102_IRQHandler                /*  102 Interrupt 102 */
                 .long     I2S2_IRQHandler                        /*  103 Interrupt 103 */
                 .long     Interrupt104_IRQHandler                /*  104 Interrupt 104 */
@@ -365,7 +365,7 @@ Default_Handler:
                 Set_Default_Handler      SECU1_IRQHandler 
                 Set_Default_Handler      JPEGD_IRQHandler 
                 Set_Default_Handler      CAN2_IRQHandler
-                Set_Default_Handler      Interrupt101_IRQHandler
+                Set_Default_Handler      ATIM2_IRQHandler
                 Set_Default_Handler      Interrupt102_IRQHandler
                 Set_Default_Handler      I2S2_IRQHandler
                 Set_Default_Handler      Interrupt104_IRQHandler

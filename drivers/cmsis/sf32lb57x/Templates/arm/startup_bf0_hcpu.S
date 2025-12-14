@@ -183,7 +183,7 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      SECU1_IRQHandler                       ;  98 Interrupt 98
                 DCD      JPEGD_IRQHandler                       ;  99 Interrupt 99
                 DCD      CAN2_IRQHandler                        ;  100 Interrupt 100
-                DCD      Interrupt101_IRQHandler                ;  101 Interrupt 101
+                DCD      ATIM2_IRQHandler                       ;  101 Interrupt 101
                 DCD      Interrupt102_IRQHandler                ;  102 Interrupt 102
                 DCD      I2S2_IRQHandler                        ;  103 Interrupt 103
                 DCD      Interrupt104_IRQHandler                ;  104 Interrupt 104                
@@ -341,7 +341,7 @@ $Handler_Name   PROC
                 Set_Default_Handler      SECU1_IRQHandler 
                 Set_Default_Handler      JPEGD_IRQHandler 
                 Set_Default_Handler      CAN2_IRQHandler
-                Set_Default_Handler      Interrupt101_IRQHandler
+                Set_Default_Handler      ATIM2_IRQHandler
                 Set_Default_Handler      Interrupt102_IRQHandler
                 Set_Default_Handler      I2S2_IRQHandler
                 Set_Default_Handler      Interrupt104_IRQHandler

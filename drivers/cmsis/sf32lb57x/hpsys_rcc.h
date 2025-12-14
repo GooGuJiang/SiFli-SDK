@@ -141,6 +141,9 @@ typedef struct
 #define HPSYS_RCC_RSTR2_ATIM1_Pos       (9U)
 #define HPSYS_RCC_RSTR2_ATIM1_Msk       (0x1UL << HPSYS_RCC_RSTR2_ATIM1_Pos)
 #define HPSYS_RCC_RSTR2_ATIM1           HPSYS_RCC_RSTR2_ATIM1_Msk
+#define HPSYS_RCC_RSTR2_ATIM2_Pos       (10U)
+#define HPSYS_RCC_RSTR2_ATIM2_Msk       (0x1UL << HPSYS_RCC_RSTR2_ATIM2_Pos)
+#define HPSYS_RCC_RSTR2_ATIM2           HPSYS_RCC_RSTR2_ATIM2_Msk
 #define HPSYS_RCC_RSTR2_USART3_Pos      (12U)
 #define HPSYS_RCC_RSTR2_USART3_Msk      (0x1UL << HPSYS_RCC_RSTR2_USART3_Pos)
 #define HPSYS_RCC_RSTR2_USART3          HPSYS_RCC_RSTR2_USART3_Msk
@@ -283,6 +286,9 @@ typedef struct
 #define HPSYS_RCC_ENR2_ATIM1_Pos        (9U)
 #define HPSYS_RCC_ENR2_ATIM1_Msk        (0x1UL << HPSYS_RCC_ENR2_ATIM1_Pos)
 #define HPSYS_RCC_ENR2_ATIM1            HPSYS_RCC_ENR2_ATIM1_Msk
+#define HPSYS_RCC_ENR2_ATIM2_Pos        (10U)
+#define HPSYS_RCC_ENR2_ATIM2_Msk        (0x1UL << HPSYS_RCC_ENR2_ATIM2_Pos)
+#define HPSYS_RCC_ENR2_ATIM2            HPSYS_RCC_ENR2_ATIM2_Msk
 #define HPSYS_RCC_ENR2_USART3_Pos       (12U)
 #define HPSYS_RCC_ENR2_USART3_Msk       (0x1UL << HPSYS_RCC_ENR2_USART3_Pos)
 #define HPSYS_RCC_ENR2_USART3           HPSYS_RCC_ENR2_USART3_Msk
@@ -425,6 +431,9 @@ typedef struct
 #define HPSYS_RCC_ESR2_ATIM1_Pos        (9U)
 #define HPSYS_RCC_ESR2_ATIM1_Msk        (0x1UL << HPSYS_RCC_ESR2_ATIM1_Pos)
 #define HPSYS_RCC_ESR2_ATIM1            HPSYS_RCC_ESR2_ATIM1_Msk
+#define HPSYS_RCC_ESR2_ATIM2_Pos        (10U)
+#define HPSYS_RCC_ESR2_ATIM2_Msk        (0x1UL << HPSYS_RCC_ESR2_ATIM2_Pos)
+#define HPSYS_RCC_ESR2_ATIM2            HPSYS_RCC_ESR2_ATIM2_Msk
 #define HPSYS_RCC_ESR2_USART3_Pos       (12U)
 #define HPSYS_RCC_ESR2_USART3_Msk       (0x1UL << HPSYS_RCC_ESR2_USART3_Pos)
 #define HPSYS_RCC_ESR2_USART3           HPSYS_RCC_ESR2_USART3_Msk
@@ -567,6 +576,9 @@ typedef struct
 #define HPSYS_RCC_ECR2_ATIM1_Pos        (9U)
 #define HPSYS_RCC_ECR2_ATIM1_Msk        (0x1UL << HPSYS_RCC_ECR2_ATIM1_Pos)
 #define HPSYS_RCC_ECR2_ATIM1            HPSYS_RCC_ECR2_ATIM1_Msk
+#define HPSYS_RCC_ECR2_ATIM2_Pos        (10U)
+#define HPSYS_RCC_ECR2_ATIM2_Msk        (0x1UL << HPSYS_RCC_ECR2_ATIM2_Pos)
+#define HPSYS_RCC_ECR2_ATIM2            HPSYS_RCC_ECR2_ATIM2_Msk
 #define HPSYS_RCC_ECR2_USART3_Pos       (12U)
 #define HPSYS_RCC_ECR2_USART3_Msk       (0x1UL << HPSYS_RCC_ECR2_USART3_Pos)
 #define HPSYS_RCC_ECR2_USART3           HPSYS_RCC_ECR2_USART3_Msk
@@ -975,6 +987,9 @@ typedef struct
 #define HPSYS_RCC_SR2_ATIM1_Pos         (9U)
 #define HPSYS_RCC_SR2_ATIM1_Msk         (0x1UL << HPSYS_RCC_SR2_ATIM1_Pos)
 #define HPSYS_RCC_SR2_ATIM1             HPSYS_RCC_SR2_ATIM1_Msk
+#define HPSYS_RCC_SR2_ATIM2_Pos         (10U)
+#define HPSYS_RCC_SR2_ATIM2_Msk         (0x1UL << HPSYS_RCC_SR2_ATIM2_Pos)
+#define HPSYS_RCC_SR2_ATIM2             HPSYS_RCC_SR2_ATIM2_Msk
 #define HPSYS_RCC_SR2_USART3_Pos        (12U)
 #define HPSYS_RCC_SR2_USART3_Msk        (0x1UL << HPSYS_RCC_SR2_USART3_Pos)
 #define HPSYS_RCC_SR2_USART3            HPSYS_RCC_SR2_USART3_Msk

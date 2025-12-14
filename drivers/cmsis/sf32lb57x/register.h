@@ -172,7 +172,7 @@ typedef enum IRQn
     SECU1_IRQn                    =  98,
     JPEGD_IRQn                    =  99,
     CAN2_IRQn                     = 100,
-    Interrupt101_IRQn             = 101,
+    ATIM2_IRQn                    = 101,
     Interrupt102_IRQn             = 102,
     I2S2_IRQn                     = 103,
     Interrupt104_IRQn             = 104,
@@ -452,7 +452,7 @@ typedef enum IRQn
 #define SECU1_BASE          0x50002000
 #define PINMUX1_BASE        0x50003000
 #define ATIM1_BASE          0x50004000
-#define AUDPRC_BASE         0x50005000
+#define ATIM2_BASE          0x50005000
 #define EZIP1_BASE          0x50006000
 #define EPIC_BASE           0x50007000
 #define LCDC1_BASE          0x50008000
@@ -480,6 +480,7 @@ typedef enum IRQn
 #define USART1_BASE         0x50084000
 #define USART2_BASE         0x50085000
 #define USART3_BASE         0x50086000
+#define AUDPRC_BASE         0x50087000
 #define AUDCODEC_BASE       0x50088000
 #define TSEN_BASE           0x50089000
 #define I2S2_BASE           0x5008a000
@@ -522,11 +523,11 @@ typedef enum IRQn
 #define SECU2_BASE          0x40007000
 #define BTIM3_BASE          0x40009000
 #define BTIM4_BASE          0x4000a000
-#define WDT2_BASE           0x4000b000
 #define PTC2_BASE           0x4000c000
 #define LPSYS_CFG_BASE      0x4000f000
 //------------------------------------
 #define LPSYS_AON_BASE      0x40040000
+#define WDT2_BASE           0x40041000
 #define LPTIM3_BASE         0x40042000
 //------------------------------------
 /** no GPIO2 module, placeholder for convenience*/
@@ -546,6 +547,7 @@ typedef enum IRQn
 #define hwp_dmac1       ((GPDMA_TypeDef         *)    DMAC1_BASE)
 #define hwp_dmac2       ((DMAC_TypeDef          *)    DMAC2_BASE)
 #define hwp_atim1       ((ATIM_TypeDef          *)    ATIM1_BASE)
+#define hwp_atim2       ((ATIM_TypeDef          *)    ATIM2_BASE)
 #define hwp_audprc      ((AUDPRC_TypeDef        *)    AUDPRC_BASE)
 #define hwp_audcodec    ((AUDCODEC_TypeDef      *)    AUDCODEC_BASE)
 #define hwp_gptim1      ((GPT_TypeDef           *)    GPTIM1_BASE)
