@@ -84,9 +84,6 @@ typedef struct
 #define RTC_DR_ERR                      RTC_DR_ERR_Msk
 
 /********************* Bit definition for RTC_CR register *********************/
-#define RTC_CR_LPCKSEL_Pos              (0U)
-#define RTC_CR_LPCKSEL_Msk              (0x1UL << RTC_CR_LPCKSEL_Pos)
-#define RTC_CR_LPCKSEL                  RTC_CR_LPCKSEL_Msk
 #define RTC_CR_WUCKSEL_Pos              (1U)
 #define RTC_CR_WUCKSEL_Msk              (0x1UL << RTC_CR_WUCKSEL_Pos)
 #define RTC_CR_WUCKSEL                  RTC_CR_WUCKSEL_Msk

@@ -17,7 +17,7 @@
   */
 
 
-  
+
 
 #if defined(HAL_MODULE_ENABLED)||defined(_SIFLI_DOXYGEN_)
 
@@ -576,7 +576,7 @@ void PendSv_DBG_Trigger(void)
 #endif
 }
 
-#if (defined(SF32LB52X) || defined(SF32LB57X)) && defined(SOC_BF0_LCPU)
+#if !defined(PMUC_IN_LPSYS) && defined(SOC_BF0_LCPU)
 __HAL_ROM_USED uint32_t HAL_GetLXTEnabled(void)
 {
     uint8_t is_lxt_enabled;
@@ -589,7 +589,7 @@ __HAL_ROM_USED uint32_t HAL_GetLXTEnabled(void)
 
     return (uint32_t)is_lxt_enabled;
 }
-#endif
+#endif /* !PMUC_IN_LPSYS && SOC_BF0_LCPU */
 
 
 #endif // SF32LB55X

@@ -624,6 +624,9 @@ typedef struct
 #ifdef RTC_CR_LPCKSEL
 #define HAL_RTC_LXT_ENABLED()          (hwp_rtc->CR&RTC_CR_LPCKSEL)
 #define HAL_RTC_ENABLE_LXT()           hwp_rtc->CR |= RTC_CR_LPCKSEL
+#elif PMUC_CR_SEL_RTC
+#define HAL_RTC_LXT_ENABLED()          (hwp_pmuc->CR&PMUC_CR_SEL_RTC)
+#define HAL_RTC_ENABLE_LXT()           hwp_pmuc->CR |= PMUC_CR_SEL_RTC
 #else
 #define HAL_RTC_LXT_ENABLED()          HAL_PMU_LXT_ENABLED()
 #define HAL_RTC_ENABLE_LXT()

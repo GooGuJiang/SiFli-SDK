@@ -529,6 +529,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_RC32KReady()
     return ret;
 }
 
+#ifndef SF32LB57X
 __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_LpCLockSelect(PMU_LpClockTypeDef lp_clock)
 {
     HAL_StatusTypeDef ret = HAL_ERROR;
@@ -541,7 +542,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_LpCLockSelect(PMU_LpClockTypeDef lp_clo
     }
     else
     {
-#if defined(SF32LB52X) || defined(SF32LB57X)
+#if defined(SF32LB52X)
         // 54x switch between RC32K and RC10K
         if (PMU_LPCLK_RC32 == lp_clock)
         {
@@ -564,7 +565,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_LpCLockSelect(PMU_LpClockTypeDef lp_clo
             }
             MODIFY_REG(hwp_pmuc->LRC_CR, PMUC_LRC_CR_CHGCRT_Msk, MAKE_REG_VAL(3, PMUC_LRC_CR_CHGCRT_Msk, PMUC_LRC_CR_CHGCRT_Pos));
         }
-#endif
+#endif /* SF32LB52X */
         hwp_pmuc->CR |= PMUC_CR_SEL_LPCLK;
         ret = HAL_OK;
     }
@@ -573,6 +574,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_LpCLockSelect(PMU_LpClockTypeDef lp_clo
 #endif
     return ret;
 }
+#endif /* SF32LB57X */
 
 #if !defined(SF32LB56X)&&!defined(SF32LB52X)&&!defined(SF32LB57X)
 __HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_EnableBuck2(void)

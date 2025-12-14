@@ -232,18 +232,13 @@ extern "C" {
 #endif /* SF32LB55X */
 
 
-#if defined(RTC_CR_LPCKSEL)
-#ifdef SOC_BF0_HCPU
+#if defined(SOC_BF0_HCPU) || defined(PMUC_IN_LPSYS)
 #define HAL_LXT_ENABLED() HAL_RTC_LXT_ENABLED()
 #define HAL_LXT_DISABLED() (!HAL_RTC_LXT_ENABLED())
 #else
 #define HAL_LXT_ENABLED() HAL_GetLXTEnabled()
 #define HAL_LXT_DISABLED() (!HAL_GetLXTEnabled())
-#endif
-#else
-#define HAL_LXT_ENABLED() HAL_PMU_LXT_ENABLED()
-#define HAL_LXT_DISABLED() HAL_PMU_LXT_DISABLED()
-#endif
+#endif /* SOC_BF0_HCPU || PMUC_IN_LPSYS */
 
 
 /**

@@ -113,6 +113,33 @@ HAL_RAM_RET_CODE_SECT(HAL_PMU_ConfigPeriLdo, HAL_StatusTypeDef HAL_PMU_ConfigPer
     return HAL_OK;
 }
 
+__HAL_ROM_USED HAL_StatusTypeDef HAL_PMU_LpCLockSelect(PMU_LpClockTypeDef lp_clock)
+{
+    HAL_StatusTypeDef ret = HAL_ERROR;
+
+    if (PMU_LPCLK_RC10 == lp_clock)
+    {
+        hwp_pmuc->CR &= ~PMUC_CR_SEL_WDT;
+        ret = HAL_OK;
+    }
+    else
+    {
+        // switch between RC32K and RC10K
+        if (PMU_LPCLK_RC32 == lp_clock)
+        {
+            ret = HAL_PMU_RC32KReady();
+            if (ret == HAL_ERROR)
+            {
+                HAL_ASSERT(0);
+                return ret;
+            }
+        }
+        hwp_pmuc->CR |= PMUC_CR_SEL_WDT;
+        ret = HAL_OK;
+    }
+    return ret;
+}
+
 #endif /* HAL_PMU_MODULE_ENABLED */
 /**
   * @}

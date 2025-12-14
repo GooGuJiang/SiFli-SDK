@@ -66,21 +66,21 @@ typedef struct
 
 
 /******************** Bit definition for PMUC_CR register *********************/
-#define PMUC_CR_SEL_LPCLK_Pos           (0U)
-#define PMUC_CR_SEL_LPCLK_Msk           (0x1UL << PMUC_CR_SEL_LPCLK_Pos)
-#define PMUC_CR_SEL_LPCLK               PMUC_CR_SEL_LPCLK_Msk
-#define PMUC_CR_HIBER_EN_Pos            (1U)
+#define PMUC_CR_SEL_WDT_Pos             (0U)
+#define PMUC_CR_SEL_WDT_Msk             (0x1UL << PMUC_CR_SEL_WDT_Pos)
+#define PMUC_CR_SEL_WDT                 PMUC_CR_SEL_WDT_Msk
+#define PMUC_CR_SEL_RTC_Pos             (1U)
+#define PMUC_CR_SEL_RTC_Msk             (0x1UL << PMUC_CR_SEL_RTC_Pos)
+#define PMUC_CR_SEL_RTC                 PMUC_CR_SEL_RTC_Msk
+#define PMUC_CR_HIBER_EN_Pos            (2U)
 #define PMUC_CR_HIBER_EN_Msk            (0x1UL << PMUC_CR_HIBER_EN_Pos)
 #define PMUC_CR_HIBER_EN                PMUC_CR_HIBER_EN_Msk
-#define PMUC_CR_REBOOT_Pos              (2U)
+#define PMUC_CR_REBOOT_Pos              (3U)
 #define PMUC_CR_REBOOT_Msk              (0x1UL << PMUC_CR_REBOOT_Pos)
 #define PMUC_CR_REBOOT                  PMUC_CR_REBOOT_Msk
-#define PMUC_CR_LPSYSRST_Pos            (3U)
+#define PMUC_CR_LPSYSRST_Pos            (4U)
 #define PMUC_CR_LPSYSRST_Msk            (0x1UL << PMUC_CR_LPSYSRST_Pos)
 #define PMUC_CR_LPSYSRST                PMUC_CR_LPSYSRST_Msk
-#define PMUC_CR_RST_CNT_Pos             (8U)
-#define PMUC_CR_RST_CNT_Msk             (0xFUL << PMUC_CR_RST_CNT_Pos)
-#define PMUC_CR_RST_CNT                 PMUC_CR_RST_CNT_Msk
 
 /******************** Bit definition for PMUC_WER register ********************/
 #define PMUC_WER_PA33_Pos               (0U)

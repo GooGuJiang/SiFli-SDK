@@ -905,6 +905,8 @@ typedef enum
 #define CHIP_IS_585() (((hwp_hpsys_cfg->IDR&HPSYS_CFG_IDR_PID_Msk)>>HPSYS_CFG_IDR_PID_Pos)==4)
 #define CHIP_IS_587() (((hwp_hpsys_cfg->IDR&HPSYS_CFG_IDR_PID_Msk)>>HPSYS_CFG_IDR_PID_Pos)==0)
 
+/** hwp_pmuc is in lpsys, lcpu can access it directly */
+#define PMUC_IN_LPSYS
 
 #if defined (USE_HAL_DRIVER)
 #include "bf0_hal.h"
