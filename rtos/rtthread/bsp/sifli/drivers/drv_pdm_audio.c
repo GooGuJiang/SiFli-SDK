@@ -345,9 +345,9 @@ static rt_err_t bf0_audio_init(struct rt_audio_device *audio)
     hpdm->Init.SampleRate = PDM_SAMPLE_16KHZ;
     hpdm->Init.ChannelDepth = PDM_CHANNEL_DEPTH_16BIT;
 #ifndef ASIC  // on FPGA
-    hpdm->Init.clkSrc = 3072000;
+    hpdm->Init.clkSrc = PDM_PLL_CLK_FREQ;
 #else // for AISC
-    hpdm->Init.clkSrc = 9600000;
+    hpdm->Init.clkSrc = PDM_XTAL_CLK_FREQ;
 #endif
 
     hpdm->RxXferSize = 0;
