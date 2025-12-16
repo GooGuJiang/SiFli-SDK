@@ -296,14 +296,6 @@ static HAL_StatusTypeDef SelectIntf(LCDC_HandleTypeDef *lcdc, HAL_LCDC_IF_TypeDe
 #ifdef SF32LB52X
             HAL_LCDC_ASSERT(__HAL_SYSCFG_GET_REVID() >= 2);
 #endif /* SF32LB52X */
-#ifdef LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE
-            if (SPI_LCD_FLAG_DDR_DUMMY_CLOCK & lcdc->Init.cfg.spi.flags)
-            {
-                MODIFY_REG(lcdc->Instance->SPI_IF_CONF_EXT,
-                           LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE_Msk,
-                           (2 << LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE_Pos) | (LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CLK_EN));
-            }
-#endif /* LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE */
 #else
             HAL_LCDC_ASSERT(0);
 #endif
@@ -1683,8 +1675,18 @@ static HAL_StatusTypeDef EnableSPIDDRSent(LCDC_HandleTypeDef *lcdc)
     uint32_t reg_v, clk_div;
 
     lcdc->Instance->LAYER0_FILL |= LCD_IF_LAYER0_FILL_BG_MODE;//Enable DDR
+#ifdef LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE
+    lcdc->Instance->SPI_IF_CONF_EXT |= LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE;
+#endif /*LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE*/
 
-#ifndef LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE
+#ifdef LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE
+    if (SPI_LCD_FLAG_DDR_DUMMY_CLOCK & lcdc->Init.cfg.spi.flags)
+    {
+        MODIFY_REG(lcdc->Instance->SPI_IF_CONF_EXT,
+                   LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE_Msk,
+                   (2 << LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE_Pos) | (LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CLK_EN));
+    }
+#else /* !LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE */
     reg_v = lcdc->Instance->SPI_IF_CONF;
     clk_div = GET_REG_VAL(reg_v, LCD_IF_SPI_IF_CONF_CLK_DIV_Msk, LCD_IF_SPI_IF_CONF_CLK_DIV_Pos);
     clk_div = HAL_MAX(clk_div >> 1, 2);
@@ -1701,7 +1703,14 @@ static HAL_StatusTypeDef DisableSPIDDRSent(LCDC_HandleTypeDef *lcdc)
 {
     lcdc->Instance->LAYER0_FILL &= ~LCD_IF_LAYER0_FILL_BG_MODE; //Disable DDR
 
-#ifndef LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE
+#ifdef LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE
+    lcdc->Instance->SPI_IF_CONF_EXT &= ~LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE;
+#endif /*LCD_IF_SPI_IF_CONF_EXT_SPI_CLK_DDR_MODE*/
+
+#ifdef LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE
+    lcdc->Instance->SPI_IF_CONF_EXT &= ~LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CLK_EN;
+    return HAL_OK;
+#else
     if (SPI_LCD_FLAG_DDR_DUMMY_CLOCK & lcdc->Init.cfg.spi.flags)
     {
         //Dummy clock
@@ -1717,8 +1726,6 @@ static HAL_StatusTypeDef DisableSPIDDRSent(LCDC_HandleTypeDef *lcdc)
     }
 
     return SetFreq(lcdc, lcdc->Init.freq); //Restore freq
-#else
-    return HAL_OK;
 #endif /* LCD_IF_SPI_IF_CONF_EXT_POST_WAIT_CYCLE */
 }
 #endif /* LCDC_SUPPORT_DDR_QSPI */
