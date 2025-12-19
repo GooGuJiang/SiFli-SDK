@@ -1058,6 +1058,15 @@ HAL_StatusTypeDef HAL_DMA_StartMutiple(DMA_HandleTypeDef *hdma, DMA_LinkListType
 
     if (HAL_DMA_STATE_READY == hdma->State)
     {
+#ifdef DMA_SUPPORT_DYN_CHANNEL_ALLOC
+        status = DMA_AllocChannel(hdma, true);
+        if (HAL_OK != status)
+        {
+            __HAL_UNLOCK(hdma);
+            goto __EXIT;
+        }
+#endif /* DMA_SUPPORT_DYN_CHANNEL_ALLOC */
+
         /* Change DMA peripheral state */
         hdma->State = HAL_DMA_STATE_BUSY;
         hdma->ErrorCode = HAL_DMA_ERROR_NONE;
@@ -1073,6 +1082,8 @@ HAL_StatusTypeDef HAL_DMA_StartMutiple(DMA_HandleTypeDef *hdma, DMA_LinkListType
         __HAL_UNLOCK(hdma);
         status = HAL_BUSY;
     }
+
+__EXIT:
     return status;
 }
 
@@ -1092,6 +1103,15 @@ HAL_StatusTypeDef HAL_DMA_StartMutiple_IT(DMA_HandleTypeDef *hdma, DMA_LinkListT
 
     if (HAL_DMA_STATE_READY == hdma->State)
     {
+#ifdef DMA_SUPPORT_DYN_CHANNEL_ALLOC
+        status = DMA_AllocChannel(hdma, true);
+        if (HAL_OK != status)
+        {
+            __HAL_UNLOCK(hdma);
+            goto __EXIT;
+        }
+#endif /* DMA_SUPPORT_DYN_CHANNEL_ALLOC */
+
         /* Change DMA peripheral state */
         hdma->State = HAL_DMA_STATE_BUSY;
         hdma->ErrorCode = HAL_DMA_ERROR_NONE;
@@ -1111,6 +1131,8 @@ HAL_StatusTypeDef HAL_DMA_StartMutiple_IT(DMA_HandleTypeDef *hdma, DMA_LinkListT
         __HAL_UNLOCK(hdma);
         status = HAL_BUSY;
     }
+
+__EXIT:
     return status;
 }
 #endif /* DMA_LINK_LIST_SUPPORT */
@@ -1525,6 +1547,10 @@ __HAL_ROM_USED void HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
     {
         /* Disable the transfer complete and error interrupt */
         __HAL_DMA_DISABLE_IT(hdma, DMA_IT_TE | DMA_IT_LC);
+
+#ifdef DMA_SUPPORT_DYN_CHANNEL_ALLOC
+        DMA_FreeChannel(hdma);
+#endif /* DMA_SUPPORT_DYN_CHANNEL_ALLOC */
 
         /* Change the DMA state */
         hdma->State = HAL_DMA_STATE_READY;
