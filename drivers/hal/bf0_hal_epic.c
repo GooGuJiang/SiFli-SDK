@@ -150,7 +150,7 @@ static void EPIC_DEBUG_PRINT_FLOAT_MATRIX(const char *s, const sifli_matrix_3x3_
 #define RETURN_ERROR(hepic,ret_v) \
         do{ (hepic)->ErrorCode = __LINE__;  return ret_v; }while(0)
 
-#if defined(SF32LB52X) || defined(SF32LB57X)
+#if defined(SF32LB52X)
     #define EPIC_L2_L1_INVALID
 #endif
 
@@ -6219,7 +6219,7 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
     uint8_t color_matrix_num = 0;
 #endif /* EPIC_SUPPORT_COLOR_MATRIX */
 
-#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X)
+#if defined(SF32LB56X) || defined(SF32LB58X) || defined(SF32LB55X) || defined(SF32LB57X)
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_2;
 #else
     cur_fix_depth_layer = (int8_t)EPIC_LAYER_IDX_0;
@@ -6247,7 +6247,7 @@ static HAL_StatusTypeDef EPIC_ChooseLayer(EPIC_BlendingDataType *input,
             else if (IS_MATRIX_TRANSFROM(&transform_cfg[i]))
             {
 #ifdef EPIC_SUPPORT_TRANS_MATRIX
-                if ((int8_t)EPIC_LAYER_IDX_2 == cur_fix_depth_layer)
+                if ((int8_t)EPIC_LAYER_IDX_2 == cur_fix_depth_layer) //L2 support matrix transform
                 {
                     epic_layer[i]       = cur_fix_depth_layer;
                     cur_fix_depth_layer--;

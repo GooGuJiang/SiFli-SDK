@@ -13,6 +13,8 @@
 #define DRV_EPIC_TIMEOUT_MS 500
 
 #define DRV_EPIC_POLYGON_POINT_MAX 16
+#define mono_layer_addr HPSYS_RAM1_BASE  //Any accessable address for mono layer, SRAM is better
+
 #ifndef DRV_EPIC_NEW_API
 
 typedef enum
