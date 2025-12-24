@@ -1688,6 +1688,10 @@ menu "On-chip Peripheral RTOS Drivers"
             config BSP_USING_PDM2
                 bool "Enable PDM2"
                 default n
+            config BSP_PDM_CLK_USE_PLL
+                bool "PDM Clock Source is Audio PLL"
+                default y if SOC_SF32LB57X
+                default n
         endif
 
     menuconfig BSP_ENABLE_AUD_PRC
