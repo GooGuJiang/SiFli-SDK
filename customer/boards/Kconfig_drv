@@ -635,7 +635,7 @@ menu "On-chip Peripheral RTOS Drivers"
     menuconfig BSP_USING_ENCODER
         bool "Enable encoder"
         default n
-        select RT_USING_ENCODER
+        select RT_USING_PULSE_ENCODER
         if BSP_USING_ENCODER
             config BSP_USING_ENCODER_GPTIM1
                 bool "Enable encoder_gtim1"

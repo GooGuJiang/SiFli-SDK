@@ -3136,7 +3136,7 @@ static HAL_StatusTypeDef EPIC_ContConfigVideoLayer(EPIC_HandleTypeDef *epic_hand
 #ifdef EPIC_VL_CFG_BLEND_DEPTH_Msk
     reg_v |= MAKE_REG_VAL(1, EPIC_VL_CFG_BLEND_DEPTH_Msk, EPIC_VL_CFG_BLEND_DEPTH_Pos);
 #else
-    reg_v |= MAKE_REG_VAL(1, EPIC_VL_MISC_CFG_BLEND_DEPTH_Msk, EPIC_VL_MISC_CFG_BLEND_DEPTH_Pos);
+    Vlayer_x->MISC_CFG |= MAKE_REG_VAL(1, EPIC_VL_MISC_CFG_BLEND_DEPTH_Msk, EPIC_VL_MISC_CFG_BLEND_DEPTH_Pos);
 #endif
 
     if (!IS_NO_ALPHA_COLOR_MODE(config->color_mode))

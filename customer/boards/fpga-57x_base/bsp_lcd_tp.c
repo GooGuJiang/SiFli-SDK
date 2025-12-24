@@ -9,7 +9,7 @@
 //#define TP_VCC_EN                     // NO pin
 //#define TP_VIO_EN                     // NO pin
 
-#define TP_RESET            (1)            // GPIO_A01
+#define TP_RESET            (41)            // GPIO_A41
 
 
 extern void BSP_GPIO_Set(int pin, int val, int is_porta);
@@ -39,6 +39,7 @@ void BSP_LCD_GMODE_Set(uint8_t high1_low0)
 
 void BSP_TP_PowerUp(void)
 {
+    HAL_PIN_Set(PAD_PA00 + TP_RESET, GPIO_A0 + TP_RESET, PIN_NOPULL, 1);
     BSP_GPIO_Set(TP_RESET,  1, 1);
 }
 
