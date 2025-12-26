@@ -3104,8 +3104,8 @@ static HAL_StatusTypeDef EPIC_ContConfigVideoLayer(EPIC_HandleTypeDef *epic_hand
                        | MAKE_REG_VAL(y_offset + config->height - 1, EPIC_VL_BR_POS_Y1_Msk, EPIC_VL_BR_POS_Y1_Pos);
 
 
-    Vlayer_x->EXTENTS = MAKE_REG_VAL(config->width, EPIC_VL_EXTENTS_MAX_COL_Msk, EPIC_VL_EXTENTS_MAX_COL_Pos)
-                        | MAKE_REG_VAL(config->height, EPIC_VL_EXTENTS_MAX_LINE_Msk, EPIC_VL_EXTENTS_MAX_LINE_Pos);
+    Vlayer_x->EXTENTS = MAKE_REG_VAL(config->width - 1, EPIC_VL_EXTENTS_MAX_COL_Msk, EPIC_VL_EXTENTS_MAX_COL_Pos)
+                        | MAKE_REG_VAL(config->height - 1, EPIC_VL_EXTENTS_MAX_LINE_Msk, EPIC_VL_EXTENTS_MAX_LINE_Pos);
 
 #ifndef SF32LB55X
     Vlayer_x->SCALE_RATIO_H = MAKE_REG_VAL(EPIC_SCALE_1, EPIC_VL_SCALE_RATIO_H_XPITCH_Msk, EPIC_VL_SCALE_RATIO_H_XPITCH_Pos);
@@ -3815,8 +3815,8 @@ static HAL_StatusTypeDef EPIC_ConfigMatrixTransLayer(EPIC_HandleTypeDef *hepic,
 #endif /* SF32LB55X */
 
     layer_x->MISC_CFG &= ~(EPIC_L2_MISC_CFG_MAX_LINE_Msk | EPIC_L2_MISC_CFG_MAX_COL_Msk);
-    layer_x->MISC_CFG |= MAKE_REG_VAL(trans_result->height, EPIC_L2_MISC_CFG_MAX_LINE_Msk, EPIC_L2_MISC_CFG_MAX_LINE_Pos)
-                         | MAKE_REG_VAL(trans_result->width, EPIC_L2_MISC_CFG_MAX_COL_Msk, EPIC_L2_MISC_CFG_MAX_COL_Pos);
+    layer_x->MISC_CFG |= MAKE_REG_VAL(trans_result->height - 1, EPIC_L2_MISC_CFG_MAX_LINE_Msk, EPIC_L2_MISC_CFG_MAX_LINE_Pos)
+                         | MAKE_REG_VAL(trans_result->width - 1, EPIC_L2_MISC_CFG_MAX_COL_Msk, EPIC_L2_MISC_CFG_MAX_COL_Pos);
 
     layer_x->CFG |= layer_color_format;
     if (EPIC_COLOR_MONO != config->color_mode)
