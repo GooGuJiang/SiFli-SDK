@@ -241,8 +241,12 @@ typedef enum IRQn
 
 //#include "system_ARMCM33.h"               /* System Header */
 
+#ifndef __ICACHE_PRESENT
 #define __ICACHE_PRESENT          1U
+#endif /* __ICACHE_PRESENT */
+#ifndef __DCACHE_PRESENT
 #define __DCACHE_PRESENT          1U
+#endif /* __DCACHE_PRESENT */
 
 #if defined(SOC_BF0_HCPU)
 #define MPU_REGION_NUM       12
@@ -426,7 +430,6 @@ typedef enum IRQn
 #include "aes_acc.h"
 #include "gpio1.h"
 #include "hpsys_pinmux.h"
-#include "lpsys_pinmux.h"
 #include "hpsys_aon.h"
 #include "lpsys_aon.h"
 #include "pmuc.h"

@@ -4,7 +4,6 @@
 typedef struct
 {
     __IO uint32_t CR;
-    __IO uint32_t RSVD;
     __IO uint32_t CNT;
     __IO uint32_t PSC;
     __IO uint32_t ARR;
@@ -15,11 +14,9 @@ typedef struct
 
 typedef struct
 {
-    __IO uint32_t IER;
     __IO uint32_t SR;
     __IO uint32_t EGR;
     __IO uint32_t CR1;
-    __IO uint32_t RSVD5;
     __IO uint32_t CNT1;
     __IO uint32_t PSC1;
     __IO uint32_t ARR1;
@@ -27,7 +24,6 @@ typedef struct
     __IO uint32_t CCR1;
     __IO uint32_t FIFO1;
     __IO uint32_t CR2;
-    __IO uint32_t RSVD4;
     __IO uint32_t CNT2;
     __IO uint32_t PSC2;
     __IO uint32_t ARR2;
@@ -35,7 +31,6 @@ typedef struct
     __IO uint32_t CCR2;
     __IO uint32_t FIFO2;
     __IO uint32_t CR3;
-    __IO uint32_t RSVD3;
     __IO uint32_t CNT3;
     __IO uint32_t PSC3;
     __IO uint32_t ARR3;
@@ -43,7 +38,6 @@ typedef struct
     __IO uint32_t CCR3;
     __IO uint32_t FIFO3;
     __IO uint32_t CR4;
-    __IO uint32_t RSVD2;
     __IO uint32_t CNT4;
     __IO uint32_t PSC4;
     __IO uint32_t ARR4;
@@ -51,7 +45,6 @@ typedef struct
     __IO uint32_t CCR4;
     __IO uint32_t FIFO4;
     __IO uint32_t CR5;
-    __IO uint32_t RSVD1;
     __IO uint32_t CNT5;
     __IO uint32_t PSC5;
     __IO uint32_t ARR5;
@@ -59,47 +52,6 @@ typedef struct
     __IO uint32_t INTV5;
 } PWM_TypeDef;
 
-
-/******************** Bit definition for PWM_IER register *********************/
-#define PWM_IER_UIE1_Pos                (0U)
-#define PWM_IER_UIE1_Msk                (0x1UL << PWM_IER_UIE1_Pos)
-#define PWM_IER_UIE1                    PWM_IER_UIE1_Msk
-#define PWM_IER_UIE2_Pos                (1U)
-#define PWM_IER_UIE2_Msk                (0x1UL << PWM_IER_UIE2_Pos)
-#define PWM_IER_UIE2                    PWM_IER_UIE2_Msk
-#define PWM_IER_UIE3_Pos                (2U)
-#define PWM_IER_UIE3_Msk                (0x1UL << PWM_IER_UIE3_Pos)
-#define PWM_IER_UIE3                    PWM_IER_UIE3_Msk
-#define PWM_IER_UIE4_Pos                (3U)
-#define PWM_IER_UIE4_Msk                (0x1UL << PWM_IER_UIE4_Pos)
-#define PWM_IER_UIE4                    PWM_IER_UIE4_Msk
-#define PWM_IER_UIE5_Pos                (4U)
-#define PWM_IER_UIE5_Msk                (0x1UL << PWM_IER_UIE5_Pos)
-#define PWM_IER_UIE5                    PWM_IER_UIE5_Msk
-#define PWM_IER_CCIE1_Pos               (8U)
-#define PWM_IER_CCIE1_Msk               (0x1UL << PWM_IER_CCIE1_Pos)
-#define PWM_IER_CCIE1                   PWM_IER_CCIE1_Msk
-#define PWM_IER_CCIE2_Pos               (9U)
-#define PWM_IER_CCIE2_Msk               (0x1UL << PWM_IER_CCIE2_Pos)
-#define PWM_IER_CCIE2                   PWM_IER_CCIE2_Msk
-#define PWM_IER_CCIE3_Pos               (10U)
-#define PWM_IER_CCIE3_Msk               (0x1UL << PWM_IER_CCIE3_Pos)
-#define PWM_IER_CCIE3                   PWM_IER_CCIE3_Msk
-#define PWM_IER_CCIE4_Pos               (11U)
-#define PWM_IER_CCIE4_Msk               (0x1UL << PWM_IER_CCIE4_Pos)
-#define PWM_IER_CCIE4                   PWM_IER_CCIE4_Msk
-#define PWM_IER_UFIE1_Pos               (16U)
-#define PWM_IER_UFIE1_Msk               (0x1UL << PWM_IER_UFIE1_Pos)
-#define PWM_IER_UFIE1                   PWM_IER_UFIE1_Msk
-#define PWM_IER_UFIE2_Pos               (17U)
-#define PWM_IER_UFIE2_Msk               (0x1UL << PWM_IER_UFIE2_Pos)
-#define PWM_IER_UFIE2                   PWM_IER_UFIE2_Msk
-#define PWM_IER_UFIE3_Pos               (18U)
-#define PWM_IER_UFIE3_Msk               (0x1UL << PWM_IER_UFIE3_Pos)
-#define PWM_IER_UFIE3                   PWM_IER_UFIE3_Msk
-#define PWM_IER_UFIE4_Pos               (19U)
-#define PWM_IER_UFIE4_Msk               (0x1UL << PWM_IER_UFIE4_Pos)
-#define PWM_IER_UFIE4                   PWM_IER_UFIE4_Msk
 
 /********************* Bit definition for PWM_SR register *********************/
 #define PWM_SR_UIF1_Pos                 (0U)
@@ -226,6 +178,15 @@ typedef struct
 #define PWM_CR1_TS_Pos                  (20U)
 #define PWM_CR1_TS_Msk                  (0x7UL << PWM_CR1_TS_Pos)
 #define PWM_CR1_TS                      PWM_CR1_TS_Msk
+#define PWM_CR1_UFIE_Pos                (29U)
+#define PWM_CR1_UFIE_Msk                (0x1UL << PWM_CR1_UFIE_Pos)
+#define PWM_CR1_UFIE                    PWM_CR1_UFIE_Msk
+#define PWM_CR1_CCIE_Pos                (30U)
+#define PWM_CR1_CCIE_Msk                (0x1UL << PWM_CR1_CCIE_Pos)
+#define PWM_CR1_CCIE                    PWM_CR1_CCIE_Msk
+#define PWM_CR1_UIE_Pos                 (31U)
+#define PWM_CR1_UIE_Msk                 (0x1UL << PWM_CR1_UIE_Pos)
+#define PWM_CR1_UIE                     PWM_CR1_UIE_Msk
 
 /******************** Bit definition for PWM_CNT1 register ********************/
 #define PWM_CNT1_CNT_Pos                (0U)
@@ -300,6 +261,15 @@ typedef struct
 #define PWM_CR2_TS_Pos                  (20U)
 #define PWM_CR2_TS_Msk                  (0x7UL << PWM_CR2_TS_Pos)
 #define PWM_CR2_TS                      PWM_CR2_TS_Msk
+#define PWM_CR2_UFIE_Pos                (29U)
+#define PWM_CR2_UFIE_Msk                (0x1UL << PWM_CR2_UFIE_Pos)
+#define PWM_CR2_UFIE                    PWM_CR2_UFIE_Msk
+#define PWM_CR2_CCIE_Pos                (30U)
+#define PWM_CR2_CCIE_Msk                (0x1UL << PWM_CR2_CCIE_Pos)
+#define PWM_CR2_CCIE                    PWM_CR2_CCIE_Msk
+#define PWM_CR2_UIE_Pos                 (31U)
+#define PWM_CR2_UIE_Msk                 (0x1UL << PWM_CR2_UIE_Pos)
+#define PWM_CR2_UIE                     PWM_CR2_UIE_Msk
 
 /******************** Bit definition for PWM_CNT2 register ********************/
 #define PWM_CNT2_CNT_Pos                (0U)
@@ -374,6 +344,15 @@ typedef struct
 #define PWM_CR3_TS_Pos                  (20U)
 #define PWM_CR3_TS_Msk                  (0x7UL << PWM_CR3_TS_Pos)
 #define PWM_CR3_TS                      PWM_CR3_TS_Msk
+#define PWM_CR3_UFIE_Pos                (29U)
+#define PWM_CR3_UFIE_Msk                (0x1UL << PWM_CR3_UFIE_Pos)
+#define PWM_CR3_UFIE                    PWM_CR3_UFIE_Msk
+#define PWM_CR3_CCIE_Pos                (30U)
+#define PWM_CR3_CCIE_Msk                (0x1UL << PWM_CR3_CCIE_Pos)
+#define PWM_CR3_CCIE                    PWM_CR3_CCIE_Msk
+#define PWM_CR3_UIE_Pos                 (31U)
+#define PWM_CR3_UIE_Msk                 (0x1UL << PWM_CR3_UIE_Pos)
+#define PWM_CR3_UIE                     PWM_CR3_UIE_Msk
 
 /******************** Bit definition for PWM_CNT3 register ********************/
 #define PWM_CNT3_CNT_Pos                (0U)
@@ -448,6 +427,15 @@ typedef struct
 #define PWM_CR4_TS_Pos                  (20U)
 #define PWM_CR4_TS_Msk                  (0x7UL << PWM_CR4_TS_Pos)
 #define PWM_CR4_TS                      PWM_CR4_TS_Msk
+#define PWM_CR4_UFIE_Pos                (29U)
+#define PWM_CR4_UFIE_Msk                (0x1UL << PWM_CR4_UFIE_Pos)
+#define PWM_CR4_UFIE                    PWM_CR4_UFIE_Msk
+#define PWM_CR4_CCIE_Pos                (30U)
+#define PWM_CR4_CCIE_Msk                (0x1UL << PWM_CR4_CCIE_Pos)
+#define PWM_CR4_CCIE                    PWM_CR4_CCIE_Msk
+#define PWM_CR4_UIE_Pos                 (31U)
+#define PWM_CR4_UIE_Msk                 (0x1UL << PWM_CR4_UIE_Pos)
+#define PWM_CR4_UIE                     PWM_CR4_UIE_Msk
 
 /******************** Bit definition for PWM_CNT4 register ********************/
 #define PWM_CNT4_CNT_Pos                (0U)
@@ -498,6 +486,9 @@ typedef struct
 #define PWM_CR5_CCP_Pos                 (5U)
 #define PWM_CR5_CCP_Msk                 (0x1UL << PWM_CR5_CCP_Pos)
 #define PWM_CR5_CCP                     PWM_CR5_CCP_Msk
+#define PWM_CR5_UIE_Pos                 (31U)
+#define PWM_CR5_UIE_Msk                 (0x1UL << PWM_CR5_UIE_Pos)
+#define PWM_CR5_UIE                     PWM_CR5_UIE_Msk
 
 /******************** Bit definition for PWM_CNT5 register ********************/
 #define PWM_CNT5_CNT_Pos                (0U)

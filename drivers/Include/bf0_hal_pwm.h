@@ -218,14 +218,8 @@ typedef struct
 /** @defgroup PWM_Interrupt_definition  PWM Interrupt definition
   * @{
   */
-#define PWM_IT_UPDATE1           (PWM_IER_UIE1)
-#define PWM_IT_UPDATE2           (PWM_IER_UIE2)
-#define PWM_IT_UPDATE3           (PWM_IER_UIE3)
-#define PWM_IT_UPDATE4           (PWM_IER_UIE4)
-#define PWM_IT_CC1               (PWM_IER_CCIE1)
-#define PWM_IT_CC2               (PWM_IER_CCIE2)
-#define PWM_IT_CC3               (PWM_IER_CCIE3)
-#define PWM_IT_CC4               (PWM_IER_CCIE4)
+#define PWM_IT_UPDATE            (PWM_CR1_UIE)
+#define PWM_IT_CC                (PWM_CR1_CCIE)
 /**
   * @}
   */
@@ -601,7 +595,8 @@ typedef struct
   *            @arg PWM_IT_BREAK: Break interrupt
   * @retval None
   */
-#define __HAL_PWM_ENABLE_IT(__HANDLE__, __INTERRUPT__)    ((__HANDLE__)->Instance->IER |= (__INTERRUPT__))
+#define __HAL_PWM_ENABLE_IT(__HANDLE__, __CHANNEL__, __INTERRUPT__)    \
+    (((PWM_ChannelTypeDef *)&((__HANDLE__)->Instance->CR1) + (__CHANNEL__))->CR |= (__INTERRUPT__))
 
 
 /** @brief  Disable the specified TIM interrupt.
@@ -618,7 +613,9 @@ typedef struct
   *            @arg PWM_IT_BREAK: Break interrupt
   * @retval None
   */
-#define __HAL_PWM_DISABLE_IT(__HANDLE__, __INTERRUPT__)   ((__HANDLE__)->Instance->IER &= ~(__INTERRUPT__))
+#define __HAL_PWM_DISABLE_IT(__HANDLE__, __CHANNEL__, __INTERRUPT__)    \
+    (((PWM_ChannelTypeDef *)&((__HANDLE__)->Instance->CR1) + (__CHANNEL__))->CR &= ~(__INTERRUPT__))
+
 
 /** @brief  Enable the specified DMA request.
   * @param  \__HANDLE__ specifies the TIM Handle.

@@ -267,39 +267,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PWM_Start_IT(PWM_HandleTypeDef *hpwm, uint3
     HAL_ASSERT(IS_PWM_INSTANCE(hpwm->Instance));
     HAL_ASSERT(IS_PWM_CHANNELS(Channel));
 
-    switch (Channel)
-    {
-    case PWM_CHANNEL_1:
-    {
-        /* Enable the TIM Capture/Compare 1 interrupt */
-        __HAL_PWM_ENABLE_IT(hpwm, PWM_IT_CC1);
-    }
-    break;
-
-    case PWM_CHANNEL_2:
-    {
-        /* Enable the TIM Capture/Compare 2 interrupt */
-        __HAL_PWM_ENABLE_IT(hpwm, PWM_IT_CC2);
-    }
-    break;
-
-    case PWM_CHANNEL_3:
-    {
-        /* Enable the TIM Capture/Compare 3 interrupt */
-        __HAL_PWM_ENABLE_IT(hpwm, PWM_IT_CC3);
-    }
-    break;
-
-    case PWM_CHANNEL_4:
-    {
-        /* Enable the TIM Capture/Compare 4 interrupt */
-        __HAL_PWM_ENABLE_IT(hpwm, PWM_IT_CC4);
-    }
-    break;
-
-    default:
-        break;
-    }
+    __HAL_PWM_ENABLE_IT(hpwm, Channel, PWM_IT_CC);
 
     /* Enable the Capture compare channel */
     PWM_CCxChannelCmd(hpwm->Instance, Channel, PWM_CCx_ENABLE);
@@ -329,39 +297,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_PWM_Stop_IT(PWM_HandleTypeDef *hpwm, uint32
     HAL_ASSERT(IS_PWM_INSTANCE(hpwm->Instance));
     HAL_ASSERT(IS_PWM_CHANNELS(Channel));
 
-    switch (Channel)
-    {
-    case PWM_CHANNEL_1:
-    {
-        /* Disable the TIM Capture/Compare 1 interrupt */
-        __HAL_PWM_DISABLE_IT(hpwm, PWM_IT_CC1);
-    }
-    break;
-
-    case PWM_CHANNEL_2:
-    {
-        /* Disable the TIM Capture/Compare 2 interrupt */
-        __HAL_PWM_DISABLE_IT(hpwm, PWM_IT_CC2);
-    }
-    break;
-
-    case PWM_CHANNEL_3:
-    {
-        /* Disable the TIM Capture/Compare 3 interrupt */
-        __HAL_PWM_DISABLE_IT(hpwm, PWM_IT_CC3);
-    }
-    break;
-
-    case PWM_CHANNEL_4:
-    {
-        /* Disable the TIM Capture/Compare 4 interrupt */
-        __HAL_PWM_DISABLE_IT(hpwm, PWM_IT_CC4);
-    }
-    break;
-
-    default:
-        break;
-    }
+    __HAL_PWM_DISABLE_IT(hpwm, Channel, PWM_IT_CC);
 
     /* Disable the Capture compare channel */
     PWM_CCxChannelCmd(hpwm->Instance, Channel, PWM_CCx_DISABLE);
