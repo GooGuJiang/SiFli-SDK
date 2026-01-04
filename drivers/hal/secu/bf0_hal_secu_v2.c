@@ -67,36 +67,36 @@ static __IO uint32_t *Get_Master_Reg(SECU_MODULE_TYPE module, uint32_t *bit_n)
     {
     /*SECU1*/
     case SECU_MOD_PTC1:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_PTC1_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_PTC1_SEC_Pos;
         break;
     case SECU_MOD_DMAC1:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_DMAC1_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_DMAC1_SEC_Pos;
         break;
     case SECU_MOD_USBC:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_USB_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_USB_SEC_Pos;
         break;
     case SECU_MOD_AES:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_AES_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_AES_SEC_Pos;
         break;
     case SECU_MOD_LCDC1:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_LCDC_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_LCDC_SEC_Pos;
         break;
     case SECU_MOD_EPIC:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_EPIC_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_EPIC_SEC_Pos;
         break;
     case SECU_MOD_ACPU:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_ACPU_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_ACPU_SEC_Pos;
         break;
     case SECU_MOD_HCPU:
-        p_reg = &(hwp_secu1->HPMST_ATTR_CFG0);
-        *bit_n = SECU1_HPMST_ATTR_CFG0_HCPU_SEC_Pos;
+        p_reg = &(hwp_secu1->HPMST_ATTR_CFG);
+        *bit_n = SECU1_HPMST_ATTR_CFG_HCPU_SEC_Pos;
         break;
 
     /*SECU2*/
@@ -216,7 +216,7 @@ HAL_StatusTypeDef HAL_SECU_SetAttr(SECU_MODULE_TYPE module, uint32_t role, uint3
 
 
         //Apply immediately
-        if (p_reg == &(hwp_secu1->HPMST_ATTR_CFG0))
+        if (p_reg == &(hwp_secu1->HPMST_ATTR_CFG))
             hwp_secu1->SECU_CTRL = SECU1_SECU_CTRL_HPMST_ATTR_UPDATE;
         else if (p_reg == &(hwp_secu2->LPMST_ATTR_CFG))
             hwp_secu2->SECU_CTRL = SECU2_SECU_CTRL_LPMST_ATTR_UPDATE;
