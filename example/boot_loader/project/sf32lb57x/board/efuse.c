@@ -7,11 +7,6 @@
 
 #define AES_BLOCK_SIZE 512
 
-ALIGN(4)
-uint8_t g_uid[DFU_UID_SIZE];
-uint8_t root_key[DFU_KEY_SIZE];
-ALIGN(4)
-static uint8_t g_aes_ctr_iv[DFU_IV_LEN];
 dfu_efuse_read_hook_t g_dfu_efuse_read_hook;
 
 int sifli_hw_efuse_write(uint8_t id, uint8_t *data, int size)

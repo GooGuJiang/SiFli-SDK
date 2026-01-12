@@ -18,8 +18,6 @@
 #include "sifli_bbm.h"
 #include "secboot.h"
 
-#define BOOT_FROM_MPI3
-
 QSPI_FLASH_CTX_T spi_flash_handle[FLASH_MAX_INSTANCE];
 DMA_HandleTypeDef spi_flash_dma_handle[FLASH_MAX_INSTANCE];
 flash_read_func g_flash_read;
@@ -150,6 +148,7 @@ static int read_nor(uint32_t addr, const int8_t *buf, uint32_t size)
     return size;
 }
 
+#ifndef CFG_BOOTROM
 static int write_nor(uint32_t addr, const int8_t *buf, uint32_t size)
 {
     FLASH_HandleTypeDef *hflash;
@@ -226,7 +225,7 @@ static int erase_nor(uint32_t addr, uint32_t size)
 
     return 0;
 }
-
+#endif /* !CFG_BOOTROM */
 
 
 static uint32_t init_mpi1()
@@ -325,11 +324,13 @@ static uint32_t init_mpi3(int nand)
         sif_bbm_init(spi_flash_handle[2].total_size, (uint8_t *)bbm_cache_buf);
 #endif /* CFG_BOOTROM */
     }
+#ifndef CFG_BOOTROM
     if (!nand)
     {
         g_flash_write = write_nor;
         g_flash_erase = erase_nor;
     }
+#endif /* CFG_BOOTROM */
 
     return (spi_flash_handle[2].base_addr);
 }
@@ -416,8 +417,11 @@ static uint32_t init_sdemmc()
 /******************************************************************************/
 
 #define MAX_RETRY 5
-void boot_device_init(void)
+bool boot_device_init(void)
 {
+    bool succ = false;
+    uint8_t hash[DFU_FTAB_CMAC_HASH_SIZE];
+
 #if !defined(CFG_BOOTROM) && !defined(FPGA)
     // set clock to high speed for bootloader
     HAL_HPAON_EnableXT48();
@@ -495,36 +499,47 @@ void boot_device_init(void)
 
     if (g_flash_read)
     {
-#define MAX_RETRY 5
-        int count = MAX_RETRY;
-
-        while (count)
+        g_flash_read(g_config_addr, (const int8_t *)&sec_config_cache, sizeof(sec_config_cache));
+        if (sec_config_cache.magic == SEC_CONFIG_MAGIC)
         {
-            g_flash_read(g_config_addr, (const int8_t *)&sec_config_cache, sizeof(struct sec_configuration));
-            if (sec_config_cache.magic == SEC_CONFIG_MAGIC)
+            if (BOARD_BOOT_DEVICE_MPI3_NAND == board_boot_device)
             {
-                if (BOARD_BOOT_DEVICE_MPI3_NAND == board_boot_device)
+                struct flash_config *cfg = (struct flash_config *)&sec_config_cache.ftab[DFU_FLASH_CONFIG];
+                if ((cfg->page_size != 0 &&  cfg->page_size != FLASH_UNINIT_32))
                 {
-                    struct flash_config *cfg = (struct flash_config *)&sec_config_cache.ftab[DFU_FLASH_CONFIG];
-                    if ((cfg->page_size != 0 &&  cfg->page_size != FLASH_UNINIT_32))
-                    {
-                        nand_pagesize = cfg->page_size;
-                        boot_handle->dualFlash |= NAND_FLAG_PAGE_DOUBLE;
-                        g_flash_read(g_config_addr, (const int8_t *)&sec_config_cache, sizeof(struct sec_configuration));
-                    }
+                    nand_pagesize = cfg->page_size;
+                    boot_handle->dualFlash |= NAND_FLAG_PAGE_DOUBLE;
+                    g_flash_read(g_config_addr, (const int8_t *)&sec_config_cache, sizeof(sec_config_cache));
                 }
-                break;
             }
-#ifdef TARMAC
-            HAL_Delay_us(10);
-#else
-            HAL_Delay_us(1000000);
-#endif
-            count--;
+#if defined(CFG_BOOTROM)
+            if (sboot_ctx.sec_en)
+            {
+                g_flash_read(g_config_addr + sizeof(sec_config_cache), hash, sizeof(hash));
+                if (sifli_verify_img_cmac_hash(NULL, (uint8_t *)&sec_config_cache, sizeof(sec_config_cache),
+                                               hash))
+                {
+                    succ = true;
+                }
+                else
+                {
+                    printf("ftab signature verification fails\n");
+                }
+            }
+
+            else
+#endif /* CFG_BOOTROM */
+            {
+                succ = true;
+            }
         }
-        if (count == 0)
-            boot_error('C');
+        else
+        {
+            printf("invalid magic\n");
+        }
     }
+
+    return succ;
 }
 
 

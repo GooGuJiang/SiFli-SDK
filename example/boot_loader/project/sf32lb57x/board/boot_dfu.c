@@ -12,6 +12,7 @@
 #include "bf0_hal.h"
 #include "../dfu/dfu.h"
 #include "sifli_crypto.h"
+#include "secboot.h"
 
 #ifdef CFG_BOOTLOADER
     #define DBG_ENABLE
@@ -51,11 +52,6 @@ static const uint8_t g_fake_dfu_efuse_uid[DFU_UID_SIZE] =
     0xB7, 0x76, 0x6B, 0x8A, 0xD7, 0xA5, 0xE7, 0xD0, 0x88, 0x52, 0x36, 0xDE, 0xC3, 0x16, 0x36, 0x4C
 };
 
-static const uint8_t g_fake_dfu_efuse_sig_hash[DFU_SIG_HASH_SIZE] =
-{
-    0x56, 0xCE, 0x4E, 0xC4, 0xC9, 0xDC, 0xF4, 0x11
-};
-
 static const uint8_t g_fake_dfu_efuse_root_key[DFU_KEY_SIZE] =
 {
     0xE6, 0x92, 0xDF, 0xB5, 0xE8, 0xFA, 0xC2, 0x43, 0x78, 0x13, 0x34, 0x5D, 0x1B, 0x4B, 0xE2, 0xB9,
@@ -93,11 +89,6 @@ static int dfu_get_efuse_hook(uint8_t id, uint8_t *data, int size)
         memcpy(data, (uint8_t *)g_fake_dfu_efuse_uid, DFU_UID_SIZE);
         ret = DFU_UID_SIZE;
     }
-    else if (id == EFUSE_ID_SIG_HASH)
-    {
-        memcpy(data, (uint8_t *)g_fake_dfu_efuse_sig_hash, DFU_SIG_HASH_SIZE);
-        ret = DFU_SIG_HASH_SIZE;
-    }
     else if (id == EFUSE_ID_ROOT)
     {
         memcpy(data, (uint8_t *)g_fake_dfu_efuse_root_key, DFU_KEY_SIZE);
@@ -106,39 +97,6 @@ static int dfu_get_efuse_hook(uint8_t id, uint8_t *data, int size)
 
     return ret;
 
-}
-
-bool sifli_dec_verify(uint8_t *key, uint32_t offset,
-                      uint8_t *in_data, int size, uint8_t *hash)
-{
-    sf_crypto_aes_cmac_ctx_t ctx;
-    sf_crypto_err_t err;
-    bool succ = false;
-
-    if (g_dfu_efuse_read_hook && !key)
-    {
-        g_dfu_efuse_read_hook(EFUSE_ID_ROOT, default_root_key, DFU_KEY_SIZE);
-        key = &default_root_key[0];
-    }
-
-    err = sf_crypto_aes_cmac_init(&ctx, (const uint32_t *)key, EFUSE_ROOTKEY_BYTE_SIZE);
-    HAL_ASSERT(SF_CRYPTO_E_OK == err);
-
-    err = sf_crypto_aes_cmac_calc(&ctx, in_data, size, true, dfu_hash);
-    if (err != SF_CRYPTO_E_OK)
-    {
-        goto __EXIT;
-    }
-
-    if (memcmp(dfu_hash, hash, sizeof(dfu_hash)) != 0)
-    {
-        goto __EXIT;
-    }
-
-    succ = true;
-
-__EXIT:
-    return succ;
 }
 
 static int dfu_process_hdr_sec(uint8_t flashid, uint8_t *data, int size)
@@ -155,7 +113,7 @@ static int dfu_process_hdr_sec(uint8_t flashid, uint8_t *data, int size)
     data += sizeof(struct image_cfg_hdr);
     size -= sizeof(struct image_cfg_hdr);
 
-    succ = sifli_dec_verify(NULL, 0, data, size, hdr->hash);
+    succ = sifli_verify_img_cmac_hash(NULL, data, size, hdr->hash);
     if (succ)          // Use root key to decode image header
     {
         if (DFU_FLASH_IMG_BOOT2 == flashid)
@@ -186,7 +144,7 @@ static int dfu_process_body_sec(uint8_t flashid, uint8_t *data, int size)
 
     size -= sizeof(struct image_body_hdr);
     data += sizeof(struct image_body_hdr);
-    succ = sifli_dec_verify(NULL, hdr->offset, data, size, hdr->hash);
+    succ = sifli_verify_img_cmac_hash(NULL, data, size, hdr->hash);
     if (succ)
     {
         img_hdr = &g_boot_patch_img_head;
@@ -331,22 +289,10 @@ static int dfu_end(uint8_t flashid)
     }
     return r;
 }
-static uint8_t dfu_secure_boot_check()
-{
-    uint8_t pattern;
-    uint32_t ret = 0;
-    int len = sifli_hw_efuse_read(EFUSE_ID_SECURE_ENABLED, &pattern, DFU_SECURE_SIZE);
-    if ((len > 0) && (pattern != 0))
-    {
-        ret = 1;
-    }
-
-    return ret;
-}
 
 void dfu_init(void)
 {
-    if (dfu_secure_boot_check() == 0)
+    if (!sboot_ctx.sec_en)
     {
         g_dfu_efuse_read_hook = dfu_get_efuse_hook;
     }

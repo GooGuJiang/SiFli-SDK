@@ -35,6 +35,7 @@ extern "C" {
 #define DFU_SIG_SIZE            256
 #define DFU_SECURE_SIZE         1
 #define DFU_FTAB_HASH_SIZE      32
+#define DFU_FTAB_CMAC_HASH_SIZE      16
 
 #define DFU_IMG_HASH_SIZE       32
 #define DFU_PKT_HASH_SIZE       32
@@ -355,7 +356,7 @@ struct sec_configuration
     uint32_t magic;
     struct flash_table  ftab[DFU_FLASH_PARTITION];
     uint8_t             sig_pub_key[DFU_SIG_KEY_SIZE];
-    uint8_t            ftab_hash[DFU_FTAB_HASH_SIZE];
+    uint8_t             padding[DFU_FTAB_HASH_SIZE];  /* not used actually */
     uint8_t reserved[4096 - (SECFG_SIGKEY_OFFSET + DFU_SIG_KEY_SIZE + DFU_FTAB_HASH_SIZE)];
     // Align to sector boundary (4096)
     /** index using flashid-2,  */
@@ -363,6 +364,7 @@ struct sec_configuration
     /** index by coreid, such as #CORE_LCPU */
     struct image_header_enc *running_imgs[CORE_MAX];
 };
+
 
 typedef struct
 {

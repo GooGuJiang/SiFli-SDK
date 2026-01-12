@@ -1,5 +1,6 @@
 #include <rtconfig.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include "register.h"
 #include "../dfu/dfu.h"
@@ -7,7 +8,31 @@
     #include "mbedtls/cipher.h"
     #include "mbedtls/pk.h"
 #endif
+#include "boot_flash.h"
+#include "sifli_crypto.h"
 #include "secboot.h"
+
+#ifndef ALIGN
+    #define ALIGN(n)                    __attribute__((aligned(n)))
+#endif /* ALIGN */
+
+static uint8_t dfu_hash[SF_CRYPTO_AES_CMAC_HASH_SIZE];
+ALIGN(4)
+static uint8_t default_root_key[DFU_KEY_SIZE];
+sboot_ctx_t sboot_ctx;
+
+static uint8_t is_addr_in_nor(uint32_t addr)
+{
+    if (boot_handle && (boot_handle->isNand == 0)
+            && (addr >= boot_handle->base) && (addr < boot_handle->base + boot_handle->size))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 /* out buf size must more than 32 byte */
 int sifli_hash_calculate(uint8_t *in, uint32_t in_size, uint8_t *out, uint8_t algo)
@@ -116,3 +141,117 @@ void sifli_secboot_exception(uint8_t excpt)
 
     HAL_sw_breakpoint();
 }
+
+bool sifli_verify_img_cmac_hash(uint8_t *key, uint8_t *in_data, int size, uint8_t *hash)
+{
+    sf_crypto_aes_cmac_ctx_t ctx;
+    sf_crypto_err_t err;
+    bool succ = false;
+
+    if (g_dfu_efuse_read_hook && !key)
+    {
+        g_dfu_efuse_read_hook(EFUSE_ID_ROOT, default_root_key, DFU_KEY_SIZE);
+        key = &default_root_key[0];
+    }
+
+    err = sf_crypto_aes_cmac_init(&ctx, (const uint32_t *)key, EFUSE_ROOTKEY_BYTE_SIZE);
+    HAL_ASSERT(SF_CRYPTO_E_OK == err);
+
+    err = sf_crypto_aes_cmac_calc(&ctx, in_data, size, true, dfu_hash);
+    if (err != SF_CRYPTO_E_OK)
+    {
+        goto __EXIT;
+    }
+
+    if (memcmp(dfu_hash, hash, sizeof(dfu_hash)) != 0)
+    {
+        goto __EXIT;
+    }
+
+    succ = true;
+
+__EXIT:
+    return succ;
+}
+
+void sboot_init(void)
+{
+    uint8_t pattern;
+    int len;
+    uint8_t rootkey[EFUSE_ROOTKEY_BYTE_SIZE];
+
+    len = sifli_hw_efuse_read(EFUSE_ID_SECURE_ENABLED, &pattern, DFU_SECURE_SIZE);
+    if ((len > 0) && (pattern != 0))
+    {
+        sboot_ctx.sec_en = true;
+    }
+
+    if (sboot_ctx.sec_en)
+    {
+        len = sifli_hw_efuse_read(EFUSE_ID_ROOT, rootkey, sizeof(rootkey));
+        if (len != sizeof(rootkey))
+        {
+            printf("load rootkey fails\n");
+        }
+    }
+}
+
+void run_img(uint32_t dest)
+{
+    __asm
+    (
+        "LDR SP, [%0]                     \n"
+        "LDR PC, [%0, #4]                 \n"
+        :           /* Outputs */
+        : "r"(dest) /* Inputs */
+        :           /* Clobbers */
+    );
+}
+
+
+void dfu_boot_img_in_flash(int flashid)
+{
+    uint32_t src = sec_config_cache.ftab[flashid].base;
+    uint32_t dest = sec_config_cache.ftab[flashid].xip_base;
+    int coreid = DFU_FLASH_IMG_IDX(flashid);
+    struct image_header_enc *img_hdr = &(sec_config_cache.imgs[coreid]);
+    uint32_t copy_len;
+
+    if (img_hdr->length && (src != dest)
+            && (is_addr_in_nor((uint32_t)dest) == 0))
+    {
+        if (sboot_ctx.sec_en)
+        {
+            copy_len = img_hdr->length + SF_CRYPTO_AES_CMAC_HASH_SIZE;
+        }
+        else
+        {
+            copy_len = img_hdr->length;
+        }
+
+        g_flash_read(src, (const int8_t *)dest, copy_len);
+    }
+
+    if (coreid < 2 * CORE_MAX)
+    {
+        coreid %= CORE_MAX;
+        if (coreid == CORE_HCPU || coreid == CORE_BL || coreid == CORE_LCPU)
+        {
+            //TODO:
+            if (is_addr_in_nor(dest))
+            {
+                HAL_FLASH_ALIAS_CFG(boot_handle, dest, img_hdr->length, src - dest);
+            }
+
+            if (!sboot_ctx.sec_en || (coreid != CORE_BL) || sifli_verify_img_cmac_hash(NULL, (uint8_t *)dest, img_hdr->length, (uint8_t *)dest + img_hdr->length))
+            {
+                run_img(dest);
+            }
+            else
+            {
+                printf("image signature verification fails\n");
+            }
+        }
+    }
+}
+

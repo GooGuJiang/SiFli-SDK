@@ -79,69 +79,8 @@ void boot_test(void)
 /**************************Efuse**************************************************/
 #define boot_efuse_init_stage1(void) \
 { \
-    hwp_efusec->TCR = 0x1DF; \
     /* Read bank0 */ \
     sifli_hw_efuse_read_bank(0); \
-}
-
-//TODO:
-#define boot_efuse_init_stage2(void) \
-{ \
-    /* Read bank3 */ \
-    sifli_hw_efuse_read_bank(3); \
-}
-
-
-/************************Boot *****************************************/
-
-void run_img(uint32_t dest)
-{
-    __asm
-    (
-        "LDR SP, [%0]                     \n"
-        "LDR PC, [%0, #4]                 \n"
-        :           /* Outputs */
-        : "r"(dest) /* Inputs */
-        :           /* Clobbers */
-    );
-}
-
-uint8_t is_addr_in_nor(uint32_t addr)
-{
-    if (boot_handle && boot_handle->isNand == 0 &&
-            addr >= boot_handle->base && addr < boot_handle->base + boot_handle->size)
-        return 1;
-    else
-        return 0;
-}
-
-void dfu_boot_img_in_flash(int flashid)
-{
-    uint32_t src = sec_config_cache.ftab[flashid].base;
-    uint32_t dest = sec_config_cache.ftab[flashid].xip_base;
-    int coreid = DFU_FLASH_IMG_IDX(flashid);
-    struct image_header_enc *img_hdr = &(sec_config_cache.imgs[coreid]);
-
-    if (img_hdr->length && (src != dest)
-            && (is_addr_in_nor((uint32_t)dest) == 0))
-    {
-        g_flash_read(src, (const int8_t *)dest, img_hdr->length);
-    }
-
-    if (coreid < 2 * CORE_MAX)
-    {
-        coreid %= CORE_MAX;
-        if (coreid == CORE_HCPU || coreid == CORE_BL || coreid == CORE_LCPU)
-        {
-            //TODO:
-            if (is_addr_in_nor(dest))
-            {
-                HAL_FLASH_ALIAS_CFG(boot_handle, dest, img_hdr->length, src - dest);
-            }
-
-            run_img(dest);
-        }
-    }
 }
 
 #ifndef CFG_BOOTROM
@@ -276,6 +215,7 @@ static void select_boot()
     }
 }
 #endif /* CFG_BOOTROM */
+
 
 void boot_images_help()
 {
@@ -600,8 +540,6 @@ static bool boot_is_bootmode(void)
 {
     HAL_Delay_us(0);
 
-    //TODO: need to be removed
-    // board_pinmux_uart();
     // HAL_sw_breakpoint();
 
     // 3. Power on flash.
@@ -610,7 +548,7 @@ static bool boot_is_bootmode(void)
     // 4. Check boot mode.
     HAL_MspInit();
 
-
+    sboot_init();
 
     // 5. Boot images
 #ifdef CFG_BOOTROM
@@ -623,8 +561,10 @@ static bool boot_is_bootmode(void)
         // HAL_sw_breakpoint();
         /* init AES_ACC as normal mode */
         __HAL_SYSCFG_CLEAR_SECURITY();
-        boot_device_init();
-        boot_images_help();
+        if (boot_device_init())
+        {
+            boot_images_help();
+        }
     }
 
     //TODO:
@@ -636,9 +576,9 @@ static bool boot_is_bootmode(void)
 
     dfu_init();
 
-    //TODO:
-    //HAL_PIN_Set_Analog(PAD_PA35, 1);                    // USB_DP
-    //HAL_PIN_Set_Analog(PAD_PA36, 1);                    // USB_DM
+    /* USB pin */
+    HAL_PIN_Set_Analog(PAD_PA35, 1);                    // USB_DP
+    HAL_PIN_Set_Analog(PAD_PA36, 1);                    // USB_DM
 
 
 #ifdef PKG_USING_CHERRYUSB

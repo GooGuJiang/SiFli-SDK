@@ -118,7 +118,16 @@ extern uint32_t g_boot_opt;
 #define MPI_POWER_PIN  (21)
 extern void BSP_GPIO_Set(int pin, int val, int is_porta);
 
-void boot_device_init(void);
+
+/**
+ * @brief  Init boot device
+ *
+ *
+ * @return whether boot device init succeed
+ * @retval true init succeed
+ * @retval false init fail
+ */
+bool boot_device_init(void);
 
 #define BOOT_SRC_Pos                    (0U)
 #define BOOT_SRC_Msk                    (0xFUL << BOOT_SRC_Pos)
