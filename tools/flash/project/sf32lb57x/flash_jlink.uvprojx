@@ -16,7 +16,7 @@
         <TargetCommonOption>
           <Device>ARMCM33_DSP_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.7.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -494,6 +494,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\drivers\hal\bf0_hal_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>bf0_hal_pmu_sf32lb57x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\drivers\hal\bf0_hal_pmu_sf32lb57x.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -502,13 +507,13 @@
       <TargetName>flash2</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6140001::V6.14.1::ARMCLANG</pCCUsed>
+      <pCCUsed>6210000::V6.21::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>ARMv8MML_DSP_SP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.7.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("ARMV8MML") FPU3(SFPU) DSP TZ CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -986,6 +991,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\drivers\hal\bf0_hal_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>bf0_hal_pmu_sf32lb57x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\drivers\hal\bf0_hal_pmu_sf32lb57x.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -994,13 +1004,13 @@
       <TargetName>flash3</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6140001::V6.14.1::ARMCLANG</pCCUsed>
+      <pCCUsed>6210000::V6.21::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>ARMv8MML_DSP_SP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.7.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("ARMV8MML") FPU3(SFPU) DSP TZ CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -1478,6 +1488,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\drivers\hal\bf0_hal_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>bf0_hal_pmu_sf32lb57x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\drivers\hal\bf0_hal_pmu_sf32lb57x.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -1492,7 +1507,7 @@
         <TargetCommonOption>
           <Device>ARMCM33_DSP_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.7.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -1970,6 +1985,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\drivers\hal\bf0_hal_rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>bf0_hal_pmu_sf32lb57x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\drivers\hal\bf0_hal_pmu_sf32lb57x.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
@@ -1984,7 +2004,7 @@
         <TargetCommonOption>
           <Device>ARMCM33_DSP_FP</Device>
           <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.7.0</PackID>
+          <PackID>ARM.CMSIS.5.9.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00020000) IRAM2(0x20200000,0x00020000) IROM(0x00000000,0x00200000) IROM2(0x00200000,0x00200000) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP CLOCK(12000000) ESEL ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -2461,6 +2481,11 @@
               <FileName>bf0_hal_rtc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\drivers\hal\bf0_hal_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>bf0_hal_pmu_sf32lb57x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\drivers\hal\bf0_hal_pmu_sf32lb57x.c</FilePath>
             </File>
           </Files>
         </Group>

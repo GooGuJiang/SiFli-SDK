@@ -180,34 +180,6 @@ extern void BSP_SetFlash2DIV(uint16_t div);
 extern void BSP_SetFlash3DIV(uint16_t div);
 extern void BSP_SetFlash4DIV(uint16_t div);
 
-static void board_pinmux_mpi1_puya_base()
-{
-    HAL_PIN_Set(PAD_SA01, MPI1_CS,   PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA07, MPI1_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA10, MPI1_DIO3, PIN_NOPULL, 1);
-}
-
-static void board_pinmux_mpi1_puya_ext(int is64Mb)
-{
-    if (is64Mb)
-        HAL_PIN_Set(PAD_SA03, MPI1_DIO2, PIN_PULLUP, 1);
-    else
-        HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
-}
-
-static void board_pinmux_mpi1_gd()
-{
-    HAL_PIN_Set(PAD_SA04, MPI1_CS,   PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA09, MPI1_CLK,  PIN_NOPULL, 1);
-    HAL_PIN_Set(PAD_SA11, MPI1_DIO0, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA02, MPI1_DIO1, PIN_PULLDOWN, 1);
-    HAL_PIN_Set(PAD_SA00, MPI1_DIO2, PIN_PULLUP, 1);
-    HAL_PIN_Set(PAD_SA08, MPI1_DIO3, PIN_PULLUP, 1);
-}
-
-
 int rt_hw_flash1_init()
 {
     HAL_StatusTypeDef res = HAL_ERROR;
