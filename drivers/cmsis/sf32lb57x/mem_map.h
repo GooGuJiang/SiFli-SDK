@@ -329,6 +329,7 @@ start_addr  0x0x20400000           0x20406000          0x20408000      0x2040E00
 #define EFUSE_BANK2_PGMDIS_SIZE       2
 #define EFUSE_ROOTKEY_OFFSET          512
 #define EFUSE_ROOTKEY_SIZE            256
+#define EFUSE_ROOTKEY_BYTE_SIZE       (EFUSE_ROOTKEY_SIZE >> 3)
 
 /**
  * @}
@@ -354,7 +355,7 @@ start_addr  0x0x20400000           0x20406000          0x20408000      0x2040E00
 /**  PSRAM Type Position */
 #define PKGID_PSRAM_TYPE_Pos         (4U)
 /**  PSRAM Type Mask */
-#define PKGID_PSRAM_TYPE_Msk         (0x3UL << PKGID_PSRAM_TYPE_Pos)
+#define PKGID_PSRAM_TYPE_Msk         (0x7UL << PKGID_PSRAM_TYPE_Pos)
 
 /**
  * @}
