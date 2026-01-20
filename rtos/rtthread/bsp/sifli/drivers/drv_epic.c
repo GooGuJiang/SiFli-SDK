@@ -16,6 +16,10 @@
     #include "drv_epic_mask.h"
 #endif
 
+#ifdef USING_VGLITE
+    #include "drv_vglite.h"
+#endif
+
 #ifndef __DEBUG__
     #define __DEBUG__ 1
 
@@ -63,7 +67,7 @@
 #endif  /* RT_USING_PM */
 
 #define IS_DCACHED_RAM(addr) (((uint32_t) addr) >= (PSRAM_BASE))
-#define GPU_BLEND_EXP_MS     500
+#define GPU_BLEND_EXP_MS     5000
 
 
 #ifdef DRV_EPIC_NEW_API
@@ -82,9 +86,14 @@
 #endif
 
 #define render_list_pool_max    2
-#define letter_pool_max         1024//800
+#define letter_pool_max         512//800
 #define mask_buf_max_bytes      (16*1024)
 #define mask_buf2_max_bytes     1600
+#if defined(ROTATE_BUF_SIZE) && defined(ROTATE_BUF_IN_SRAM)
+    #define rotate_buf_bytes   ROTATE_BUF_SIZE
+#else
+    #define rotate_buf_bytes   0
+#endif
 
 #define rl_flag_commit          0x01
 #define rl_flag_rendering       0x02
@@ -101,6 +110,7 @@ typedef enum
     HAL_API_CONT_BLEND_ASYNC_STOP,
     HAL_API_TRANSFORM,
     HAL_API_COPY,
+    HAL_API_ALL_STOP,
 } HAL_API_TypeDef;
 
 typedef struct
@@ -112,8 +122,10 @@ typedef struct
     uint16_t src_list_alloc_len; /* Allocated src list len */
     uint16_t src_list_len; /* Committed src len*/
     rt_list_t src_list;    /* Committed source list*/
-    drv_epic_letter_type_t letter_pool[letter_pool_max];
-    uint32_t letter_pool_free;
+    drv_epic_letter_type_t *letter_pool;
+    uint32_t letter_pool_free;  /* The size of the letter pool that has been used*/
+    uint32_t letter_pool_size;  /* The maximum size of the letter pool for this render list*/
+    uint8_t  letter_pool_index; /* The index of the letter pool from stack*/
     EPIC_AreaTypeDef  commit_area; /*Committed invalid area*/
 
 } priv_render_list_t;
@@ -123,6 +135,7 @@ typedef struct
 {
     priv_render_list_t *rl;
     uint16_t  src_idx;
+    drv_epic_operation *operation;
     uint32_t  start_tick;
     uint32_t  cost_us;
 } priv_render_hist_t;
@@ -227,7 +240,9 @@ typedef struct
     uint32_t rd_epic_hal_us;
     uint32_t rd_epic_sync_wait_us;
     uint32_t rd_epic_async_wait; /*ms*/
-    uint32_t letter_pool_used_max;
+    uint32_t letter_buf_pool_max;  /* The maximum size of the letter pool*/
+    uint32_t letter_pool_used_max; /* The maximum size of the letter pool that has been used*/
+
     //Detail statistics
     operation_detail_ctx_t rd_operations_detail[DRV_EPIC_DRAW_MAX];
     operation_detail_ctx_t *p_last_rd_operation;
@@ -237,7 +252,7 @@ typedef struct
     struct rt_thread task;
     rt_mq_t  mq;
     uint8_t task_idle; //1: task is idle, 0: task is busy
-
+    drv_epic_rotate_t rotated; //Whether rotation is supported
 #endif /* DRV_EPIC_NEW_API */
 
     uint32_t hclk_freq_Mhz;
@@ -301,10 +316,11 @@ static EPIC_HandleTypeDef *epic = NULL;
     static void epic_abort_callback(EPIC_HandleTypeDef *epic);
 #endif
 
-L1_RET_BSS_SECT_BEGIN(drv_epic_ram)
 static void dummy_function_for_source_insight_symbol_list0(void)
 {
 }
+
+L1_RET_BSS_SECT_BEGIN(drv_epic_ram)
 static EPIC_DrvTypeDef drv_epic;
 static uint8_t drv_epic_inited = 0;
 L1_RET_BSS_SECT_END
@@ -314,11 +330,16 @@ L1_NON_RET_BSS_SECT_BEGIN(drv_epic_stack)
     L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static priv_render_list_t drv_epic_render_list_pool[render_list_pool_max]);
     L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t drv_epic_mask_buf_pool[mask_buf_max_bytes]);
     L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t drv_epic_mask_buf2_pool[mask_buf2_max_bytes]);
+    L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static drv_epic_letter_type_t drv_epic_letter_pool[letter_pool_max * render_list_pool_max]);
+    #if (rotate_buf_bytes > 0)
+        L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t rotate_buf[rotate_buf_bytes]);
+    #endif
 #endif /* DRV_EPIC_NEW_API */
 L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t drv_epic_stack[4096]);
 L1_NON_RET_BSS_SECT_END
 
-
+#define LETTER_POOL_FROM_STACK() (rl->letter_pool == &drv_epic_letter_pool[letter_pool_max * rl->letter_pool_index])
+#define LETTER_POOL_ALLOW_FROM_HEAP() (drv_epic.letter_buf_pool_max > letter_pool_max)
 
 static void dummy_function_for_source_insight_symbol_list1(void)
 {
@@ -327,9 +348,11 @@ static void dummy_function_for_source_insight_symbol_list1(void)
 static void print_gpu_error_info(void);
 int drv_epic_init(void);
 #ifdef DRV_EPIC_NEW_API
-    static rt_err_t drv_epic_render_list_init(void);
+static rt_err_t drv_epic_render_list_init(void);
+extern void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
+                                const EPIC_PointTypeDef *pivot);
 #else
-    static void cont_blend_reset(void);
+static void cont_blend_reset(void);
 #endif /* DRV_EPIC_NEW_API */
 
 
@@ -914,7 +937,7 @@ void drv_gpu_open(void)
 
         epic->jpegd_work_buf_size = max_img_width * 2 * 32; /* 2bytes per pixel, 32 rows */
         RT_ASSERT(NULL == epic->jpegd_work_buf);
-        epic->jpegd_work_buf = rt_malloc(epic->jpegd_work_buf_size);
+        epic->jpegd_work_buf = epic_malloc(epic->jpegd_work_buf_size);
         RT_ASSERT(epic->jpegd_work_buf);
 
 #endif /* HAL_JPEGD_MODULE_ENABLED */
@@ -932,6 +955,11 @@ void drv_gpu_open(void)
 #endif /* DRV_EPIC_NEW_API */
         LOG_I("drv_gpu opened.");
     }
+#endif
+
+
+#ifdef USING_VGLITE
+    drv_vglite_open();
 #endif
 }
 
@@ -959,7 +987,7 @@ void drv_gpu_close(void)
         }
         if (epic->jpegd_work_buf)
         {
-            rt_free(epic->jpegd_work_buf);
+            epic_free(epic->jpegd_work_buf);
             epic->jpegd_work_buf = NULL;
         }
 #endif /* HAL_JPEGD_MODULE_ENABLED */
@@ -968,6 +996,11 @@ void drv_gpu_close(void)
         LOG_I("drv_gpu closed.");
     }
 #endif
+
+#ifdef USING_VGLITE
+    drv_vglite_close();
+#endif
+
 }
 
 uint32_t drv_epic_get_error(void)
@@ -1357,6 +1390,15 @@ static void clip_layer_to_area(EPIC_BlendingDataType *p_layer,
 
     p_layer->data_size = ((pixel_size * p_layer->total_width * p_layer->height) + 7) >> 3;
 }
+
+static void clip_intersect_area(EPIC_AreaTypeDef *src_area, EPIC_AreaTypeDef *dst_area)
+{
+    src_area->x0 = HAL_MAX(src_area->x0, dst_area->x0);
+    src_area->x1 = HAL_MIN(src_area->x1, dst_area->x1);
+    src_area->y0 = HAL_MAX(src_area->y0, dst_area->y0);
+    src_area->y1 = HAL_MIN(src_area->y1, dst_area->y1);
+}
+
 
 #define _get_layer_area(p_area, p_layer) \
     (p_area)->x0 = (p_layer)->x_offset; \
@@ -2087,6 +2129,16 @@ void drv_epic_cont_blend_reset(void)
     if(!(expr)){print_gpu_error_info();\
     RT_ASSERT(expr);}\
 }while(0)
+
+
+typedef struct
+{
+    uint32_t is_grad;
+    uint32_t argb8888;
+    rect_vertex_color_t *p_grad_color;
+    const EPIC_AreaTypeDef *p_rect_area;
+} draw_rect_dsc_t;
+
 static rt_err_t render_start(drv_epic_render_list_t list);
 static rt_err_t render(drv_epic_render_list_t list);
 static rt_err_t render_end(drv_epic_render_list_t list);
@@ -2656,6 +2708,7 @@ static HAL_StatusTypeDef Call_Hal_Api(HAL_API_TypeDef api, void *p1, void *p2, v
             PRINT_API_NAME(HAL_API_BLEND_EX);
             PRINT_API_NAME(HAL_API_TRANSFORM);
             PRINT_API_NAME(HAL_API_COPY);
+            PRINT_API_NAME(HAL_API_ALL_STOP);
         default:
             LOG_I("Call_Hal_Api= %d", api);
             break;
@@ -2712,6 +2765,25 @@ static HAL_StatusTypeDef Call_Hal_Api(HAL_API_TypeDef api, void *p1, void *p2, v
             epic_sem_release();
             cont_blend_states = 0;
             statistics_hw_done();
+        }
+        return HAL_OK;
+    }
+    else if (HAL_API_ALL_STOP == api)
+    {
+        if (cont_blend_states != 0)
+        {
+            //It is continue blending, stop it.
+            ret = HAL_EPIC_ContBlendStop(hw_epic_handle);
+            DRV_EPIC_ASSERT(HAL_OK == ret);
+            epic_sem_release();
+            cont_blend_states = 0;
+            statistics_hw_done();
+        }
+        else
+        {
+            //Waitting for async blending done.
+            wait_hw_done();
+            epic_sem_release();
         }
         return HAL_OK;
     }
@@ -3006,15 +3078,37 @@ static void draw_fill(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_m
     }
 }
 
+static void inline setup_grad_rect_layer(EPIC_LayerConfigTypeDef *p_layer, draw_rect_dsc_t *p_rect_desc)
+{
+    int32_t area_w = HAL_EPIC_AreaWidth(p_rect_desc->p_rect_area);
+    int32_t area_h = HAL_EPIC_AreaHeight(p_rect_desc->p_rect_area);
+    area_w = MIN(area_w, EPIC_INPUT_SCALE_NONE);
+    area_h = MIN(area_h, EPIC_INPUT_SCALE_NONE);
+
+    HAL_EPIC_LayerConfigInit(p_layer);
+    p_layer->data = (uint8_t *)p_rect_desc->p_grad_color;
+    p_layer->color_mode = EPIC_COLOR_ARGB8888;
+    p_layer->width = 2;
+    p_layer->height = 2;
+    p_layer->x_offset = p_rect_desc->p_rect_area->x0;
+    p_layer->y_offset = p_rect_desc->p_rect_area->y0;
+    p_layer->total_width = 2;
+    p_layer->color_en = false;
+    p_layer->transform_cfg.scale_x = EPIC_INPUT_SCALE_NONE / area_w;
+    p_layer->transform_cfg.scale_y = EPIC_INPUT_SCALE_NONE / area_h;
+    p_layer->alpha = EPIC_OPA_MAX;
+    p_layer->data_size = 2 * 2 * 4;
+}
+
 static void draw_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_mask_layer,
-                      const EPIC_AreaTypeDef *p_fill_area, uint32_t argb8888)
+                      const EPIC_AreaTypeDef *p_fill_area, draw_rect_dsc_t *p_rect_desc)
 {
     HAL_StatusTypeDef ret;
     EPIC_LayerConfigTypeDef output_layer;
     EPIC_AreaTypeDef com_area;
 
-    uint8_t opa = (uint8_t)((argb8888 >> 24) & 0xFF);
-    if (opa <= EPIC_OPA_MIN) return;
+    uint8_t opa = (uint8_t)((p_rect_desc->argb8888 >> 24) & 0xFF);
+    if ((opa <= EPIC_OPA_MIN) && (!p_rect_desc->is_grad)) return;
 
     if (!_layer_IntersectArea(dst, p_fill_area, &com_area))
         return;
@@ -3028,9 +3122,9 @@ static void draw_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_m
     {
 
 
-        output_layer.color_r = (uint8_t)((argb8888 >> 16) & 0xFF);
-        output_layer.color_g = (uint8_t)((argb8888 >> 8) & 0xFF);
-        output_layer.color_b = (uint8_t)((argb8888 >> 0) & 0xFF);
+        output_layer.color_r = (uint8_t)((p_rect_desc->argb8888 >> 16) & 0xFF);
+        output_layer.color_g = (uint8_t)((p_rect_desc->argb8888 >> 8) & 0xFF);
+        output_layer.color_b = (uint8_t)((p_rect_desc->argb8888 >> 0) & 0xFF);
 
         if (p_mask_layer)
         {
@@ -3038,28 +3132,42 @@ static void draw_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_m
 
             memcpy(&input_layers[2], p_mask_layer, sizeof(EPIC_LayerConfigTypeDef));
 
-            input_layers[1] = output_layer;
-            input_layers[1].data = (uint8_t *) mono_layer_addr;
-            input_layers[1].color_mode = EPIC_INPUT_MONO;
-            input_layers[1].alpha = opa;
-            input_layers[1].ax_mode = ALPHA_BLEND_RGBCOLOR;
-            input_layers[1].color_en = true;
+            if (p_rect_desc->is_grad)
+            {
+                setup_grad_rect_layer(&input_layers[1], p_rect_desc);
+            }
+            else
+            {
+                input_layers[1] = output_layer;
+                input_layers[1].data = (uint8_t *) mono_layer_addr;
+                input_layers[1].color_mode = EPIC_INPUT_MONO;
+                input_layers[1].alpha = opa;
+                input_layers[1].ax_mode = ALPHA_BLEND_RGBCOLOR;
+                input_layers[1].color_en = true;
+            }
 
 
             memcpy(&input_layers[0], dst, sizeof(EPIC_LayerConfigTypeDef));
             ret =  Call_Hal_Api(HAL_API_BLEND_EX, input_layers, (void *)((uint32_t)3), &output_layer);
         }
 #ifndef SF32LB55X
-        else if (opa != 255)
+        else if ((opa != 255) || p_rect_desc->is_grad)
         {
             EPIC_LayerConfigTypeDef input_layers[2];
 
-            input_layers[1] = output_layer;
-            input_layers[1].data = (uint8_t *) mono_layer_addr;
-            input_layers[1].color_mode = EPIC_INPUT_MONO;
-            input_layers[1].alpha = opa;
-            input_layers[1].ax_mode = ALPHA_BLEND_RGBCOLOR;
-            input_layers[1].color_en = true;
+            if (p_rect_desc->is_grad)
+            {
+                setup_grad_rect_layer(&input_layers[1], p_rect_desc);
+            }
+            else
+            {
+                input_layers[1] = output_layer;
+                input_layers[1].data = (uint8_t *) mono_layer_addr;
+                input_layers[1].color_mode = EPIC_INPUT_MONO;
+                input_layers[1].alpha = opa;
+                input_layers[1].ax_mode = ALPHA_BLEND_RGBCOLOR;
+                input_layers[1].color_en = true;
+            }
 
             memcpy(&input_layers[0], dst, sizeof(EPIC_LayerConfigTypeDef));
             ret =  Call_Hal_Api(HAL_API_BLEND_EX, input_layers, (void *)((uint32_t)2), &output_layer);
@@ -3092,11 +3200,28 @@ static inline void draw_rect2(EPIC_LayerConfigTypeDef *dst, const EPIC_AreaTypeD
 {
     EPIC_AreaTypeDef com_area;
     if (HAL_EPIC_AreaIntersect(&com_area, p_fill_area, p_clip_area))
-        draw_rect(dst, p_mask_layer, &com_area, argb8888);
+    {
+        draw_rect_dsc_t rect_desc;
+        rect_desc.is_grad = 0;
+        rect_desc.p_grad_color = NULL;
+        rect_desc.p_rect_area = NULL;
+        rect_desc.argb8888 = argb8888;
+
+        draw_rect(dst, p_mask_layer, &com_area, &rect_desc);
+    }
 }
 
-static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_mask_layer,
-                                 void *masks[], const EPIC_AreaTypeDef *p_draw_area, uint32_t argb8888,
+static inline void draw_rect3(EPIC_LayerConfigTypeDef *dst, const EPIC_AreaTypeDef *p_clip_area,
+                              EPIC_LayerConfigTypeDef *p_mask_layer,
+                              const EPIC_AreaTypeDef *p_fill_area, draw_rect_dsc_t *p_rect_desc)
+{
+    EPIC_AreaTypeDef com_area;
+    if (HAL_EPIC_AreaIntersect(&com_area, p_fill_area, p_clip_area))
+        draw_rect(dst, p_mask_layer, &com_area, p_rect_desc);
+}
+
+static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_extra_mask_layer,
+                                 void *masks[], const EPIC_AreaTypeDef *p_draw_area, draw_rect_dsc_t *p_rect_desc,
                                  const EPIC_AreaTypeDef *p_circle_mask_area1,
                                  const EPIC_AreaTypeDef *p_circle_mask_area2,
                                  drv_epic_mask_opa_t *p_circle_mask_buf,
@@ -3104,8 +3229,9 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
                                 )
 {
     HAL_StatusTypeDef ret;
+    EPIC_LayerConfigTypeDef *p_rect_color_layer, *p_mask_layer;
+    EPIC_LayerConfigTypeDef input_layers[3];
     EPIC_LayerConfigTypeDef output_layer;
-    EPIC_LayerConfigTypeDef fg_layer;
     EPIC_AreaTypeDef com_area;
 
     if (!_layer_IntersectArea(dst, p_draw_area, &com_area))
@@ -3115,7 +3241,7 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
     int32_t blend_w = HAL_EPIC_AreaWidth(&com_area);
 
     if (blend_h <= 0 || blend_w <= 0) return RT_EEMPTY;
-    if (NULL == p_mask_layer->data) p_mask_layer = NULL; //Disable mask layer if no data
+    if (NULL == p_extra_mask_layer->data) p_extra_mask_layer = NULL; //Disable mask layer if no data
 
     //ping-pong buffer for CPU and GPU paralell
     int32_t  mask_buf_h = MIN((drv_epic.dbg_mask_buf_pool_max / 2) / blend_w, blend_h);
@@ -3128,18 +3254,31 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
 
 
 
-    /*Inital fg layer*/
-    HAL_EPIC_LayerConfigInit(&fg_layer);
-    fg_layer.alpha = (uint8_t)((argb8888 >> 24) & 0xFF);
-    fg_layer.color_en = true;
-    fg_layer.color_r = (uint8_t)((argb8888 >> 16) & 0xFF);
-    fg_layer.color_g = (uint8_t)((argb8888 >> 8) & 0xFF);
-    fg_layer.color_b = (uint8_t)((argb8888 >> 0) & 0xFF);
-    fg_layer.color_mode = EPIC_INPUT_A8;
-    fg_layer.ax_mode = ALPHA_BLEND_RGBCOLOR;
-    fg_layer.width  = blend_w;
-    fg_layer.total_width = fg_layer.width;
-    fg_layer.x_offset = fill_area.x0;
+    /*Inital mask layer*/
+    p_mask_layer = &input_layers[2];
+    HAL_EPIC_LayerConfigInit(p_mask_layer);
+    p_mask_layer->color_mode = EPIC_INPUT_A8;
+    p_mask_layer->width  = blend_w;
+    p_mask_layer->total_width = p_mask_layer->width;
+    p_mask_layer->x_offset = fill_area.x0;
+
+    if (p_rect_desc->is_grad)
+    {
+        p_mask_layer->ax_mode = ALPHA_BLEND_MASK;
+
+        //Setup independed gradient layer
+        setup_grad_rect_layer(&input_layers[1], p_rect_desc);
+    }
+    else
+    {
+        //Append RGB to mask layer
+        p_mask_layer->color_en = true;
+        p_mask_layer->ax_mode = ALPHA_BLEND_RGBCOLOR;
+        p_mask_layer->alpha = (uint8_t)((p_rect_desc->argb8888 >> 24) & 0xFF);
+        p_mask_layer->color_r = (uint8_t)((p_rect_desc->argb8888 >> 16) & 0xFF);
+        p_mask_layer->color_g = (uint8_t)((p_rect_desc->argb8888 >> 8) & 0xFF);
+        p_mask_layer->color_b = (uint8_t)((p_rect_desc->argb8888 >> 0) & 0xFF);
+    }
 
 
 
@@ -3151,11 +3290,12 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
 
 
     /*
-        Avoid 'mask_buf_ping_pong' is still using by previous cont_blend,
+        Avoid 'mask_buf_ping_pong' is still using by previous blending,
         befre we overwrite it.
     */
-    ret =  Call_Hal_Api(HAL_API_CONT_BLEND_STOP, NULL, NULL, NULL);
+    ret =  Call_Hal_Api(HAL_API_ALL_STOP, NULL, NULL, NULL);
     DRV_EPIC_ASSERT(HAL_OK == ret);
+
 
     for (int32_t f = 0; f < blend_h;)
     {
@@ -3213,15 +3353,13 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
             mask_buf_sub += blend_w;
         }
 
-
-
         fill_area.y1 =  fill_area.y0 + fill_h - 1;
         if (mask_res != DRAW_MASK_RES_TRANSP)
         {
-            //setup fg
-            fg_layer.data = (uint8_t *)mask_buf_ping_pong;
-            fg_layer.height = fill_h;
-            fg_layer.y_offset = fill_area.y0;
+            //setup mask layer
+            p_mask_layer->data = (uint8_t *)mask_buf_ping_pong;
+            p_mask_layer->height = fill_h;
+            p_mask_layer->y_offset = fill_area.y0;
 
 
             //setup output_layer
@@ -3235,8 +3373,24 @@ static rt_err_t draw_masked_rect(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigT
                 output_layer.height   = fill_h;
             }
 
-            ret =  Call_Hal_Api(HAL_API_CONT_BLEND, &fg_layer, p_mask_layer, &output_layer);
-            DRV_EPIC_ASSERT(HAL_OK == ret);
+
+            if (p_rect_desc->is_grad)
+            {
+                if (p_extra_mask_layer)
+                {
+                    RT_ASSERT(0); //TODO, merge extra mask into p_mask_layer
+                }
+
+                input_layers[0] = output_layer; //Setup bg layer
+                ret =  Call_Hal_Api(HAL_API_BLEND_EX, input_layers, (void *)((uint32_t)3), &output_layer);
+                DRV_EPIC_ASSERT(HAL_OK == ret);
+            }
+            else
+            {
+                ret =  Call_Hal_Api(HAL_API_CONT_BLEND, p_mask_layer, p_extra_mask_layer, &output_layer);
+                DRV_EPIC_ASSERT(HAL_OK == ret);
+            }
+
 
 
             if (mask_buf_ping_pong == mask_buf)
@@ -3258,15 +3412,50 @@ static inline rt_err_t draw_masked_rect2(EPIC_LayerConfigTypeDef *dst, const EPI
         const EPIC_AreaTypeDef *p_circle_mask_area1,
         const EPIC_AreaTypeDef *p_circle_mask_area2,
         drv_epic_mask_opa_t *p_circle_mask_buf,
-        uint32_t circle_mask_width
-                                        )
+        uint32_t circle_mask_width)
 {
     EPIC_AreaTypeDef com_area;
     if (HAL_EPIC_AreaIntersect(&com_area, p_draw_area, p_clip_area))
-        return draw_masked_rect(dst, p_mask_layer, masks, &com_area, argb8888,
+    {
+        draw_rect_dsc_t rect_desc;
+        rect_desc.is_grad = 0;
+        rect_desc.p_grad_color = NULL;
+        rect_desc.p_rect_area = NULL;
+        rect_desc.argb8888 = argb8888;
+        return draw_masked_rect(dst, p_mask_layer, masks, &com_area, &rect_desc,
+                                p_circle_mask_area1, p_circle_mask_area2, p_circle_mask_buf, circle_mask_width);
+    }
+
+    return RT_EOK;
+}
+
+static inline rt_err_t draw_masked_rect3(EPIC_LayerConfigTypeDef *dst, const EPIC_AreaTypeDef *p_clip_area,
+        EPIC_LayerConfigTypeDef *p_mask_layer,
+        void *masks[], const EPIC_AreaTypeDef *p_draw_area, draw_rect_dsc_t *p_rect_desc,
+        const EPIC_AreaTypeDef *p_circle_mask_area1,
+        const EPIC_AreaTypeDef *p_circle_mask_area2,
+        drv_epic_mask_opa_t *p_circle_mask_buf,
+        uint32_t circle_mask_width)
+{
+    EPIC_AreaTypeDef com_area;
+    if (HAL_EPIC_AreaIntersect(&com_area, p_draw_area, p_clip_area))
+        return draw_masked_rect(dst, p_mask_layer, masks, &com_area, p_rect_desc,
                                 p_circle_mask_area1, p_circle_mask_area2, p_circle_mask_buf, circle_mask_width);
 
     return RT_EOK;
+}
+
+static rt_err_t draw_masked_rect4(EPIC_LayerConfigTypeDef *dst, EPIC_LayerConfigTypeDef *p_extra_mask_layer,
+                                  void *masks[], const EPIC_AreaTypeDef *p_draw_area, uint32_t argb8888)
+{
+    draw_rect_dsc_t rect_desc;
+    rect_desc.is_grad = 0;
+    rect_desc.p_grad_color = NULL;
+    rect_desc.p_rect_area = NULL;
+    rect_desc.argb8888 = argb8888;
+
+    return draw_masked_rect(dst, p_extra_mask_layer, masks, p_draw_area, &rect_desc,
+                            NULL, NULL, NULL, 0);
 }
 
 static void get_rounded_area(int16_t angle, int32_t radius, uint8_t thickness, EPIC_AreaTypeDef *res_area)
@@ -3363,10 +3552,10 @@ static rt_err_t render_arc(drv_epic_operation *p_operation, EPIC_LayerConfigType
         circle_mask = (drv_epic_mask_opa_t *)drv_epic.mask_buf2_pool;
 
         /*
-            Avoid 'mask_buf2_pool' is still using by previous cont_blend,
+            Avoid 'mask_buf2_pool' is still using by previous blending,
             befre we overwrite it.
         */
-        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_CONT_BLEND_STOP, NULL, NULL, NULL);
+        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_ALL_STOP, NULL, NULL, NULL);
         DRV_EPIC_ASSERT(HAL_OK == ret);
 
         memset(circle_mask, 0xff, width * width);
@@ -3426,9 +3615,14 @@ static rt_err_t render_arc(drv_epic_operation *p_operation, EPIC_LayerConfigType
         mask_counts++;
     }
 
+    draw_rect_dsc_t rect_desc;
+    rect_desc.is_grad = 0;
+    rect_desc.p_grad_color = NULL;
+    rect_desc.p_rect_area = NULL;
+    rect_desc.argb8888 = p_operation->desc.arc.argb8888;
 
     draw_masked_rect(dst, &p_operation->mask,
-                     mask_list, &clipped_area, p_operation->desc.arc.argb8888,
+                     mask_list, &clipped_area, &rect_desc,
                      &round_area_1, &round_area_2,
                      circle_mask,
                      width
@@ -3448,8 +3642,14 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
     int32_t coords_w = HAL_EPIC_AreaWidth(p_rect_area);
     int32_t coords_h = HAL_EPIC_AreaHeight(p_rect_area);
     EPIC_AreaTypeDef draw_area;
+    draw_rect_dsc_t rect_desc;
 
     if (!HAL_EPIC_AreaIntersect(&draw_area, p_rect_area, p_clip_area))  return RT_EOK;
+
+    rect_desc.is_grad = p_operation->desc.rectangle.grad_color_en;
+    rect_desc.p_grad_color = &p_operation->desc.rectangle.grad_color;
+    rect_desc.p_rect_area = p_rect_area;
+    rect_desc.argb8888 = p_operation->desc.rectangle.argb8888;
 
     /*Get the real radius*/
     int32_t rout = p_operation->desc.rectangle.radius;
@@ -3458,7 +3658,7 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
 
     if (rout <= 0)
     {
-        draw_rect(dst, &p_operation->mask, &draw_area, color);
+        draw_rect(dst, &p_operation->mask, &draw_area, &rect_desc);
     }
     else
     {
@@ -3487,24 +3687,23 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             //Draw round rect area
             fill_area.y0 = p_rect_area->y0;
             fill_area.y1 = p_rect_area->y0 + rout;
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
 
             //Draw NONE round rect area
             fill_area.y0 = p_rect_area->y0 + rout + 1;
             fill_area.y1 = p_rect_area->y1;
-            draw_rect2(dst, p_clip_area, &p_operation->mask, &fill_area, color);
-
+            draw_rect3(dst, p_clip_area, &p_operation->mask, &fill_area, &rect_desc);
         }
         else if (!top_fillet && bot_fillet)
         {
             //Draw round rect area
             fill_area.y0 = p_rect_area->y1 - rout;
             fill_area.y1 = p_rect_area->y1;
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
 
@@ -3512,7 +3711,7 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             //Draw NONE round rect area
             fill_area.y0 = p_rect_area->y0;
             fill_area.y1 = p_rect_area->y1 - rout - 1;
-            draw_rect2(dst, p_clip_area, &p_operation->mask, &fill_area, color);
+            draw_rect3(dst, p_clip_area, &p_operation->mask, &fill_area, &rect_desc);
         }
         else if (2 == split)
         {
@@ -3520,15 +3719,15 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             fill_area.y0 = p_rect_area->y0;
             fill_area.y1 = p_rect_area->y0 + rout;
             //Top
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
             fill_area.y0 = p_rect_area->y1 - rout;
             fill_area.y1 = p_rect_area->y1;
             //Bottom
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
 
@@ -3537,7 +3736,7 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             //Draw NONE round rect area
             fill_area.y0 = p_rect_area->y0 + rout + 1;
             fill_area.y1 = p_rect_area->y1 - rout - 1;
-            draw_rect2(dst, p_clip_area, &p_operation->mask, &fill_area, color);
+            draw_rect3(dst, p_clip_area, &p_operation->mask, &fill_area, &rect_desc);
         }
         else if (1 == split)
         {
@@ -3548,16 +3747,16 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             fill_area.x0 = p_rect_area->x0;
             fill_area.x1 = p_rect_area->x0 + rout - 1;
             //Left
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
 
             fill_area.x0 = p_rect_area->x1 - rout + 1;
             fill_area.x1 = p_rect_area->x1;
             //Right
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
 
 
@@ -3566,14 +3765,14 @@ static rt_err_t render_rectangle(drv_epic_operation *p_operation, EPIC_LayerConf
             //Draw NONE round rect area
             fill_area.x0 = p_rect_area->x0 + rout;
             fill_area.x1 = p_rect_area->x1 - rout;
-            draw_rect2(dst, p_clip_area, &p_operation->mask, &fill_area, color);
+            draw_rect3(dst, p_clip_area, &p_operation->mask, &fill_area, &rect_desc);
         }
         else
         {
             fill_area.y0 = p_rect_area->y0;
             fill_area.y1 = p_rect_area->y1;
-            draw_masked_rect2(dst, p_clip_area, &p_operation->mask,
-                              mask_list, &fill_area, color,
+            draw_masked_rect3(dst, p_clip_area, &p_operation->mask,
+                              mask_list, &fill_area, &rect_desc,
                               NULL, NULL, NULL, 0);
         }
 
@@ -3885,7 +4084,12 @@ static rt_err_t render_line_hor(drv_epic_operation *p_operation, EPIC_LayerConfi
     /*If there is no mask then simply draw a rectangle*/
     if (!dashed)
     {
-        draw_rect(dst, &p_operation->mask, &blend_area, p_operation->desc.line.argb8888);
+        draw_rect_dsc_t rect_desc;
+        rect_desc.is_grad = 0;
+        rect_desc.p_grad_color = NULL;
+        rect_desc.p_rect_area = NULL;
+        rect_desc.argb8888 = p_operation->desc.line.argb8888;
+        draw_rect(dst, &p_operation->mask, &blend_area, &rect_desc);
     }
     else
     {
@@ -3981,7 +4185,12 @@ static rt_err_t render_line_ver(drv_epic_operation *p_operation, EPIC_LayerConfi
     /*If there is no mask then simply draw a rectangle*/
     if (!dashed)
     {
-        draw_rect(dst, &p_operation->mask, &blend_area, p_operation->desc.line.argb8888);
+        draw_rect_dsc_t rect_desc;
+        rect_desc.is_grad = 0;
+        rect_desc.p_grad_color = NULL;
+        rect_desc.p_rect_area = NULL;
+        rect_desc.argb8888 = p_operation->desc.line.argb8888;
+        draw_rect(dst, &p_operation->mask, &blend_area, &rect_desc);
     }
     else
     {
@@ -4155,10 +4364,8 @@ static rt_err_t render_line_skew(drv_epic_operation *p_operation, EPIC_LayerConf
 
 
 
-    //draw_masked_rect
-    draw_masked_rect(dst, &p_operation->mask,
-                     masks, &blend_area, p_operation->desc.line.argb8888,
-                     NULL, NULL, NULL, 0);
+    draw_masked_rect4(dst, &p_operation->mask,
+                      masks, &blend_area, p_operation->desc.line.argb8888);
 
 
     drv_epic_mask_free_param(&mask_left_param);
@@ -4256,10 +4463,8 @@ static rt_err_t render_line(drv_epic_operation *p_operation, EPIC_LayerConfigTyp
                     mask_list[1] = &mask_line_param;
                 }
 
-                //draw_masked_rect
-                draw_masked_rect(dst, NULL,
-                                 mask_list, &clip_line, p_operation->desc.line.argb8888,
-                                 NULL, NULL, NULL, 0);
+                draw_masked_rect4(dst, NULL,
+                                  mask_list, &clip_line, p_operation->desc.line.argb8888);
                 drv_epic_mask_free_param(&mask_out_param);
 
             }
@@ -4305,10 +4510,8 @@ static rt_err_t render_line(drv_epic_operation *p_operation, EPIC_LayerConfigTyp
                     mask_list[1] = &mask_line_param;
                 }
 
-                //draw_masked_rect
-                draw_masked_rect(dst, NULL,
-                                 mask_list, &clip_line, p_operation->desc.line.argb8888,
-                                 NULL, NULL, NULL, 0);
+                draw_masked_rect4(dst, NULL,
+                                  mask_list, &clip_line, p_operation->desc.line.argb8888);
                 drv_epic_mask_free_param(&mask_out_param);
 
             }
@@ -4393,7 +4596,19 @@ static rt_err_t render_letters(drv_epic_operation *p_operation, EPIC_LayerConfig
 
     return RT_ERROR;
 }
-
+#if (rotate_buf_bytes > 0)
+static bool visible_after_transformed(EPIC_LayerConfigTypeDef *layer, const EPIC_AreaTypeDef *p_clip_area)
+{
+    EPIC_AreaTypeDef transformed_area;
+    EPIC_PointTypeDef pivot;
+    pivot.x = layer->transform_cfg.pivot_x;
+    pivot.y = layer->transform_cfg.pivot_y;
+    EPIC_GetTransformedArea(&transformed_area, layer->width, layer->height, layer->transform_cfg.angle,
+                            layer->transform_cfg.scale_x, layer->transform_cfg.scale_y, &pivot);
+    HAL_EPIC_AreaMove(&transformed_area, layer->x_offset, layer->y_offset);
+    return HAL_EPIC_AreaIntersect(&transformed_area, &transformed_area, p_clip_area);
+}
+#endif
 static void render_image(drv_epic_operation *p_operation, EPIC_LayerConfigTypeDef *dst, const EPIC_AreaTypeDef *p_clip_area)
 {
     HAL_StatusTypeDef ret;
@@ -4404,32 +4619,78 @@ static void render_image(drv_epic_operation *p_operation, EPIC_LayerConfigTypeDe
     memcpy(&output_layer, dst, sizeof(EPIC_LayerConfigTypeDef));
     _clip_layer(&output_layer, p_clip_area);
 
+    EPIC_LayerConfigTypeDef input_layers[3];
+    HAL_API_TypeDef api;
+
+    uint32_t input_layer_cnt = 2;
+
+    memcpy(&input_layers[0], dst, sizeof(EPIC_LayerConfigTypeDef));
+    memcpy(&input_layers[1], &p_operation->desc.blend.layer, sizeof(EPIC_LayerConfigTypeDef));
+    if (p_operation->mask.data)
     {
-        EPIC_LayerConfigTypeDef input_layers[3];
-        HAL_API_TypeDef api;
+        memcpy(&input_layers[2], &p_operation->mask, sizeof(EPIC_LayerConfigTypeDef));
+        input_layer_cnt++;
+    }
+    if (p_operation->desc.blend.layer.transform_cfg.type != 0)
+    {
+        api = HAL_API_TRANSFORM;
+        RT_ASSERT((EPIC_BLEND_MODE_NORMAL == p_operation->desc.blend.use_dest_as_bg));
+    }
+    else
+    {
+        api = HAL_API_BLEND_EX;
+    }
 
-        uint32_t input_layer_cnt = 2;
+#if (rotate_buf_bytes > 0)
+    if ((p_operation->desc.blend.layer.transform_cfg.angle != 0)
+            && (0 == p_operation->desc.blend.layer.transform_cfg.type)
+            && (!HCPU_IS_SRAM_ADDR(p_operation->desc.blend.layer.data)))
+    {
+        const EPIC_LayerConfigTypeDef *src_layer = &p_operation->desc.blend.layer;
+        EPIC_LayerConfigTypeDef *dst_layer = &input_layers[1];
 
-        memcpy(&input_layers[0], dst, sizeof(EPIC_LayerConfigTypeDef));
-        memcpy(&input_layers[1], &p_operation->desc.blend.layer, sizeof(EPIC_LayerConfigTypeDef));
-        if (p_operation->mask.data)
+        uint32_t color_bytes = HAL_EPIC_GetColorDepth(src_layer->color_mode) >> 3;
+        uint32_t buf_size = rotate_buf_bytes >> 1;
+        int16_t angle = dst_layer->transform_cfg.angle;
+        int16_t w = src_layer->total_width;
+        int16_t h = src_layer->height;
+        int16_t x = src_layer->x_offset;
+        int16_t y_start = src_layer->y_offset;
+        int16_t y_end = y_start + h;
+        uint32_t size_line = color_bytes * src_layer->total_width;
+        int16_t h_align = buf_size / size_line;
+        RT_ASSERT(h_align > 2);
+        bool pre_show = false;
+        uint8_t rotate_buf_i = 0;
+        /*Avoid 'rotate_buf' is still using by previous blending, befre we overwrite it.        */
+        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_ALL_STOP, NULL, NULL, NULL);
+        DRV_EPIC_ASSERT(HAL_OK == ret);
+        for (int16_t row = y_start; row < y_end; row += h_align - 2)
         {
-            memcpy(&input_layers[2], &p_operation->mask, sizeof(EPIC_LayerConfigTypeDef));
-            input_layer_cnt++;
+            int16_t rev_line = y_end - row;
+            dst_layer->height = h_align > rev_line ? rev_line : h_align;
+            dst_layer->y_offset = row;
+            dst_layer->transform_cfg.pivot_y = src_layer->transform_cfg.pivot_y - row + y_start;
+
+            if (visible_after_transformed(dst_layer, p_clip_area))
+            {
+                pre_show = true;
+                uint32_t offset = (row - y_start) * size_line;
+                dst_layer->data_size = dst_layer->height * size_line;
+                RT_ASSERT(dst_layer->data_size <= buf_size);
+                dst_layer->data = (0 == rotate_buf_i) ? &rotate_buf[0] : &rotate_buf[rotate_buf_bytes >> 1];
+                rotate_buf_i = !rotate_buf_i;
+                memcpy(dst_layer->data, src_layer->data + offset, dst_layer->data_size);
+                ret =  Call_Hal_Api(api, input_layers, (void *)input_layer_cnt, &output_layer);
+                DRV_EPIC_ASSERT(HAL_OK == ret);
+            }
+            else if (pre_show)
+                break;
         }
-
-
-
-        if (p_operation->desc.blend.layer.transform_cfg.type != 0)
-        {
-            api = HAL_API_TRANSFORM;
-            RT_ASSERT((EPIC_BLEND_MODE_NORMAL == p_operation->desc.blend.use_dest_as_bg));
-        }
-        else
-        {
-            api = HAL_API_BLEND_EX;
-        }
-
+    }
+    else
+#endif
+    {
         if (EPIC_BLEND_MODE_NORMAL != p_operation->desc.blend.use_dest_as_bg)
         {
             output_layer.color_en = (EPIC_BLEND_MODE_FIXED_BG == p_operation->desc.blend.use_dest_as_bg);
@@ -4498,8 +4759,8 @@ static rt_err_t render_polygon(drv_epic_operation *p_operation, EPIC_LayerConfig
     EPIC_AreaTypeDef clip_area;
     if (!HAL_EPIC_AreaIntersect(&clip_area, &p_operation->clip_area, p_clip_area)) return RT_EOK;
 
-    void **mask_list = rt_malloc((point_cnt + 1) * sizeof(void *));
-    drv_epic_mask_line_param_t *mp = rt_malloc(point_cnt * sizeof(drv_epic_mask_line_param_t));
+    void **mask_list = epic_malloc((point_cnt + 1) * sizeof(void *));
+    drv_epic_mask_line_param_t *mp = epic_malloc(point_cnt * sizeof(drv_epic_mask_line_param_t));
     drv_epic_mask_line_param_t *mp_next = mp;
     RT_ASSERT(mask_list);
     RT_ASSERT(mp);
@@ -4546,7 +4807,8 @@ static rt_err_t render_polygon(drv_epic_operation *p_operation, EPIC_LayerConfig
     bool inv = false;
     if (dyl * dxr < dyr * dxl) inv = true;
     uint16_t make_index = 0;
-    do
+    uint16_t i = 0;
+    for (i = 0; i <  point_cnt; i ++)
     {
         if (!inv)
         {
@@ -4597,19 +4859,19 @@ static rt_err_t render_polygon(drv_epic_operation *p_operation, EPIC_LayerConfig
             mask_cnt++;
             i_prev_right = i_next_right;
         }
-
+        if (mask_cnt == point_cnt) break;
     }
-    while (mask_cnt < point_cnt);
+
     mask_list[make_index] = NULL;
 
-    draw_masked_rect(dst, &p_operation->mask,
-                     mask_list, &clip_area, p_operation->desc.polygon.argb8888,
-                     NULL, NULL, NULL, 0);
+    if (point_cnt != i)
+        draw_masked_rect4(dst, &p_operation->mask,
+                          mask_list, &clip_area, p_operation->desc.polygon.argb8888);
 
     for (int16_t i = 0; i < make_index; i++) drv_epic_mask_free_param(mask_list[i]);
 
-    rt_free(mask_list);
-    rt_free(mp);
+    epic_free(mask_list);
+    epic_free(mp);
 
     return RT_EOK;
 }
@@ -4660,6 +4922,7 @@ static rt_err_t render(drv_epic_render_list_t list)
                 p_cur_hist = &drv_epic.hist[drv_epic.hist_idx];
                 p_cur_hist->rl = rl;
                 p_cur_hist->src_idx = i;
+                p_cur_hist->operation = p_operation;
                 p_cur_hist->start_tick = start_tick;
                 p_cur_hist->cost_us = 0;
 #endif /* debug_rl_hist_num > 0 */
@@ -4847,7 +5110,7 @@ static void statisttics_end(void)
                      );
             }
 
-            LOG_E("letter_pool_used_max:%d, total:%d", drv_epic.letter_pool_used_max, letter_pool_max);
+            LOG_E("letter_pool_used_max:%d, total:%d", drv_epic.letter_pool_used_max, drv_epic.letter_buf_pool_max);
 
 
             LOG_E("---Others---:");
@@ -4928,6 +5191,13 @@ rt_err_t destroy_render_list(drv_epic_render_list_t list)
         epic_free(o);
     }
 
+    if (!LETTER_POOL_ALLOW_FROM_HEAP() && !LETTER_POOL_FROM_STACK())
+    {
+        epic_free((void *)rl->letter_pool);
+        rl->letter_pool = &drv_epic_letter_pool[letter_pool_max * rl->letter_pool_index];
+        rl->letter_pool_size = letter_pool_max;
+    }
+
     rt_enter_critical();
     rl->flag = 0;
     rl->src_list_len = 0;
@@ -4996,6 +5266,8 @@ static void epic_task(void *param)
 
                 render_start(rl);
 
+                max_row = (DRV_EPIC_ROT_NONE == drv_epic.rotated) ? max_row : max_row - 2;
+
                 for (int16_t start_row = p_invalid_area->y0; start_row <= p_invalid_area->y1; start_row += max_row)
                 {
                     p_dst->y_offset = start_row;
@@ -5012,12 +5284,9 @@ static void epic_task(void *param)
 
                     if (RT_EOK == render_list(rl))
                     {
-                        //Notify the continue blend operations stop now
-                        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_CONT_BLEND_STOP, NULL, NULL, NULL);
+                        //Wait all blending operations to stop
+                        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_ALL_STOP, NULL, NULL, NULL);
                         DRV_EPIC_ASSERT(HAL_OK == ret);
-
-                        rt_err_t ret_v = drv_gpu_check_done(GPU_BLEND_EXP_MS);
-                        DRV_EPIC_ASSERT(RT_EOK == ret_v);
 
                         if (p_RenderDrawctx->partial_done_cb)
                         {
@@ -5118,7 +5387,7 @@ static void epic_task(void *param)
                     draw_img_op.clip_area = *p_final_area;
                     HAL_EPIC_LayerConfigInit(&draw_img_op.mask);
                     draw_img_op.desc.blend.layer = *p_dst;
-                    draw_img_op.desc.blend.layer.transform_cfg.pivot_x = final_layer.x_offset - p_dst->x_offset;
+                    draw_img_op.desc.blend.layer.transform_cfg.pivot_x = 0;
                     draw_img_op.desc.blend.layer.transform_cfg.scale_x = scale_x;
                     draw_img_op.desc.blend.layer.transform_cfg.scale_y = scale_y;
                     draw_img_op.desc.blend.use_dest_as_bg = EPIC_BLEND_MODE_OVERWRITE;
@@ -5130,9 +5399,13 @@ static void epic_task(void *param)
                     final_layer_clip_area.x1 = p_final_area->x1;
 
                     //3. Render the image one by one
-                    for (int16_t start_row = p_final_area->y0; start_row <= p_final_area->y1; start_row += final_layer_max_row)
+                    int16_t line_cnt_pre = scale_y == EPIC_INPUT_SCALE_NONE ? final_layer_max_row : (final_layer_max_row - 2);
+                    DRV_EPIC_ASSERT(line_cnt_pre > 0);
+                    /*In the case of scaling, the last drawing may be drawn twice,
+                    resulting in the callback function being called twice with two errors*/
+                    uint32_t last = 0;
+                    for (int16_t start_row = p_final_area->y0; start_row <= p_final_area->y1 && !last; start_row += line_cnt_pre)
                     {
-                        uint32_t last;
                         final_layer_clip_area.y0 = start_row;
                         if (start_row + final_layer_max_row - 1 >= p_final_area->y1)
                         {
@@ -5145,7 +5418,9 @@ static void epic_task(void *param)
                             last = 0;
                         }
 
-                        p_dst->y_offset = start_row * scale_y / EPIC_INPUT_SCALE_NONE;
+
+                        p_dst->y_offset = p_final_area->y0 + (start_row - p_final_area->y0) * scale_y / EPIC_INPUT_SCALE_NONE;
+
 
                         if (p_dst->y_offset + p_dst->height - 1 >= invalid_area.y1)
                         {
@@ -5162,7 +5437,7 @@ static void epic_task(void *param)
                             draw_img_op.desc.blend.layer.data = p_dst->data;
                             draw_img_op.desc.blend.layer.y_offset = p_dst->y_offset;
                             draw_img_op.desc.blend.layer.height  = p_dst->height;
-                            draw_img_op.desc.blend.layer.transform_cfg.pivot_y = final_layer.y_offset - p_dst->y_offset;
+                            draw_img_op.desc.blend.layer.transform_cfg.pivot_y = - p_dst->y_offset + p_final_area->y0;
 
                             render_layer(&draw_img_op, &final_layer, &final_layer_clip_area);
                         }
@@ -5194,8 +5469,8 @@ static void epic_task(void *param)
                 {
                     if (RT_EOK == render_list(rl))
                     {
-                        //Notify the continue blend operations stop now
-                        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_CONT_BLEND_STOP, NULL, NULL, NULL);
+                        //Wait all blending operations to stop
+                        HAL_StatusTypeDef ret =  Call_Hal_Api(HAL_API_ALL_STOP, NULL, NULL, NULL);
                         DRV_EPIC_ASSERT(HAL_OK == ret);
 
                     }
@@ -5206,9 +5481,6 @@ static void epic_task(void *param)
 
                     if (p_Render2Buf->done_cb)
                     {
-                        rt_err_t ret_v = drv_gpu_check_done(GPU_BLEND_EXP_MS);
-                        DRV_EPIC_ASSERT(RT_EOK == ret_v);
-
                         uint32_t usr_cb_start_ms = rt_tick_get_millisecond();
                         p_Render2Buf->done_cb(rl, p_dst, p_Render2Buf->usr_data, 1);
                         p_drv_epic->rd_usr_cb_total += rt_tick_get_millisecond() - usr_cb_start_ms;
@@ -5699,8 +5971,17 @@ drv_epic_letter_type_t *drv_epic_op_alloc_letter(drv_epic_operation *op)
 
     RT_ASSERT(rl);
     RT_ASSERT(0 == (rl->flag & (rl_flag_rendering)));
-    RT_ASSERT(rl->letter_pool_free < letter_pool_max);
+    RT_ASSERT(rl->letter_pool_free < rl->letter_pool_size);
 
+    if (0 == rl->letter_pool_free && LETTER_POOL_ALLOW_FROM_HEAP() && LETTER_POOL_FROM_STACK())
+    {
+        uint32_t size = sizeof(drv_epic_letter_type_t) * drv_epic.letter_buf_pool_max;
+        rl->letter_pool_size = drv_epic.letter_buf_pool_max;
+        rl->letter_pool = epic_calloc(1, size);
+        RT_ASSERT(rl->letter_pool);
+
+        LOG_D("alloc new letter_pool[0x%p] size[%d]", rl->letter_pool, size);
+    }
     drv_epic_letter_type_t *p_free = &rl->letter_pool[rl->letter_pool_free];
     rl->letter_pool_free++;
 
@@ -5777,6 +6058,9 @@ static rt_err_t drv_epic_render_list_init(void)
             drv_epic.render_list_pool[i].commit_area.x1 = -1;
             drv_epic.render_list_pool[i].commit_area.y0 = 0;
             drv_epic.render_list_pool[i].commit_area.y1 = -1;
+            drv_epic.render_list_pool[i].letter_pool = &drv_epic_letter_pool[letter_pool_max * i];
+            drv_epic.render_list_pool[i].letter_pool_size = letter_pool_max;
+            drv_epic.render_list_pool[i].letter_pool_index = i;
             rt_list_init(&drv_epic.render_list_pool[i].src_list);
         }
     }
@@ -5808,6 +6092,157 @@ rt_err_t drv_epic_render_trav(drv_epic_render_list_t list, drv_epic_render_trav_
     }
 
     return RT_EOK;
+}
+
+rt_err_t drv_epic_set_letter_pool_size(uint32_t pool_size)
+{
+    if (pool_size > letter_pool_max)
+        drv_epic.letter_buf_pool_max = pool_size;
+    else
+        drv_epic.letter_buf_pool_max = letter_pool_max;
+
+    return RT_EOK;
+}
+
+rt_err_t drv_epic_set_rotation(drv_epic_rotate_t rotate)
+{
+    drv_epic.rotated = rotate;
+
+    return RT_EOK;
+}
+
+drv_epic_rotate_t drv_epic_get_rotation(void)
+{
+    return drv_epic.rotated;
+}
+
+static int16_t drv_epic_get_rotate_angle(void)
+{
+    switch (drv_epic.rotated)
+    {
+    case DRV_EPIC_ROT_90:
+        return 90;
+    case DRV_EPIC_ROT_180:
+        return 180;
+    case DRV_EPIC_ROT_270:
+        return 270;
+    default:
+        return 0;
+    }
+}
+
+static void epic_copy_cplt_callback(EPIC_HandleTypeDef *epic)
+{
+    drv_epic_cplt_cbk cbk = epic->user_data;
+    if (cbk) cbk(epic);
+    epic_sem_release();
+}
+
+rt_err_t drv_epic_copy(const uint8_t *src, uint8_t *dst,
+                       const EPIC_AreaTypeDef *src_area,
+                       const EPIC_AreaTypeDef *dst_area,
+                       const EPIC_AreaTypeDef *copy_area,
+                       uint32_t src_cf, uint32_t dst_cf,
+                       drv_epic_cplt_cbk cbk)
+{
+    RT_ASSERT((RT_NULL != src_area) && (RT_NULL != dst_area) && (RT_NULL != copy_area));
+    RT_ASSERT(HAL_EPIC_AreaIsIn(copy_area, src_area) && HAL_EPIC_AreaIsIn(copy_area, dst_area));
+
+    rt_err_t err;
+    EPIC_HandleTypeDef *h_epic = &epic_handle;
+    EPIC_LayerConfigTypeDef input_layer;
+    EPIC_LayerConfigTypeDef output_layer;
+    int16_t angle = drv_epic_get_rotate_angle() * 10;
+
+    EPIC_PointTypeDef dst_pivot;
+    dst_pivot.x = dst_area->x0 + (HAL_EPIC_AreaWidth(dst_area) >> 1);
+    dst_pivot.y = dst_area->y0 + (HAL_EPIC_AreaHeight(dst_area) >> 1);
+
+    HAL_EPIC_LayerConfigInit(&input_layer);
+
+    input_layer.data = (uint8_t *)src;
+    input_layer.color_mode = src_cf;
+    input_layer.height = HAL_EPIC_AreaHeight(src_area);
+    input_layer.total_width = HAL_EPIC_AreaWidth(src_area);
+    input_layer.width = HAL_EPIC_AreaWidth(src_area);
+    input_layer.x_offset = src_area->x0;
+    input_layer.y_offset = src_area->y0;
+    input_layer.data_size = get_layer_size((EPIC_BlendingDataType *)&input_layer);
+
+    input_layer.transform_cfg.angle        = angle;
+    input_layer.transform_cfg.pivot_x = dst_pivot.x - src_area->x0;
+    input_layer.transform_cfg.pivot_y = dst_pivot.y - src_area->y0;
+
+    EPIC_PointTypeDef rotated_pivot;
+    rotated_pivot.x = input_layer.transform_cfg.pivot_x;
+    rotated_pivot.y = input_layer.transform_cfg.pivot_y;
+    EPIC_AreaTypeDef rotated_area;
+    rotated_area = *copy_area;
+    int16_t rotated_width = HAL_EPIC_AreaWidth(&rotated_area);
+    int16_t rotated_height = HAL_EPIC_AreaHeight(&rotated_area);
+    EPIC_GetRotatedArea((EPIC_AreaTypeDef *)&rotated_area, rotated_width, rotated_height, angle, &rotated_pivot);
+
+    switch (drv_epic.rotated)
+    {
+    case DRV_EPIC_ROT_90:
+    {
+        rotated_area.x0 += src_area->x0;
+        if (src_area->y0 >= dst_pivot.y)
+            rotated_area.x1 += src_area->x0 - 2;
+        else
+            rotated_area.x1 += src_area->x0;
+        rotated_area.y0 += src_area->y0;
+        rotated_area.y1 += src_area->y0;
+
+        break;
+    }
+    case DRV_EPIC_ROT_180:
+    {
+        rotated_area.x0 += src_area->x0;
+        rotated_area.x1 += src_area->x0;
+        rotated_area.y0 += src_area->y0;
+        if (src_area->y0 > dst_pivot.y)
+            rotated_area.y1 += src_area->y0 - 2;
+        else
+            rotated_area.y1 += src_area->y0 - 1;
+        break;
+    }
+    case DRV_EPIC_ROT_270:
+    {
+        if (src_area->y0 > dst_pivot.y)
+            rotated_area.x0 += src_area->x0 + 4;
+        else
+            rotated_area.x0 += src_area->x0 + 2;
+        rotated_area.x1 += src_area->x0;
+        rotated_area.y0 += src_area->y0;
+        rotated_area.y1 += src_area->y0;
+        break;
+    }
+    default:
+    {
+        rotated_area.x0 += src_area->x0;
+        rotated_area.x1 += src_area->x0;
+        rotated_area.y0 += src_area->y0;
+        rotated_area.y1 += src_area->y0;
+        break;
+    }
+    }
+
+    clip_intersect_area(&rotated_area, (EPIC_AreaTypeDef *)dst_area);
+
+    HAL_EPIC_LayerConfigInit(&output_layer);
+    output_layer.color_mode = dst_cf;
+    output_layer.total_width = HAL_EPIC_AreaWidth(dst_area);
+
+    clip_layer_to_area((EPIC_BlendingDataType *)&output_layer, dst, dst_area->x0, dst_area->y0, &rotated_area);
+
+    wait_hw_done();
+
+    h_epic->user_data = (void *)cbk;
+    h_epic->XferCpltCallback = epic_copy_cplt_callback;
+
+    HAL_StatusTypeDef ret = HAL_EPIC_BlendStartEx_IT(h_epic, &input_layer, 1, &output_layer);
+    return (HAL_OK == ret) ? RT_EOK : RT_ERROR;
 }
 
 #endif /*DRV_EPIC_NEW_API*/
@@ -5869,9 +6304,12 @@ int drv_epic_init(void)
         drv_epic.dbg_flag_print_rl = 0;
         drv_epic.dbg_flag_print_exe_detail = 0;
         drv_epic.dbg_flag_print_statistics = 0;
+        drv_epic.dbg_flag_dis_ram_instance = 0;
 
         drv_epic.dbg_mask_buf_pool_max = mask_buf_max_bytes;
         drv_epic.dbg_render_buf_max = UINT32_MAX;
+        drv_epic.letter_buf_pool_max = letter_pool_max;
+        drv_epic.rotated = DRV_EPIC_ROT_NONE;
 #else
         drv_epic.split_rd.op = DRV_EPIC_INVALID;
 #endif /* DRV_EPIC_NEW_API */

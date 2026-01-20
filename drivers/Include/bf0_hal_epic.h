@@ -624,6 +624,7 @@ typedef struct
 {
     EPIC_OpTypeDef op;
     uint32_t start_time; //Gtimer
+    uint32_t end_time;
     EPIC_OpParamTypeDef param;
 } EPIC_OpHistItemTypeDef;
 
@@ -700,6 +701,7 @@ typedef struct __EPIC_HandleTypeDef
     } api_cfg;
 #ifdef EPIC_DEBUG
     EPIC_OpHistTypeDef *op_hist;
+    EPIC_OpHistItemTypeDef *last_hist_item;
 #endif
     void *user_data;                                                             /*!< user data */
     __IO uint32_t PerfCnt;                                                       /*!< EPIC total running cycle counter */
@@ -973,6 +975,9 @@ static inline int32_t EPIC_TrigoCos(int16_t angle)
 }
 void EPIC_TrigoSinCosP1(int16_t angle, int16_t *sin_val, int16_t *cos_val);
 
+void EPIC_GetTransformedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
+                             uint32_t scale_x, uint32_t scale_y,
+                             const EPIC_PointTypeDef *pivot);
 /* -------------------------------
     EPIC Transfer Layer(EPICTL) APIs
  ------------------------------- */

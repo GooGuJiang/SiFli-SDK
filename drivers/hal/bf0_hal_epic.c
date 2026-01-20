@@ -489,6 +489,12 @@ static void EPIC_DISABLE(EPIC_HandleTypeDef *hepic)
     hepic->PerfCnt += hw_cnt;
     hepic->HalCnt  += HAL_GetElapsedTick(hepic->start_tick, hepic->end_tick) - hw_cnt;
 #endif /* EPIC_PERF_CNT_VAL */
+#ifdef EPIC_DEBUG
+    if (hepic->last_hist_item)
+    {
+        hepic->last_hist_item->end_time = HAL_HPAON_READ_GTIMER();
+    }
+#endif /* EPIC_DEBUG */
 }
 
 static inline void EPIC_RUN(EPIC_HandleTypeDef *hepic)
@@ -1195,18 +1201,22 @@ static void EPIC_GetMirrorArea(EPIC_BlendingDataType *vl, const EPIC_BlendingDat
     }
 }
 
-/** Calculate area after rotation, area coordinate is relative to original topleft pixel(and pivot too)
+
+/** Calculate area after tranformed(rotate first, then scale), area coordinate is relative to original topleft pixel(and pivot too)
  *  i.e. if angle=0, output is x0=0, y0=0, x1=w-1, y1=h-1
  *
  * @param[out] output
  * @param[in] w width
  * @param[in] h height
  * @param[in] angle angle in 0.1 degree
+ * @param[in] scale_x scale x in Q24.8
+ * @param[in] scale_y scale y in Q24.8
  * @param[in] pivot pivot
  * @return sinus of 'angle'. sin(-90) = -32767, sin(90) = 32767
  */
-void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
-                         const EPIC_PointTypeDef *pivot)
+void EPIC_GetTransformedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
+                             uint32_t scale_x, uint32_t scale_y,
+                             const EPIC_PointTypeDef *pivot)
 {
     int32_t angle_low = angle / 10;
     int32_t angle_hight = angle_low + 1;
@@ -1220,6 +1230,13 @@ void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16
 
     int32_t sinma = (s1 * (10 - angle_rem) + s2 * angle_rem) / 10;
     int32_t cosma = (c1 * (10 - angle_rem) + c2 * angle_rem) / 10;
+
+    float sinma_f = ((float) sinma) / ((float)(1 << EPIC_TRIGO_SHIFT));
+    float cosma_f = ((float) cosma) / ((float)(1 << EPIC_TRIGO_SHIFT));
+
+    float scale_x_f = ((float)(EPIC_INPUT_SCALING_FACTOR_1)) / ((float) scale_x);
+    float scale_y_f = ((float)(EPIC_INPUT_SCALING_FACTOR_1)) / ((float) scale_y);
+
 
     EPIC_PointTypeDef lt;
     EPIC_PointTypeDef rt;
@@ -1235,32 +1252,25 @@ void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16
     a.x1 = (w - pivot->x);
     a.y1 = (h - pivot->y);
 
-    xt = a.x0;
-    yt = a.y0;
-    lt.x = ((cosma * xt - sinma * yt) >> EPIC_TRIGO_SHIFT) + pivot->x;
-    lt.y = ((sinma * xt + cosma * yt) >> EPIC_TRIGO_SHIFT) + pivot->y;
+#define TRANSFORM_POINT(out_x, out_y, in_x, in_y)  \
+        (out_x) = ((cosma_f * (in_x) - sinma_f * (in_y)) * scale_x_f) + pivot->x; \
+        (out_y) = ((sinma_f * (in_x) + cosma_f * (in_y)) * scale_y_f) + pivot->y;
 
-    xt = a.x1;
-    yt = a.y0;
-    rt.x = ((cosma * xt - sinma * yt) >> EPIC_TRIGO_SHIFT) + pivot->x;
-    rt.y = ((sinma * xt + cosma * yt) >> EPIC_TRIGO_SHIFT) + pivot->y;
-
-    xt = a.x0;
-    yt = a.y1;
-    lb.x = ((cosma * xt - sinma * yt) >> EPIC_TRIGO_SHIFT) + pivot->x;
-    lb.y = ((sinma * xt + cosma * yt) >> EPIC_TRIGO_SHIFT) + pivot->y;
-
-    xt = a.x1;
-    yt = a.y1;
-    rb.x = ((cosma * xt - sinma * yt) >> EPIC_TRIGO_SHIFT) + pivot->x;
-    rb.y = ((sinma * xt + cosma * yt) >> EPIC_TRIGO_SHIFT) + pivot->y;
+    TRANSFORM_POINT(lt.x, lt.y, a.x0, a.y0);
+    TRANSFORM_POINT(rt.x, rt.y, a.x1, a.y0);
+    TRANSFORM_POINT(lb.x, lb.y, a.x0, a.y1);
+    TRANSFORM_POINT(rb.x, rb.y, a.x1, a.y1);
 
     output->x0 = EPIC_MATH_MIN4(lb.x, lt.x, rb.x, rt.x) - 1;
     output->x1 = EPIC_MATH_MAX4(lb.x, lt.x, rb.x, rt.x) + 1;
     output->y0 = EPIC_MATH_MIN4(lb.y, lt.y, rb.y, rt.y) - 1;
     output->y1 = EPIC_MATH_MAX4(lb.y, lt.y, rb.y, rt.y) + 1;
 }
-
+void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
+                         const EPIC_PointTypeDef *pivot)
+{
+    EPIC_GetTransformedArea(output, w, h, angle, EPIC_INPUT_SCALING_FACTOR_1, EPIC_INPUT_SCALING_FACTOR_1, pivot);
+}
 /**
  * @brief Calculate point's coordinate after scaled base on expect_pivot.
  *  All coordinates below have SAME origin!
@@ -3869,6 +3879,7 @@ static inline EPIC_OpHistItemTypeDef *EPIC_AllocRecordItem(EPIC_HandleTypeDef *e
     p = &epic->op_hist->hist[epic->op_hist->idx];
 
     p->start_time = HAL_HPAON_READ_GTIMER();
+    epic->last_hist_item = p;
     return p;
 }
 static void EPIC_RecordRotationOp(EPIC_HandleTypeDef *epic, EPIC_TransformCfgTypeDef *rot_cfg,
@@ -4570,7 +4581,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStartEx(EPIC_HandleTypeDef *epic,
     ret = EPIC_ConfigBlendEx(epic, layer, alpha, transform_cfg, input_layer_num + 1);
     if (HAL_OK != ret)
     {
-        ret = HAL_OK;
+        if (HAL_EPIC_NOTHING_TO_DO == ret) ret = HAL_OK;
         goto __EXIT;
     }
 
@@ -4594,7 +4605,7 @@ __EXIT:
 
     epic->State = HAL_EPIC_STATE_READY;
 
-    return HAL_OK;
+    return ret;
 }
 
 
@@ -4656,7 +4667,7 @@ HAL_StatusTypeDef HAL_EPIC_BlendStartEx_IT(EPIC_HandleTypeDef *epic,
     if (HAL_OK != ret)
     {
         EPIC_BlendCpltCallback(epic);
-        return HAL_OK;
+        return (HAL_EPIC_NOTHING_TO_DO == ret) ? HAL_OK : ret;
     }
 
     epic->IntXferCpltCallback = EPIC_BlendCpltCallback;
@@ -5657,6 +5668,10 @@ HAL_StatusTypeDef HAL_EPIC_BlendFastStart_Init(EPIC_HandleTypeDef *hepic)
     hepic->State = HAL_EPIC_STATE_READY;
     hepic->IntXferCpltCallback = NULL;
     hepic->XferCpltCallback = NULL;
+    hepic->coeng_state = 0;
+#ifdef EPIC_DEBUG
+    hepic->last_hist_item = NULL;
+#endif
 
     EPIC_DisableLayer(hepic->Instance, EPIC_LAYER_IDX_0);
     EPIC_DisableLayer(hepic->Instance, EPIC_LAYER_IDX_1);
@@ -5698,8 +5713,9 @@ HAL_StatusTypeDef HAL_EPIC_BlendFastStart_IT(EPIC_HandleTypeDef *hepic, EPIC_Han
     hepic->RamLTab[1]  = hepic_s->RamLTab[1];
 #endif /* EPIC_LOOKUP_TABLES > 1 */
 #endif /* EPIC_SUPPORT_L8 */
-
-
+#ifdef EPIC_DEBUG
+    hepic->last_hist_item = hepic_s->last_hist_item;
+#endif
 
 
 
