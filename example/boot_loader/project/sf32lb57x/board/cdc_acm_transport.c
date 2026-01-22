@@ -18,7 +18,7 @@
 #define CDC_INT_EP 0x83
 
 #define USBD_VID           0x38F4
-#define USBD_PID           0xFFFF
+#define USBD_PID           0x0001
 #define USBD_MAX_POWER     100
 #define USBD_LANGID_STRING 1033
 
@@ -182,15 +182,12 @@ static const uint8_t cdc_descriptor[] =
 #endif
 
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[USB_BUFF_MAX_LEN]; /* 2048 is only for test speed , please use CDC_MAX_MPS for common*/
-USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t write_buffer[USB_BUFF_MAX_LEN];
-
-
 
 static void cdc_acm_data_send_with_dtr_test(uint8_t *buf, uint32_t len);
 
 transport_t usb_cdc_acm_transport =
 {
-    .send = cdc_acm_data_send_with_dtr_test
+
 };
 
 volatile bool ep_tx_busy_flag = false;
@@ -268,10 +265,7 @@ static struct usbd_interface intf1;
 
 void cdc_acm_init(uint8_t busid, uintptr_t reg_base)
 {
-    const uint8_t data[10] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30 };
-
-    memcpy(&write_buffer[0], data, 10);
-    memset(&write_buffer[10], 'a', USB_BUFF_MAX_LEN - 10);
+    usb_cdc_acm_transport.send = cdc_acm_data_send_with_dtr_test;
 
 #ifdef CONFIG_USBDEV_ADVANCE_DESC
     usbd_desc_register(busid, &cdc_descriptor);
@@ -299,19 +293,6 @@ void usbd_cdc_acm_set_dtr(uint8_t busid, uint8_t intf, bool dtr)
     }
 }
 
-#if 0
-void cdc_acm_data_send_with_dtr_test(uint8_t busid)
-{
-    if (dtr_enable)
-    {
-        ep_tx_busy_flag = true;
-        usbd_ep_start_write(busid, CDC_IN_EP, write_buffer, USB_BUFF_MAX_LEN);
-        while (ep_tx_busy_flag)
-        {
-        }
-    }
-}
-#else
 static void cdc_acm_data_send_with_dtr_test(uint8_t *buf, uint32_t len)
 {
     if (dtr_enable)
@@ -325,4 +306,3 @@ static void cdc_acm_data_send_with_dtr_test(uint8_t *buf, uint32_t len)
     }
 }
 
-#endif
