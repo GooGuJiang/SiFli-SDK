@@ -106,6 +106,20 @@ void BSP_SetFlash5DIV(uint16_t div);
 
 uint8_t is_addr_in_flash(uint32_t addr);
 
+/**
+ * @brief  Load bank0 data from efuse and cache it in internal buffer
+ *
+ *
+ * @return pointer to bank0 data array, NULL if load fail
+ */
+const uint32_t *sifli_hw_efuse_load_bank0(void);
+
+/**
+ * @brief  Get cached bank0 data
+ *
+ * @return pointer to cached bank0 data array
+ */
+const uint32_t *sifli_hw_efuse_get_bank0_data(void);
 
 extern FLASH_HandleTypeDef *boot_handle;
 extern uint32_t g_config_addr;

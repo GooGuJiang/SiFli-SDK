@@ -179,9 +179,19 @@ void sboot_init(void)
     uint8_t pattern;
     int len;
     uint8_t rootkey[EFUSE_ROOTKEY_BYTE_SIZE];
+    const uint32_t *bank0_data;
 
-    // Read secure enabled flag from efuse, also load the whole bank0 to make SWDDIS take effect
-    len = sifli_hw_efuse_read(EFUSE_ID_SECURE_ENABLED, &pattern, DFU_SECURE_SIZE);
+    /* load bank0 which has SWDDIS and SECEN*/
+    bank0_data = sifli_hw_efuse_load_bank0();
+    if (bank0_data)
+    {
+        len = HAL_EFUSE_Extract(bank0_data, EFUSE_SECEN_OFFSET, &pattern, EFUSE_SECEN_SIZE);
+    }
+    else
+    {
+        printf("load bank0 fails\n");
+        len = 0;
+    }
     if ((len > 0) && (pattern != 0))
     {
         sboot_ctx.sec_en = true;

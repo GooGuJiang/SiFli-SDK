@@ -118,8 +118,10 @@ static uint8_t board_read_pkgid(void)
 {
     uint8_t pkgid;
     int32_t r;
+    const uint32_t *bank0_data;
 
-    r = HAL_EFUSE_Read2(EFUSE_PKGID_OFFSET, &pkgid, EFUSE_PKGID_SIZE);
+    bank0_data = sifli_hw_efuse_get_bank0_data();
+    r = HAL_EFUSE_Extract(bank0_data, EFUSE_PKGID_OFFSET, &pkgid, EFUSE_PKGID_SIZE);
     HAL_ASSERT(EFUSE_PKGID_SIZE == r);
 
     return pkgid;
