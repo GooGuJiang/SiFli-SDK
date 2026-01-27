@@ -70,8 +70,6 @@
 #define GPU_BLEND_EXP_MS     5000
 
 
-#ifdef DRV_EPIC_NEW_API
-
 #ifdef SOLUTION
     #include "app_mem.h"
     #define epic_malloc          app_malloc
@@ -84,6 +82,9 @@
     #define epic_calloc          rt_calloc
     #define epic_free            rt_free
 #endif
+
+
+#ifdef DRV_EPIC_NEW_API
 
 #define render_list_pool_max    2
 #define letter_pool_max         512//800
