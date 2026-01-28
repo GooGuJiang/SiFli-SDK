@@ -555,6 +555,7 @@ static void print_uid(void)
     int entry(void)
 #endif
 {
+#ifdef CFG_BOOTROM
     /* pull up power control pin by default */
     HAL_PMU_ClearPadRetention(MPI_POWER_PAD);
     HAL_PIN_CompileTimeSet(MPI_POWER_PAD, MPI_POWER_PAD_FUNC, PIN_PULLUP, 1);
@@ -571,13 +572,9 @@ static void print_uid(void)
     HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_SYS, RCC_SYSCLK_HXT48);
     HAL_Delay_us(0);
 
-#ifdef CFG_BOOTROM
     print_boot_info();
-#endif /* CFG_BOOTROM */
 
-#ifdef CFG_BOOTROM
     if (!boot_is_bootmode())
-#endif
     {
         board_init();
 
@@ -589,7 +586,6 @@ static void print_uid(void)
         }
     }
 
-#ifdef CFG_BOOTROM
     print_uid();
 
     dfu_init();
@@ -614,6 +610,17 @@ static void print_uid(void)
         }
     }
 #else
+    sboot_init();
+
+    board_init();
+
+    board_boot_device = board_boot_from();
+
+    if (boot_device_init())
+    {
+        boot_images_help();
+    }
+
     while (1)
     {
     }
