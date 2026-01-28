@@ -196,6 +196,7 @@ void sboot_init(void)
     {
         sboot_ctx.sec_en = true;
     }
+#ifdef CFG_BOOTROM
     if (bank0_data)
     {
         len = HAL_EFUSE_Extract(bank0_data, EFUSE_PINRST_OFFSET, &pattern, EFUSE_PINRST_SIZE);
@@ -211,6 +212,7 @@ void sboot_init(void)
     {
         printf("load rootkey fails\n");
     }
+#endif /* CFG_BOOTROM */
 }
 
 void run_img(uint32_t dest)
