@@ -55,7 +55,6 @@ int sdio_emmc_init(void)
     while (!(rsp_arg[0] & 0x80000000));
 
     //CMD2
-    HAL_Delay_us(20);
     cmd_arg = 0x0;
     cmd_result = sd1_send_cmd(2, cmd_arg); //CMD2
     if (cmd_result == SD_TIMEOUT)
@@ -69,7 +68,6 @@ int sdio_emmc_init(void)
     sd1_get_rsp(&rsp_idx, &cid[3], &cid[2], &cid[1], &cid[0]);
 
     //CMD3
-    HAL_Delay_us(20);
     rca = 1;
     cmd_arg = 0x10000;
     cmd_result = sd1_send_cmd(3, cmd_arg); //CMD3
@@ -90,7 +88,6 @@ int sdio_emmc_init(void)
     // card identification done, switch mode
     hwp_sdmmc1->CDR &= ~SD_CDR_CMD_OD;  // recover to push pull mode
 
-    HAL_Delay_us(20);
     cmd_arg = rca << 16;
     //cmd_arg = 0x10000;
     cmd_result = sd1_send_cmd(9, cmd_arg); //CMD9
@@ -115,7 +112,6 @@ int sdio_emmc_init(void)
 
     //start card transfer
     //CMD7 (SELECT_CARD)
-    HAL_Delay_us(20);
     cmd_arg = (uint32_t)rca << 16;
     cmd_result = sd1_send_cmd(7, cmd_arg);
     if (cmd_result == SD_TIMEOUT)
@@ -195,7 +191,6 @@ int sdio_emmc_init(void)
     sd1_read(0, 1); //1 wire mode,1 blocks
 #endif
     //CMD17 (READ_SINGLE_BLOCK)
-    HAL_Delay_us(20);
     hwp_sdmmc1->SR = 0xffffffff; //clear sdmmc interrupts
     cmd_arg = 0; //start data address
     cmd_result = sd1_send_cmd(17, cmd_arg);
@@ -248,7 +243,6 @@ int emmc_read_data(uint32_t addr, uint8_t *data, uint32_t len)
     sd1_read(wire_mode, 1); //1 wire mode
 
     //CMD17 (READ_SINGLE_BLOCK)
-    HAL_Delay_us(20);
     hwp_sdmmc1->SR = 0xffffffff; //clear sdmmc interrupts
     cmd_arg =  addr >> 9; //start data address
     cmd_result = sd1_send_cmd(17, cmd_arg);

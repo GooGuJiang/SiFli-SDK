@@ -45,7 +45,7 @@ uint8_t sd1_wait_cmd();
 void sd1_get_rsp(uint8_t *rsp_idx, uint32_t *rsp_arg1, uint32_t *rsp_arg2, uint32_t *rsp_arg3, uint32_t *rsp_arg4);
 void sd1_read(uint8_t wire_mode, uint8_t block_num);
 uint8_t sd1_wait_read(void);
-
+void sd1_set_delay_time_us(uint32_t delay_time_us);
 
 uint8_t sdio_sd_init(void);
 int sd_read_data(uint32_t addr, uint8_t *data, uint32_t len);

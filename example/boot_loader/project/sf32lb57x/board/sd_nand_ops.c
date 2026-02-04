@@ -46,7 +46,6 @@ uint8_t sdio_sd_init(void)
 
     //start card identification
     //CMD8
-    HAL_Delay_us(20);
     cmd_arg = 0x000001aa; //VHS=1
     cmd_result = sd1_send_cmd(8, cmd_arg); //CMD8
     if (cmd_result == SD_TIMEOUT)
@@ -76,7 +75,6 @@ uint8_t sdio_sd_init(void)
     cmd_arg = 0x40ff8000;
     while (1) //wait for card busy status
     {
-        HAL_Delay_us(20);
         cmd_result = sd1_send_acmd(41, cmd_arg, rca); //CMD55+ACMD41
         if (cmd_result == SD_TIMEOUT)
         {
@@ -95,7 +93,6 @@ uint8_t sdio_sd_init(void)
     ccs = (rsp_arg[0] >> 30) & 0x1;
 
     //CMD2
-    HAL_Delay_us(20);
     cmd_arg = 0x0;
     cmd_result = sd1_send_cmd(2, cmd_arg); //CMD2
     if (cmd_result == SD_TIMEOUT)
@@ -115,7 +112,6 @@ uint8_t sdio_sd_init(void)
     sd1_get_rsp(&rsp_idx, &cid[3], &cid[2], &cid[1], &cid[0]);
 
     //CMD3
-    HAL_Delay_us(20);
     cmd_arg = 0x0;
     cmd_result = sd1_send_cmd(3, cmd_arg); //CMD3
     if (cmd_result == SD_TIMEOUT)
@@ -142,7 +138,6 @@ uint8_t sdio_sd_init(void)
         return test_result;
     }
 
-    HAL_Delay_us(20);
     cmd_arg = rca << 16;
     cmd_result = sd1_send_cmd(9, cmd_arg); //CMD9
     if (cmd_result == SD_TIMEOUT)
@@ -211,7 +206,6 @@ uint8_t sdio_sd_init(void)
 
     //start card transfer
     //CMD7 (SELECT_CARD)
-    HAL_Delay_us(20);
     cmd_arg = (uint32_t)rca << 16;
     cmd_result = sd1_send_cmd(7, cmd_arg);
     if (cmd_result == SD_TIMEOUT)
@@ -238,7 +232,6 @@ uint8_t sdio_sd_init(void)
     }
 
     //ACMD6
-    HAL_Delay_us(20);
     cmd_arg = wire_mode ? 2 : 0; //select 4-wire mode or 1-wire mode
     cmd_result = sd1_send_acmd(6, cmd_arg, rca); //CMD55+ACMD6
     if (cmd_result == SD_TIMEOUT)
@@ -259,7 +252,6 @@ uint8_t sdio_sd_init(void)
     sd1_read(wire_mode, 1); //4 wire mode,8 blocks
 
     //CMD17 (READ_SINGLE_BLOCK)
-    HAL_Delay_us(20);
     cmd_arg = 0; //start data address
     cmd_result = sd1_send_cmd(17, cmd_arg);
     if (cmd_result == SD_TIMEOUT)
@@ -321,7 +313,6 @@ int sd_read_data(uint32_t addr, uint8_t *data, uint32_t len)
     sd1_read(wire_mode, 1); //4 wire mode,1 blocks
 
     //CMD17 (READ_SINGLE_BLOCK)
-    HAL_Delay_us(20);
     cmd_arg = sdsc ? addr : addr >> 9; //start data address
     cmd_result = sd1_send_cmd(17, cmd_arg);
     if (cmd_result == SD_TIMEOUT)

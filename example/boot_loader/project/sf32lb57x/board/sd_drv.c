@@ -1,6 +1,14 @@
 #include <rtconfig.h>
 #include "sd_drv.h"
 
+/* 8 cycles for 400kHz */
+static uint32_t sd1_delay_time_us = 20;
+
+void sd1_set_delay_time_us(uint32_t delay_time_us)
+{
+    sd1_delay_time_us = delay_time_us;
+}
+
 void sd1_init(void)
 {
     hwp_hpsys_rcc->ENR2 &= ~HPSYS_RCC_ENR2_SDMMC1;
@@ -15,6 +23,9 @@ uint8_t sd1_send_cmd(uint8_t cmd_idx, uint32_t cmd_arg)
     uint32_t ccr;
     uint8_t has_rsp;
     uint8_t long_rsp;
+
+    /* add delay for cmd->cmd and rsp->cmd */
+    HAL_Delay_us(sd1_delay_time_us);
 
     hwp_sdmmc1->CAR = cmd_arg;
     switch (cmd_idx)
