@@ -1494,11 +1494,30 @@ menu "On-chip Peripheral RTOS Drivers"
         default n
         if BSP_USING_EPIC && !SOC_SF32LB55X
             config DRV_EPIC_NEW_API
-            bool "Using epic render list API(under development)"
+            bool "Using epic render list API"
             default n
             help
                 1. Can not works on SFLB55X serials
                 2. Asynchronized rendering, must keep the buffers used by the render-list available until rendering is complete.
+            
+            choice
+                prompt "EPIC Render List API Mode"
+                depends on DRV_EPIC_NEW_API
+                default DRV_EPIC_NEW_API_SINGLE_CORE    if BF0_HCPU
+                default DRV_EPIC_NEW_API_DUAL_CORE_ACPU if BF0_ACPU
+
+                config DRV_EPIC_NEW_API_SINGLE_CORE
+                    bool "Using epic render list API in single core mode"
+                    depends on BF0_HCPU
+
+                config DRV_EPIC_NEW_API_DUAL_CORE_HCPU
+                    bool "Using epic render list API in dual core HCPU mode"
+                    depends on BF0_HCPU
+                
+                config DRV_EPIC_NEW_API_DUAL_CORE_ACPU
+                    bool "Using epic render list API in dual core ACPU mode"
+                    depends on BF0_ACPU
+            endchoice
 
         endif
         config EZIP_PAL_SUPPORT
