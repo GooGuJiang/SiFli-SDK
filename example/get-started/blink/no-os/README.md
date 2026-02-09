@@ -10,6 +10,9 @@
 * eh-lb561
 * eh-lb563
 * eh-ss6500
+* sf32lb52-lcd系列
+* sf32lb56-lcd系列
+* sf32lb58-lcd系列
 
 **注意：** 一般而言，例程都是运行芯片的HCPU。如果想在LCPU运行例程，可以使用"eh-lb563_lcpu"。
 

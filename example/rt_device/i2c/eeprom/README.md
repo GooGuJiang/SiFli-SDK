@@ -3,9 +3,9 @@
 ## 支持的平台
 例程可以运行在以下开发板.
 * sf32lb52-nano系列
-* sf32lb52-lcd
-* sf32lb56-lcd
-* sf32lb58-lcd
+* sf32lb52-lcd系列
+* sf32lb56-lcd系列
+* sf32lb58-lcd系列
 
 ## 概述
 * 在RT-Thread操作系统下,通过对EEPROM芯片AT24CO8SC模块的读写操作，演示I2C的使用方法
