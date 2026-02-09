@@ -398,7 +398,8 @@ const pin_fsel_function_t pad_pa17_fsel_func_tbl[] =
 const pin_fsel_function_t pad_pa18_fsel_func_tbl[] =
 {
     {0, GPIO_A18},
-    {1, SWDIO},
+    {1, USART1_RXD},
+    {2, SWCLK},
     {0, PIN_FUNC_UNDEF},
 };
 
@@ -406,7 +407,8 @@ const pin_fsel_function_t pad_pa18_fsel_func_tbl[] =
 const pin_fsel_function_t pad_pa19_fsel_func_tbl[] =
 {
     {0, GPIO_A19},
-    {1, SWCLK},
+    {1, USART1_TXD},
+    {2, SWDIO},
     {0, PIN_FUNC_UNDEF},
 };
 
@@ -615,7 +617,7 @@ const pin_fsel_function_t pad_pa42_fsel_func_tbl[] =
 const pin_fsel_function_t pad_pa43_fsel_func_tbl[] =
 {
     {0, GPIO_A43},
-    {1, SWDIO},
+    {1, SWCLK},
     {7, DBG_DO14},
     {0, PIN_FUNC_UNDEF},
 };
@@ -624,7 +626,7 @@ const pin_fsel_function_t pad_pa43_fsel_func_tbl[] =
 const pin_fsel_function_t pad_pa44_fsel_func_tbl[] =
 {
     {0, GPIO_A44},
-    {1, SWCLK},
+    {1, SWDIO},
     {7, DBG_DO15},
     {0, PIN_FUNC_UNDEF},
 };
