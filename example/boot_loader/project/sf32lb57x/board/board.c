@@ -222,16 +222,18 @@ void board_init(void)
     delay = GET_REG_VAL2(boot_opt, BOOT_PD_Delay);
     if (delay)
     {
-        HAL_PIN_CompileTimeSet(MPI_POWER_PAD, MPI_POWER_PAD_FUNC, PIN_NOPULL, 1);
         board_gpio_set(MPI_POWER_PAD, 0, 1);
+        HAL_PIN_CompileTimeSet(MPI_POWER_PAD, MPI_POWER_PAD_FUNC, PIN_NOPULL, 1);
         HAL_Delay_us(delay * 1000);
     }
 
     delay = GET_REG_VAL2(boot_opt, BOOT_PU_Delay);
     if (delay)
     {
-        HAL_PIN_CompileTimeSet(MPI_POWER_PAD, MPI_POWER_PAD_FUNC, PIN_NOPULL, 1);
+        /* update DOR before enable DOER to avoid output 0 when enabling output */
+        HAL_GPIO_WritePin(hwp_gpio1, MPI_POWER_PAD - PAD_PA00, 1);
         board_gpio_set(MPI_POWER_PAD, 1, 1);
+        HAL_PIN_CompileTimeSet(MPI_POWER_PAD, MPI_POWER_PAD_FUNC, PIN_NOPULL, 1);
         HAL_Delay_us(delay * 1000);
     }
 #endif /* CFG_BOOTROM */
