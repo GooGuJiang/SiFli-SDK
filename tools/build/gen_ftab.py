@@ -66,6 +66,12 @@ IMAGE_INDEX_COUNT = 4
 PARTITION_INFO_STRUCT = struct.Struct("<IIII")  # base, size, xip_base, flags
 FLASH_TABLE_SIZE = 0x8000
 SEC_CONFIG_MAGIC = 0x53454346  # 'FCES'
+EX_IMAGE_SLOT_FLASH_IDS = [11, 12, 13]  # DFU_FLASH_HCPU_EXT2 / LCPU_EXT1 / LCPU_EXT2
+EX_IMAGE_SLOT_PARTITION_INDICES = [
+    PartitionIndex.HCPU_IMAGE_RESERVE2,
+    PartitionIndex.LCPU_IMAGE_RESERVE1,
+    PartitionIndex.LCPU_IMAGE_RESERVE2,
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -102,11 +108,66 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _get_partition_core(partition: dict) -> str:
+    return str(partition.get('core') or 'HCPU').strip().upper()
+
+
+def _collect_partition_roles(partitions: List[dict]) -> Dict[str, object]:
+    ftab_partition = None
+    calibration_partition = None
+    bootloader_partition = None
+    factory_hcpu_partition = None
+    dfu_hcpu_partition = None
+
+    for p in partitions:
+        ptype = p.get('type', '')
+        subtype = p.get('subtype', '')
+        core = _get_partition_core(p)
+        if ptype == 'ftab' and ftab_partition is None:
+            ftab_partition = p
+        elif ptype == 'data' and subtype == 'calibration' and calibration_partition is None:
+            calibration_partition = p
+        elif ptype == 'bootloader' and bootloader_partition is None:
+            bootloader_partition = p
+        elif ptype == 'app' and subtype == 'factory' and core == 'HCPU' and factory_hcpu_partition is None:
+            factory_hcpu_partition = p
+        elif ptype == 'app' and subtype == 'dfu' and core == 'HCPU' and dfu_hcpu_partition is None:
+            dfu_hcpu_partition = p
+
+    if factory_hcpu_partition is None:
+        for p in partitions:
+            if p.get('type') == 'app' and p.get('subtype') == 'factory':
+                factory_hcpu_partition = p
+                break
+    if dfu_hcpu_partition is None:
+        for p in partitions:
+            if p.get('type') == 'app' and p.get('subtype') == 'dfu':
+                dfu_hcpu_partition = p
+                break
+
+    extra_app_partitions: List[dict] = []
+    for p in partitions:
+        if p.get('type') != 'app':
+            continue
+        if p is factory_hcpu_partition or p is dfu_hcpu_partition:
+            continue
+        extra_app_partitions.append(p)
+
+    return {
+        'ftab': ftab_partition,
+        'calibration': calibration_partition,
+        'bootloader': bootloader_partition,
+        'factory_hcpu': factory_hcpu_partition,
+        'dfu_hcpu': dfu_hcpu_partition,
+        'extra_apps': extra_app_partitions,
+    }
+
+
 def build_partition_table_entries(
     partitions: List[dict],
     chip_config: dict,
     chip: Optional[str] = None,
-) -> List[Tuple[int, int, int, int]]:
+) -> Tuple[List[Tuple[int, int, int, int]], Dict[str, int]]:
     """Build partition table entries from ptab partitions.
 
     v3 address rules:
@@ -119,9 +180,11 @@ def build_partition_table_entries(
     - For app/bootloader partitions with `exec`, xip_base comes from exec.{region,offset}.
 
     Returns:
-        List of (base, size, xip_base, flags) tuples
+        - List of (base, size, xip_base, flags) tuples
+        - Mapping of extra image partition name -> flash_id (11/12/13)
     """
     entries = [(0, 0, 0, 0)] * PARTITION_ENTRY_COUNT
+    extra_image_flash_ids: Dict[str, int] = {}
 
     def _mpi_name_from_region(region: str) -> Optional[str]:
         if not region:
@@ -180,35 +243,101 @@ def build_partition_table_entries(
         except Exception:
             return None
 
-    # Find key partitions
-    ftab_partition = None
-    calibration_partition = None
-    bootloader_partition = None
-    main_partition = None
-    dfu_partition = None
+    _mem_map_cache: Dict[str, int] = {}
+    _mem_map_loaded = False
 
-    for p in partitions:
-        ptype = p.get('type', '')
-        subtype = p.get('subtype', '')
-        name = p.get('name', '')
+    def _load_mem_map_ints() -> Dict[str, int]:
+        nonlocal _mem_map_loaded, _mem_map_cache
+        if _mem_map_loaded:
+            return _mem_map_cache
+        _mem_map_loaded = True
+        try:
+            sifli_sdk = os.getenv('SIFLI_SDK')
+            if not sifli_sdk:
+                sifli_sdk = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+            if not sifli_sdk:
+                return _mem_map_cache
+            chip_u = (chip or '').upper()
+            if chip_u.startswith('SF32LB52'):
+                cmsis_dir = 'sf32lb52x'
+            elif chip_u.startswith('SF32LB56'):
+                cmsis_dir = 'sf32lb56x'
+            elif chip_u.startswith('SF32LB58'):
+                cmsis_dir = 'sf32lb58x'
+            else:
+                return _mem_map_cache
+            import gen_link_lds
+            _mem_map_cache = dict(gen_link_lds._load_mem_map_ints(sifli_sdk, cmsis_dir))
+        except Exception:
+            _mem_map_cache = {}
+        return _mem_map_cache
 
-        if ptype == 'ftab':
-            ftab_partition = p
-        elif ptype == 'data' and subtype == 'calibration':
-            calibration_partition = p
-        elif ptype == 'bootloader':
-            bootloader_partition = p
-        elif ptype == 'app' and subtype == 'factory':
-            main_partition = p
-        elif ptype == 'app' and subtype == 'dfu':
-            dfu_partition = p
+    def _acpu_exec_host_addr(exec_region: str, exec_offset: int) -> Optional[int]:
+        """Resolve ACPU exec RAM address from HCPU/bootloader view.
+
+        In legacy ftab.c, ACPU image xip_base uses HCPU-visible RAM address
+        (e.g. HPSYS_RAM_BASE + offset -> 0x2020_0000), not ACPU local view.
+        """
+        r = (exec_region or '').strip().lower()
+        mem_map_ints = _load_mem_map_ints()
+        if r == 'hpsys_ram' or r.startswith('hpsys'):
+            base = mem_map_ints.get('HPSYS_RAM_BASE', 0x20000000)
+            return int(base) + int(exec_offset)
+        if r == 'lpsys_ram' or r.startswith('lpsys'):
+            base = mem_map_ints.get('LPSYS_RAM_BASE')
+            if base is None:
+                # Legacy default on older chips.
+                base = 0x20400000
+            return int(base) + int(exec_offset)
+        return None
+
+    def _partition_entry_addr(partition: dict) -> Tuple[int, int, int]:
+        region = partition.get('region', '')
+        offset = ptab_module.parse_size(partition.get('offset', 0))
+        size = ptab_module.parse_size(partition.get('size', 0))
+        core = partition.get('core')
+        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config, core=core)
+        base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
+        exec_def = partition.get('exec')
+        if isinstance(exec_def, dict):
+            exec_region = str(exec_def.get('region', '')).strip()
+            exec_offset = ptab_module.parse_size(exec_def.get('offset', 0))
+            core_u = str(core or '').strip().upper()
+            if core_u == 'ACPU':
+                host_addr = _acpu_exec_host_addr(exec_region, exec_offset)
+                if host_addr is not None:
+                    xip_addr = int(host_addr)
+                else:
+                    exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config, core=core)
+                    xip_addr = _select_exec_addr(exec_region, exec_sbus_addr, exec_cbus_addr)
+            else:
+                exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config, core=core)
+                xip_addr = _select_exec_addr(exec_region, exec_sbus_addr, exec_cbus_addr)
+        else:
+            mem_type = _get_region_mem_type(region)
+            if mem_type == 'nand':
+                raise ValueError(
+                    "app partition '{}' on NAND must provide exec for ftab generation".format(
+                        partition.get('name', '?')
+                    )
+                )
+            xip_addr = _select_exec_addr(region, sbus_addr, cbus_addr)
+        return int(base_addr), int(size), int(xip_addr)
+
+    roles = _collect_partition_roles(partitions)
+    ftab_partition = roles['ftab']
+    calibration_partition = roles['calibration']
+    bootloader_partition = roles['bootloader']
+    main_partition = roles['factory_hcpu']
+    dfu_partition = roles['dfu_hcpu']
+    extra_app_partitions = roles['extra_apps']
 
     # Fill ftab entry
     if ftab_partition:
         size = ptab_module.parse_size(ftab_partition.get('size', 0))
         region = ftab_partition.get('region', '')
         offset = ptab_module.parse_size(ftab_partition.get('offset', 0))
-        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
+        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config, core=ftab_partition.get('core'))
         base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
         
         entries[PartitionIndex.FLASH_PARTITION_TABLE] = (base_addr, size, 0, 0)
@@ -218,7 +347,7 @@ def build_partition_table_entries(
         size = ptab_module.parse_size(calibration_partition.get('size', 0))
         region = calibration_partition.get('region', '')
         offset = ptab_module.parse_size(calibration_partition.get('offset', 0))
-        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
+        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config, core=calibration_partition.get('core'))
         base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
         
         entries[PartitionIndex.CALIBRATION_TABLE] = (base_addr, size, 0, 0)
@@ -233,7 +362,7 @@ def build_partition_table_entries(
             size = storage_size
         region = bootloader_partition.get('region', '')
         offset = ptab_module.parse_size(bootloader_partition.get('offset', 0))
-        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
+        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config, core=bootloader_partition.get('core'))
         base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
 
         exec_def = bootloader_partition.get('exec')
@@ -242,7 +371,7 @@ def build_partition_table_entries(
 
         exec_region = str(exec_def.get('region', '')).strip()
         exec_offset = ptab_module.parse_size(exec_def.get('offset', 0))
-        exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config)
+        exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config, core=bootloader_partition.get('core'))
         xip_addr = _select_exec_addr(exec_region, exec_sbus_addr, exec_cbus_addr)
 
         entries[PartitionIndex.BOOTLOADER] = (base_addr, size, xip_addr, 0)
@@ -250,52 +379,35 @@ def build_partition_table_entries(
 
     # Fill main entry
     if main_partition:
-        region = main_partition.get('region', '')
-        offset = ptab_module.parse_size(main_partition.get('offset', 0))
-        size = ptab_module.parse_size(main_partition.get('size', 0))
-        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
-        base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
-
-        exec_def = main_partition.get('exec')
-        if isinstance(exec_def, dict):
-            exec_region = str(exec_def.get('region', '')).strip()
-            exec_offset = ptab_module.parse_size(exec_def.get('offset', 0))
-            exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config)
-            xip_addr = _select_exec_addr(exec_region, exec_sbus_addr, exec_cbus_addr)
-        else:
-            # No exec: allow XIP for NOR/PSRAM; NAND must provide exec
-            mem_type = _get_region_mem_type(region)
-            if mem_type == 'nand':
-                raise ValueError("app.factory partition on NAND must provide exec for ftab generation")
-            xip_addr = _select_exec_addr(region, sbus_addr, cbus_addr)
-
+        base_addr, size, xip_addr = _partition_entry_addr(main_partition)
         entries[PartitionIndex.HCPU_IMAGE] = (base_addr, size, xip_addr, 0)
         entries[PartitionIndex.HCPU_IMAGE_PONG] = (base_addr, size, xip_addr, 0)
 
     # Fill dfu entry (optional)
     if dfu_partition:
-        region = dfu_partition.get('region', '')
-        offset = ptab_module.parse_size(dfu_partition.get('offset', 0))
-        size = ptab_module.parse_size(dfu_partition.get('size', 0))
-        sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
-        base_addr = _select_download_addr(region, sbus_addr, cbus_addr)
-
-        exec_def = dfu_partition.get('exec')
-        if isinstance(exec_def, dict):
-            exec_region = str(exec_def.get('region', '')).strip()
-            exec_offset = ptab_module.parse_size(exec_def.get('offset', 0))
-            exec_sbus_addr, exec_cbus_addr = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config)
-            xip_addr = _select_exec_addr(exec_region, exec_sbus_addr, exec_cbus_addr)
-        else:
-            mem_type = _get_region_mem_type(region)
-            if mem_type == 'nand':
-                raise ValueError("app.dfu partition on NAND must provide exec for ftab generation")
-            xip_addr = _select_exec_addr(region, sbus_addr, cbus_addr)
-
+        base_addr, size, xip_addr = _partition_entry_addr(dfu_partition)
         entries[PartitionIndex.LCPU_IMAGE_PING] = (base_addr, size, xip_addr, 0)
         entries[PartitionIndex.LCPU_IMAGE_PONG] = (base_addr, size, xip_addr, 0)
 
-    return entries
+    if len(extra_app_partitions) > len(EX_IMAGE_SLOT_PARTITION_INDICES):
+        names = [p.get('name', '?') for p in extra_app_partitions]
+        raise ValueError(
+            "Too many extra app partitions for ftab ext slots (max {}): {}".format(
+                len(EX_IMAGE_SLOT_PARTITION_INDICES), ", ".join(names)
+            )
+        )
+
+    for idx, part in enumerate(extra_app_partitions):
+        part_name = str(part.get('name') or '').strip()
+        if not part_name:
+            continue
+        base_addr, size, xip_addr = _partition_entry_addr(part)
+        part_idx = EX_IMAGE_SLOT_PARTITION_INDICES[idx]
+        flash_id = EX_IMAGE_SLOT_FLASH_IDS[idx]
+        entries[part_idx] = (base_addr, size, xip_addr, 0)
+        extra_image_flash_ids[part_name] = int(flash_id)
+
+    return entries, extra_image_flash_ids
 
 
 def pack_partition_table(entries: List[Tuple[int, int, int, int]]) -> bytes:
@@ -318,7 +430,9 @@ def pack_image_description(length: int, used: bool) -> bytes:
 def build_image_descriptions(
     bootloader_size: int,
     main_size: int,
-    dfu_size: int = 0
+    dfu_size: int = 0,
+    hcpu2_size: Optional[int] = None,
+    ext_image_sizes: Optional[Dict[int, int]] = None,
 ) -> bytes:
     """Build image description table
 
@@ -335,25 +449,26 @@ def build_image_descriptions(
     """
     desc = bytearray()
 
+    if hcpu2_size is None:
+        # Keep legacy behaviour: HCPU2 uses HCPU size when backup slot exists.
+        hcpu2_size = main_size
+
     # Sizes array: index = Flash ID - 2
-    sizes = [
-        dfu_size if dfu_size > 0 else 0xFFFFFFFF,  # [0] LCPU/DFU image
-        bootloader_size, # [1] Bootloader
-        main_size,       # [2] HCPU (main app)
-        0xFFFFFFFF,      # [3] Boot
-        0xFFFFFFFF,      # [4] LCPU2
-        0xFFFFFFFF,      # [5] BCPU2
-        main_size,       # [6] HCPU2 (backup, same size as main)
-        0xFFFFFFFF,      # [7] Boot2
-    ]
+    sizes = [0xFFFFFFFF] * IMAGE_DESCRIPTION_COUNT
+    sizes[0] = dfu_size if dfu_size > 0 else 0xFFFFFFFF
+    sizes[1] = bootloader_size
+    sizes[2] = main_size
+    sizes[6] = hcpu2_size if hcpu2_size and hcpu2_size > 0 else 0xFFFFFFFF
+
+    for flash_id, length in (ext_image_sizes or {}).items():
+        idx = int(flash_id) - 2
+        if idx < 0 or idx >= IMAGE_DESCRIPTION_COUNT:
+            continue
+        sizes[idx] = int(length) if int(length) > 0 else 0xFFFFFFFF
 
     for idx in range(IMAGE_DESCRIPTION_COUNT):
-        if idx < len(sizes):
-            length = sizes[idx]
-            used = length != 0xFFFFFFFF and length != 0
-        else:
-            length = 0xFFFFFFFF
-            used = False
+        length = sizes[idx]
+        used = length != 0xFFFFFFFF and length != 0
         desc.extend(pack_image_description(length, used))
 
     return bytes(desc)
@@ -390,34 +505,84 @@ def generate_ftab_binary(
     ptab_obj,
     chip_config: dict,
     bootloader_size: int,
-    main_size: int
+    main_size: int,
+    image_sizes: Optional[Dict[str, int]] = None,
 ) -> bytes:
     """Generate complete ftab.bin content"""
 
     # Get partitions from v3 ptab
     partitions = ptab_obj.partitions
+    image_sizes = dict(image_sizes or {})
+    roles = _collect_partition_roles(partitions)
 
     # Get flash base for ftab (download/storage view)
     flash_base = 0
-    for p in partitions:
-        ptype = p.get('type', '')
-        if ptype == 'ftab':
-            region = p.get('region', '')
-            offset = ptab_module.parse_size(p.get('offset', 0))
-            sbus_addr, cbus_addr = ptab_module.resolve_region_address(region, offset, chip_config)
-            # Reuse the same selection rule as partition table entries
-            mpi_name = region if region.startswith('mpi') else None
-            if region.startswith('psram'):
-                mpi_name = 'mpi1' if region == 'psram' else 'mpi{}'.format(region.replace('psram', '') or '1')
-            mem_type = (chip_config.get('memory_info', {}).get(mpi_name or region, {}).get('type') or 'nor').lower()
-            flash_base = cbus_addr if mem_type == 'nor' else sbus_addr
-            break
+    ftab_partition = roles.get('ftab')
+    if isinstance(ftab_partition, dict):
+        region = ftab_partition.get('region', '')
+        offset = ptab_module.parse_size(ftab_partition.get('offset', 0))
+        flash_base = ptab_module.get_download_addr_v3(region, offset, chip_config, core=ftab_partition.get('core'))
 
     # Build components
-    entries = build_partition_table_entries(partitions, chip_config, getattr(ptab_obj, 'chip', None))
+    entries, ext_flash_ids = build_partition_table_entries(partitions, chip_config, getattr(ptab_obj, 'chip', None))
     partition_table = pack_partition_table(entries)
-    image_descriptions = build_image_descriptions(bootloader_size, main_size)
-    image_index_table = build_image_index_table(flash_base)
+
+    def _partition_size(part: object, default: int = 0) -> int:
+        if isinstance(part, dict):
+            return int(ptab_module.parse_size(part.get('size', default)))
+        return int(default)
+
+    partition_size_by_name: Dict[str, int] = {}
+    for p in partitions:
+        pname = str(p.get('name') or '').strip()
+        if not pname:
+            continue
+        partition_size_by_name[pname] = int(ptab_module.parse_size(p.get('size', 0)))
+
+    bootloader_part = roles.get('bootloader')
+    factory_hcpu = roles.get('factory_hcpu')
+    dfu_hcpu = roles.get('dfu_hcpu')
+
+    # Use partition max size as image length policy.
+    bootloader_len = _partition_size(bootloader_part, bootloader_size)
+    if bootloader_len <= 0:
+        bootloader_len = int(bootloader_size)
+
+    main_len = _partition_size(factory_hcpu, main_size)
+    if main_len <= 0:
+        main_len = int(main_size)
+
+    # Match v2 default behaviour:
+    # - only enable LCPU/DFU image when DFU binary is actually produced
+    # - otherwise keep CORE_LCPU image pointer invalid and clear ftab[2]/[6]
+    dfu_enabled = False
+    dfu_size = 0
+    if isinstance(dfu_hcpu, dict):
+        dfu_name = str(dfu_hcpu.get('name') or '').strip()
+        if 'dfu' in image_sizes or (dfu_name and dfu_name in image_sizes):
+            dfu_enabled = True
+            dfu_size = _partition_size(dfu_hcpu, 0)
+    if not dfu_enabled:
+        entries[PartitionIndex.LCPU_IMAGE_PING] = (0, 0, 0, 0)
+        entries[PartitionIndex.LCPU_IMAGE_PONG] = (0, 0, 0, 0)
+        partition_table = pack_partition_table(entries)
+
+    ext_image_sizes: Dict[int, int] = {}
+    for part_name, flash_id in ext_flash_ids.items():
+        if part_name in image_sizes:
+            ext_size = int(partition_size_by_name.get(part_name, 0))
+            if ext_size <= 0:
+                ext_size = int(image_sizes[part_name])
+            ext_image_sizes[int(flash_id)] = int(ext_size)
+
+    image_descriptions = build_image_descriptions(
+        bootloader_size=bootloader_len,
+        main_size=main_len,
+        dfu_size=dfu_size,
+        hcpu2_size=main_len,
+        ext_image_sizes=ext_image_sizes,
+    )
+    image_index_table = build_image_index_table(flash_base, dfu_present=dfu_enabled)
 
     # Assemble ftab binary
     blob = bytearray()

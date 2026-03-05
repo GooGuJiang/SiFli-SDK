@@ -96,7 +96,21 @@ def _parse_define_map(header_path: str) -> Dict[str, str]:
     out: Dict[str, str] = {}
     try:
         with open(header_path, 'r', encoding='utf-8', errors='ignore') as f:
-            for line in f:
+            logical_lines: List[str] = []
+            pending = ''
+            for raw in f:
+                line = raw.rstrip('\n')
+                if pending:
+                    line = pending + line.lstrip()
+                if line.rstrip().endswith('\\'):
+                    pending = line.rstrip()[:-1] + ' '
+                    continue
+                pending = ''
+                logical_lines.append(line)
+            if pending:
+                logical_lines.append(pending)
+
+            for line in logical_lines:
                 m = define_re.match(line)
                 if not m:
                     continue
@@ -104,6 +118,7 @@ def _parse_define_map(header_path: str) -> Dict[str, str]:
                 value = (m.group(2) or '').strip()
                 # Drop trailing comments
                 value = value.split('//', 1)[0].strip()
+                value = re.sub(r'/\*.*?\*/', '', value).strip()
                 out[name] = value
     except FileNotFoundError:
         return out
@@ -139,6 +154,8 @@ def _infer_cmsis_dir_from_chip(chip: str) -> str:
         return 'sf32lb52x'
     if chip.startswith('SF32LB56'):
         return 'sf32lb56x'
+    if chip.startswith('SF32LB58'):
+        return 'sf32lb58x'
     raise LinkLdsError('Unsupported chip for Jinja2 link generation: {}'.format(chip))
 
 
@@ -149,10 +166,17 @@ def _load_mem_map_ints(sifli_sdk_root: str, cmsis_dir: str) -> Dict[str, int]:
         'QSPI2_MEM_BASE',
         'HCPU_FLASH2_IMG_SIZE',
         'HCPU_FLASH2_FONT_SIZE',
+        'HCPU_RAM_DATA_START_ADDR',
+        'HCPU_RAM_DATA_SIZE',
         # Bootloader runtime size
         'FLASH_BOOT_LOADER_SIZE',
         # HCPU RO data (ROM_EX) size (placed at end of HPSYS RAM)
         'HCPU_RO_DATA_SIZE',
+        # 58x HCPU ret/itcm
+        'HPSYS_RETM_BASE',
+        'HPSYS_RETM_SIZE',
+        'HPSYS_ITCM_BASE',
+        'HPSYS_ITCM_SIZE',
         # Mailbox sizes
         'HPSYS_MBOX_BUF_SIZE',
         'LPSYS_MBOX_BUF_SIZE',
@@ -160,7 +184,9 @@ def _load_mem_map_ints(sifli_sdk_root: str, cmsis_dir: str) -> Dict[str, int]:
         'LPSYS_RAM_BASE',
         'LPSYS_RAM_CBUS_BASE',
         'LPSYS_RAM_SIZE',
+        'LCPU_MBOX_SIZE',
         'LCPU_RAM_CODE_SIZE',
+        'LCPU_RAM_CODE_START_ADDR',
         # LCPU DTCM
         'LPSYS_DTCM_BASE',
         'LPSYS_DTCM_SIZE',
@@ -389,12 +415,16 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     hpsys_mbox_size = int(mem_map_ints.get('HPSYS_MBOX_BUF_SIZE', 0x400))
     lpsys_mbox_size = int(mem_map_ints.get('LPSYS_MBOX_BUF_SIZE', 0x400))
 
-    hcpu_ram_base = hpsys_base
-    hcpu_ro_data_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
-    hcpu_ram_size_total = max(0, int(hpsys_total) - hpsys_mbox_size)
-    hcpu_ram_size = max(0, int(hcpu_ram_size_total) - int(hcpu_ro_data_size))
+    # Prefer mem_map.h runtime macros when available; fall back to SiliconSchema.
+    hcpu_ram_base = int(mem_map_ints.get('HCPU_RAM_DATA_START_ADDR', hpsys_base))
+    hcpu_ram_size = int(mem_map_ints.get('HCPU_RAM_DATA_SIZE', 0))
+    if hcpu_ram_size <= 0:
+        hcpu_ro_data_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
+        hcpu_ram_size_total = max(0, int(hpsys_total) - hpsys_mbox_size)
+        hcpu_ram_size = max(0, int(hcpu_ram_size_total) - int(hcpu_ro_data_size))
+
+    hcpu_rom_ex_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
     hcpu_rom_ex_base = hcpu_ram_base + hcpu_ram_size
-    hcpu_rom_ex_size = max(0, int(hcpu_ro_data_size))
 
     lcpu_ram_base = lpsys_base_hcpu
     lcpu_ram_size = max(0, int(lpsys_total) - lpsys_mbox_size)
@@ -452,6 +482,7 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
 
     rom_base = 0
     rom_size = 0
+    code_p: Optional[Dict[str, Any]] = None
 
     if build_name == 'bootloader':
         boot_p = _find_partition(partitions, ptype='bootloader', core=build_core)
@@ -471,16 +502,15 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         if rom_size <= 0:
             rom_size = ptab_module.parse_size(boot_p.get('size', 0))
     elif build_core == 'LCPU':
-        if cmsis_dir == 'sf32lb56x':
-            # For 56x, LCPU linker script layout comes from mem_map.h.
-            rom_base = int(mem_map_ints.get('LPSYS_RAM_CBUS_BASE', 0))
+        if cmsis_dir in ('sf32lb56x', 'sf32lb58x'):
+            # For 56/58, LCPU linker script layout comes from mem_map.h.
+            rom_base = int(mem_map_ints.get('LCPU_RAM_CODE_START_ADDR', mem_map_ints.get('LPSYS_RAM_CBUS_BASE', 0)))
             rom_size = int(mem_map_ints.get('LCPU_RAM_CODE_SIZE', 0))
         else:
             rom_base = lcpu_rom_base
             rom_size = lcpu_rom_size
     else:
         # main/dfu or named images (HCPU)
-        code_p = None
         if build_name == 'main':
             code_p = _find_partition(partitions, ptype='app', subtype='factory', core=build_core)
             if not code_p:
@@ -529,11 +559,24 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         else:
             ram_base, ram_size = hcpu_ram_base, hcpu_ram_size
     elif build_core == 'LCPU':
-        if cmsis_dir == 'sf32lb56x':
+        if cmsis_dir in ('sf32lb56x', 'sf32lb58x'):
             ram_base = int(mem_map_ints.get('LPSYS_RAM_BASE', 0))
-            ram_size = max(0, int(mem_map_ints.get('LPSYS_RAM_SIZE', 0)) - int(mem_map_ints.get('LPSYS_MBOX_BUF_SIZE', 0)))
+            mbox_size = int(mem_map_ints.get('LCPU_MBOX_SIZE', mem_map_ints.get('LPSYS_MBOX_BUF_SIZE', 0)))
+            ram_size = max(0, int(mem_map_ints.get('LPSYS_RAM_SIZE', 0)) - mbox_size)
         else:
             ram_base, ram_size = lcpu_ram_base, lcpu_ram_size
+    elif build_core == 'ACPU' and code_p:
+        # ACPU code executes from RAM mapped by `exec`.
+        exec_def = code_p.get('exec')
+        if isinstance(exec_def, dict):
+            exec_region = str(exec_def.get('region', '')).strip()
+            exec_offset = ptab_module.parse_size(exec_def.get('offset', 0))
+            exec_sbus, exec_cbus = ptab_module.resolve_region_address(exec_region, exec_offset, chip_config, core=code_p.get('core'))
+            exec_mem_type = _get_region_mem_type(exec_region, chip_config)
+            ram_base = _select_start_addr(exec_mem_type, exec_sbus, exec_cbus)
+            ram_size = ptab_module.parse_size(code_p.get('size', 0))
+        else:
+            ram_base, ram_size = hcpu_ram_base, hcpu_ram_size
     else:
         ram_base, ram_size = hcpu_ram_base, hcpu_ram_size
 
@@ -548,6 +591,10 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     out['__PSRAM_SIZE'] = int(psram_size)
     out['__PSRAM2_BASE'] = int(psram2_base)
     out['__PSRAM2_SIZE'] = int(psram2_size)
+    out['__RET_RAM_BASE'] = int(mem_map_ints.get('HPSYS_RETM_BASE', 0))
+    out['__RET_RAM_SIZE'] = int(mem_map_ints.get('HPSYS_RETM_SIZE', 0))
+    out['__ITCM_BASE'] = int(mem_map_ints.get('HPSYS_ITCM_BASE', 0))
+    out['__ITCM_SIZE'] = int(mem_map_ints.get('HPSYS_ITCM_SIZE', 0))
 
     # Optional flash2 layout (used by some HCPU linker scripts)
     rom2_base = int(mem_map_ints.get('QSPI2_MEM_BASE', 0))
@@ -558,8 +605,8 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     out['__ROM3_BASE'] = int(rom2_base + rom2_size) if rom2_base and rom2_size else 0
     out['__ROM3_SIZE'] = rom3_size
 
-    # 56x LCPU extra regions
-    if build_core == 'LCPU' and cmsis_dir == 'sf32lb56x':
+    # 56x/58x LCPU extra regions
+    if build_core == 'LCPU' and cmsis_dir in ('sf32lb56x', 'sf32lb58x'):
         out['__DTCM_BASE'] = int(mem_map_ints.get('LPSYS_DTCM_BASE', 0))
         out['__DTCM_SIZE'] = int(mem_map_ints.get('LPSYS_DTCM_SIZE', 0))
         # ROM2 (flash) starts right after bootloader in internal flash.

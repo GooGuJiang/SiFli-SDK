@@ -866,17 +866,48 @@ def FtabBinBuild(target, source, env):
     imgs_info = env.get('IMGS_INFO', [])
     bootloader_size = 0x10000
     main_size = 0x200000
+    image_sizes = {}
+
+    def _calc_binary_size(path):
+        path = str(path)
+        if os.path.isfile(path):
+            return os.path.getsize(path)
+        if os.path.isdir(path):
+            # Prefer ER_IROM1.bin when multiple binaries are generated.
+            preferred = os.path.join(path, 'ER_IROM1.bin')
+            if os.path.isfile(preferred):
+                return os.path.getsize(preferred)
+            max_size = 0
+            for n in os.listdir(path):
+                f = os.path.join(path, n)
+                if os.path.isfile(f):
+                    max_size = max(max_size, os.path.getsize(f))
+            return max_size if max_size > 0 else None
+        return None
 
     for img in imgs_info:
         img_name = img.get('name', '')
         if img_name == 'bootloader' and 'binary' in img:
             try:
-                bootloader_size = os.path.getsize(str(img['binary'][0]))
+                sz = _calc_binary_size(img['binary'][0])
+                if sz:
+                    bootloader_size = sz
+                    image_sizes['bootloader'] = int(sz)
             except:
                 pass
         elif img_name == 'main' and 'binary' in img:
             try:
-                main_size = os.path.getsize(str(img['binary'][0]))
+                sz = _calc_binary_size(img['binary'][0])
+                if sz:
+                    main_size = sz
+                    image_sizes['main'] = int(sz)
+            except:
+                pass
+        elif 'binary' in img:
+            try:
+                sz = _calc_binary_size(img['binary'][0])
+                if sz:
+                    image_sizes[img_name] = int(sz)
             except:
                 pass
 
@@ -885,7 +916,8 @@ def FtabBinBuild(target, source, env):
         ptab_obj,
         chip_config,
         bootloader_size,
-        main_size
+        main_size,
+        image_sizes=image_sizes,
     )
 
     # 写入文件
@@ -1955,23 +1987,6 @@ def InitBuild(bsp_root, build_dir, board):
                          os.path.join(build_dir, '.config'), os.path.join(build_dir, "rtconfig.h"),
                          os.path.join(build_dir, "kconfiglist")] + conf_list)
     assert retcode == 0, "Fail to generate .config and rtconfig.h"
-
-    # ptab v3 boards (ptab.yaml) must not rely on custom_mem_map.h. Keep project-level
-    # CUSTOM_MEM_MAP defaults (often y) for legacy ptab v1/v2 boards, while force
-    # disabling it for v3 boards to avoid missing-header build failures.
-    if os.path.exists(os.path.join(path1, 'ptab.yaml')):
-        rtconfig_h_path = os.path.join(build_dir, "rtconfig.h")
-        marker = "/* auto: ptab v3 disables CUSTOM_MEM_MAP */"
-        try:
-            with open(rtconfig_h_path, "r", encoding="utf-8") as f:
-                contents = f.read()
-            if marker not in contents:
-                with open(rtconfig_h_path, "a", encoding="utf-8") as f:
-                    f.write("\n" + marker + "\n")
-                    f.write("#ifdef CUSTOM_MEM_MAP\n#undef CUSTOM_MEM_MAP\n#endif\n")
-        except Exception as e:
-            logging.error("Fail to patch {}: {}".format(rtconfig_h_path, e))
-            raise
 
     if os.path.isfile('rtconfig_project.h'):
         shutil.copy('rtconfig_project.h', os.path.join(build_dir, "rtconfig_project.h"))

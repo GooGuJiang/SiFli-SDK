@@ -838,34 +838,42 @@ def resolve_region_address(
         cbus_addr = int(xip_offset) + int(offset) if xip_offset is not None else sbus_addr
         return sbus_addr, cbus_addr
 
+    def _resolve_ram_region_base(ram_banks: Dict[str, Any], default_base: int) -> int:
+        # First pass: if core is specified, scan all banks for that core.
+        if core_key:
+            for _, bank in ram_banks.items():
+                if not isinstance(bank, dict):
+                    continue
+                c = bank.get(core_key)
+                if isinstance(c, dict):
+                    base_offset = c.get('offset')
+                    if base_offset is not None:
+                        return int(base_offset)
+
+        # Second pass: fallback to the first hcpu bank (legacy default behaviour).
+        for _, bank in ram_banks.items():
+            if not isinstance(bank, dict):
+                continue
+            hcpu = bank.get('hcpu')
+            if isinstance(hcpu, dict):
+                base_offset = hcpu.get('offset')
+                if base_offset is not None:
+                    return int(base_offset)
+
+        return int(default_base)
+
     # RAM region (hpsys_ram -> hpsys.ram)
     if region == 'hpsys_ram' or region.startswith('hpsys'):
         hpsys = ram_config.get('hpsys', {})
         ram = hpsys.get('ram', {})
-        # 使用第一个 ram bank 的 offset 作为基地址（按 core 选择）
-        for _, bank in ram.items():
-            if core_key and core_key in bank:
-                base_offset = bank.get(core_key, {}).get('offset')
-                if base_offset is not None:
-                    return base_offset + offset, base_offset + offset
-            hcpu = bank.get('hcpu', {})
-            base_offset = hcpu.get('offset', 0x20000000)
-            return base_offset + offset, base_offset + offset
-        # 默认值
-        return 0x20000000 + offset, 0x20000000 + offset
+        base = _resolve_ram_region_base(ram, 0x20000000)
+        return base + offset, base + offset
 
     if region == 'lpsys_ram' or region.startswith('lpsys'):
         lpsys = ram_config.get('lpsys', {})
         ram = lpsys.get('ram', {})
-        for _, bank in ram.items():
-            if core_key and core_key in bank:
-                base_offset = bank.get(core_key, {}).get('offset')
-                if base_offset is not None:
-                    return base_offset + offset, base_offset + offset
-            hcpu = bank.get('hcpu', {})
-            base_offset = hcpu.get('offset', 0x20400000)
-            return base_offset + offset, base_offset + offset
-        return 0x20400000 + offset, 0x20400000 + offset
+        base = _resolve_ram_region_base(ram, 0x20400000)
+        return base + offset, base + offset
 
     # psram 别名处理：psram{x} 直接映射到 mpi{x}
     # 用于 exec 的地址使用 xip 地址

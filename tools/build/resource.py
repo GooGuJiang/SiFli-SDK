@@ -1493,21 +1493,9 @@ def ConstructImgDownloadInfoV3(img_download_info, ptab_obj):
         ptype = partition.get('type', '')
         region = partition.get('region', '')
         offset = ptab.parse_size(partition.get('offset', 0))
+        core = partition.get('core')
 
-        sbus_addr, cbus_addr = ptab.resolve_region_address(region, offset, chip_config)
-
-        # Select download address based on memory type:
-        # - NAND: use base address (sbus_addr) for direct flash access
-        # - NOR: use XIP address (cbus_addr) for traditional XIP flash
-        # - PSRAM/RAM: use base address (sbus_addr)
-        memory_info = chip_config.get('memory_info', {}).get(region, {})
-        mem_type = memory_info.get('type', '').lower()
-        
-        if mem_type in ('nand', 'psram', 'ram'):
-            download_addr = sbus_addr
-        else:
-            # Default to XIP address for NOR Flash
-            download_addr = cbus_addr
+        download_addr = ptab.get_download_addr_v3(region, offset, chip_config, core=core)
 
         if ptype == 'ftab':
             img_download_info['ftab'] = download_addr
@@ -1518,12 +1506,13 @@ def ConstructImgDownloadInfoV3(img_download_info, ptab_obj):
 
         img_download_info[name] = download_addr
         
-        # Add 'main' alias for factory app (env['name'] is usually 'main')
+        # Add 'main' alias for HCPU factory app (env['name'] is usually 'main')
         subtype = partition.get('subtype', '')
-        if ptype == 'app' and subtype == 'factory':
+        part_core = (core or 'HCPU').upper()
+        if ptype == 'app' and subtype == 'factory' and part_core == 'HCPU':
             img_download_info['main'] = download_addr
-        # Add 'dfu' alias for dfu app (env['name'] is usually 'dfu')
-        if ptype == 'app' and subtype == 'dfu':
+        # Add 'dfu' alias for HCPU dfu app (env['name'] is usually 'dfu')
+        if ptype == 'app' and subtype == 'dfu' and part_core == 'HCPU':
             img_download_info['dfu'] = download_addr
 
 

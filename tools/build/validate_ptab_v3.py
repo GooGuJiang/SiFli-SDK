@@ -358,7 +358,7 @@ def validate_ptab_v3(ptab_obj) -> List[ValidationError]:
                     ))
 
             region = str(p.get('region', '') or '').strip()
-            if not re.match(r'^mpi\\d+$', region, flags=re.IGNORECASE):
+            if not re.match(r'^mpi\d+$', region, flags=re.IGNORECASE):
                 errors.append(ValidationError(
                     f"Partition '{pname}': flashdb_kv must use region 'mpiN' (got '{region}')"
                 ))
