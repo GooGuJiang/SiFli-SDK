@@ -1,8 +1,121 @@
-# SiFli SDK change Log v2.4.4
-## Notice
-Board `sf32lb52-nano_52j` and `sf32lb52-nano_52b` are obsolete and retained for compatibility. They are not well supported by examples. Please use `sf32lb52-nano_a128r16`, `sf32lb52-nano_n16r16` and `sf32lb52-nano_n4` instead.
+# SiFli SDK Change Log v2.4.5
+## Main Changes
+- All examples now support sf32lb56-lcd and sf32lb58-lcd series boards
+- The default toolchain set by `set_env` has been changed to `gcc`. To compile using Keil, run `set_env keil` instead
+
+## Change log since v2.4.4
+
+### Drivers
+#### Fixed
+- rcc: Fixed PCLK2 configuration error in deepwfi state for sf32lb52x
+- psram: Fixed bit-flip issue when PSRAM working at 24MHz on 52x
+- nand: Fixed ECC status mode of HYF4GQ4UTACAE
+- gpio: Fixed rt_pin callback not being invoked by LCPU side when HCPU is in sleep on SF32LB58
+- gpio: Fixed HPSYS sleep issue when using GPIO2 wakeup pin
+
+#### Changed
+- pdm: Added PDM2 support
+- common: Added sf32lb58 revision and LCPU config mismatch check
+- sdio: Added PM mode configuration
+
+### Middleware
+#### Fixed
+- lvgl: Changed to use RT-Thread's malloc by default to avoid compiler warnings
+- log: Fixed log crash when log is paused
+- lvgl_v9: Fixed issue where LV_USE_MEM_MONITOR cannot be enabled when LV_STDLIB_BUILTIN is absent
+- lvgl_v8: Fixed abnormal slider progress filling caused by list rendering problem
+- elm_rw: Fixed incomplete exported file data
+
+#### Changed
+- dfu: Added support for 55x
+- lvgl: Added `CONFIG_` prefix to macro definitions that do not have it
+
+#### Added
+- dfu_pan: Added DFU_PAN
+- battery: Added battery component
+
+
+### Bluetooth
+#### Fixed
+- bt: Synced LCPU patch for sf32lb52x and sf32lb56x
+- ble: Fixed ble connection cfm auth error
+- bt: Fixed typo by replacing mis-use of `callHeldStatus` with `callSetupStatus`
+- ble: Fixed ad type flags set error
+- ble: Changed rw timer to soft time
+- bt: Fixed hf feature about multi connect
+
+
+#### Changed
+- bt: Unified BR/EDR output power to 10dBm for 56x no-signal test
+- bt: Synced 52x and 56x RF driver
+- bt: Fixed 56x BIS audio stuttering issue
+- ble: Added some GATT cmp message process
+- bt: Supported two sbc/aac decoders
+
+#### Added
+- bt: Added AVRCP multi-connection function
+- bt: Added API for role switch
+- ble: Added ble tx power service
+- bt: Added passkey and pincode pair mode
+- ble: Added BLE_GAP_SET_PHY_CNF message
+- ble: Added read remote feature finsh command
+- ble: Added a way to set primary phy for ble advertising
+- bt: Added RF hopping test
+
+
+### RTOS
+#### Fixed
+- gmtime: Modified to search for RTC device only when time value is needed
+
+### Examples
+#### Fixed
+- `multimedia/audio/record`: Removed gain setting
+- `multimedia/audio/record`: Fixed playback time bug
+- `ble/hid`: Added debouncing for the button of board eh-lb551
+- `ble/peripheral_with_ota`: Turned off ULOG_OUTPUT_LVL_I
+- `bt/pan`: Fixed PAN delete link key bug
+- `multimedia/audio/record`: Fixed abnormal playback speed because data is written to NOR Flash
+
+#### Changed
+- `all examples`: Added support for sf32lb56x-lcd and sf32lb58-lcd series board
+- `bt/music_source`: Fixed incorrect description of playback loop count in README
+- `ble/file_transfer`: Fixed path length verification issue and enabled RTC function
+- `ble/talkback`: Added README
+
+
+### Tools
+#### Fixed
+- build: Fixed VS2017 project generation failure
+
+#### Changed
+- set_env: Changed to use GCC as default toolchain
+
+### BSP
+#### Fixed
+- `board/eh-lb520`: Expanded DFU_FLASH_CODE area
+- `board/sf32lb52-lchspi-ulp`: Added DFU_DOWNLOAD_REGION area
+- `board/eh-lb551`: Increased size of DFU area
+- `board/eh-lb555`: Fixed DFU region of board eh-lb555 not being large enough
+- `board/sf32lb56-lcd_n16r12n1`: Changed to use UART1 as console and not enable UART4 by HCPU side
+- `board/sf32lb58-lcd`: Fixed HCPU_FLASH_CODE tag error in 58-lcd_n16xxx boards
+- `board/sf32lb58-lcd`: Fixed key config error
+- `board/sf32lb56-lcd`: Fixed key config error
+- `board/sf32lb56-lcd`: Fixed LED pin config error
+- `board/sf32lb58-lcd`: Added DFU area
+- `board/sf32lb58-lcd_a128r32n1_dsi`: Fixed filesystem not working
+- `board/sf32lb58-lcd_a128r32n1_dsi`: Fixed JLINK_DEVICE
+- `board/sf32lb58-lcd_a128r32n1_a1_dsi`: Fixed filesystem not working
+- `board/sf32lb58-lcd`: Enabled PA and specified control pin
+- `board/sf32lb52-lcd_n16r8_jdi`: Corrected board macro definition
+
+#### Added
+- board: Added board sf32lb58-lcd_n16r32n1_qspi and sf32lb58-lcd_a128r32n1_qspi which use QSPI display as default display
+- board: Added sf32lb58-lcd board variants using A1 chip
 
 ## Change log since v2.4.3
+### Notice
+Board `sf32lb52-nano_52j` and `sf32lb52-nano_52b` are obsolete and retained for compatibility. They are not well supported by examples. Please use `sf32lb52-nano_a128r16`, `sf32lb52-nano_n16r16` and `sf32lb52-nano_n4` instead.
+
 ### Drivers
 #### Fixed
 - rgbled: Sync the RGB LED driver to fix the issue that RGBLED cannot be turned off
