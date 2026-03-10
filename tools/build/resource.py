@@ -749,6 +749,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
     - Alias macros: <ALIAS>_START_ADDR/_SIZE/_OFFSET
     - FS_REGION_* for filesystem-like partitions
     - FLASH_BOOT_LOADER_* from bootloader.exec (execution address)
+    - HCPU_FLASH_CODE_* from HCPU factory app.exec (execution address)
     - CODE_START_ADDR/CODE_SIZE for the current env image (best-effort)
     """
 
@@ -772,6 +773,8 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
     def _get_region_mem_type(region):
         if region == 'hpsys_ram' or region.startswith('hpsys') or region == 'lpsys_ram' or region.startswith('lpsys'):
             return 'ram'
+        if region == 'psram' or region.startswith('psram'):
+            return 'psram'
         mpi_name = _mpi_name_from_region(region)
         if mpi_name:
             info = chip_config.get('memory_info', {}).get(mpi_name, {})
@@ -953,6 +956,23 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
         s += _define_u32('FLASH_BOOT_LOADER_START_ADDR', bl_exec_addr)
         s += _define_u32('FLASH_BOOT_LOADER_SIZE', bl_size)
         s += _define_u32('FLASH_BOOT_LOADER_OFFSET', exec_offset)
+
+    # HCPU_FLASH_CODE_* macros (execution address, from exec)
+    hcpu_factory_partition = factory_by_core.get('HCPU')
+    if hcpu_factory_partition and isinstance(hcpu_factory_partition.get('exec'), dict):
+        exec_def = hcpu_factory_partition['exec']
+        exec_region = str(exec_def.get('region', '')).strip()
+        exec_offset = ptab.parse_size(exec_def.get('offset', 0))
+        exec_sbus, exec_cbus = ptab.resolve_region_address(exec_region, exec_offset, chip_config, core='HCPU')
+        hcpu_exec_addr = _select_exec_addr(exec_region, exec_sbus, exec_cbus)
+        hcpu_size = ptab.parse_size(hcpu_factory_partition.get('size', 0))
+
+        s += MakeLine('')
+        s += MakeLine('')
+        s += MakeLine('/* HCPU factory app exec addr */')
+        s += _define_u32('HCPU_FLASH_CODE_START_ADDR', hcpu_exec_addr)
+        s += _define_u32('HCPU_FLASH_CODE_SIZE', hcpu_size)
+        s += _define_u32('HCPU_FLASH_CODE_OFFSET', exec_offset)
 
     # CODE_START_ADDR/CODE_SIZE for current image (best-effort)
     env_name = (env.get('name') or '').strip().lower()

@@ -305,6 +305,8 @@ def _get_region_mem_type(region: str, chip_config: Dict[str, Any]) -> str:
     region = (region or '').strip().lower()
     if region == 'hpsys_ram' or region.startswith('hpsys') or region == 'lpsys_ram' or region.startswith('lpsys'):
         return 'ram'
+    if region == 'psram' or region.startswith('psram'):
+        return 'psram'
     mpi_name = _mpi_name_from_region(region)
     if mpi_name:
         info = chip_config.get('memory_info', {}).get(mpi_name, {})
@@ -416,14 +418,18 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     lpsys_mbox_size = int(mem_map_ints.get('LPSYS_MBOX_BUF_SIZE', 0x400))
 
     # Prefer mem_map.h runtime macros when available; fall back to SiliconSchema.
+    # 52x legacy projects historically linked HCPU RAM against the ptab/memory
+    # window without subtracting HCPU_CUSTOM_CONFIG_SIZE, so keep that layout
+    # for v3 regression compatibility.
     hcpu_ram_base = int(mem_map_ints.get('HCPU_RAM_DATA_START_ADDR', hpsys_base))
+    hcpu_ro_data_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
+    hcpu_ram_size_total = max(0, int(hpsys_total) - hpsys_mbox_size)
+    hcpu_ram_size_fallback = max(0, int(hcpu_ram_size_total) - int(hcpu_ro_data_size))
     hcpu_ram_size = int(mem_map_ints.get('HCPU_RAM_DATA_SIZE', 0))
-    if hcpu_ram_size <= 0:
-        hcpu_ro_data_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
-        hcpu_ram_size_total = max(0, int(hpsys_total) - hpsys_mbox_size)
-        hcpu_ram_size = max(0, int(hcpu_ram_size_total) - int(hcpu_ro_data_size))
+    if hcpu_ram_size <= 0 or cmsis_dir == 'sf32lb52x':
+        hcpu_ram_size = hcpu_ram_size_fallback
 
-    hcpu_rom_ex_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
+    hcpu_rom_ex_size = hcpu_ro_data_size
     hcpu_rom_ex_base = hcpu_ram_base + hcpu_ram_size
 
     lcpu_ram_base = lpsys_base_hcpu
