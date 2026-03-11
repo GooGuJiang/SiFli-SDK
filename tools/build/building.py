@@ -441,12 +441,13 @@ def _infer_build_core(env, fallback: str = 'HCPU') -> str:
 
 def ModifyProgramBinaryTargets(target, source, env):
     import ptab as ptab_module
+    import rtconfig
 
     ptab_obj = env.GetPtab() if hasattr(env, "GetPtab") else None
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    if ptab_obj and ptab_obj.is_v3():
+    if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
         elf_path = str(source[0]) if source else ''
         elf_dir = os.path.dirname(elf_path)
         out_dir = os.path.join(elf_dir, 'int_res')
@@ -458,12 +459,13 @@ def ModifyProgramBinaryTargets(target, source, env):
 
 def ModifyProgramHexTargets(target, source, env):
     import ptab as ptab_module
+    import rtconfig
 
     ptab_obj = env.GetPtab() if hasattr(env, "GetPtab") else None
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    if ptab_obj and ptab_obj.is_v3():
+    if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
         elf_path = str(source[0]) if source else ''
         elf_dir = os.path.dirname(elf_path)
         out_dir = os.path.join(elf_dir, 'int_res')
@@ -723,7 +725,7 @@ def LdsBuild(target, source, env):
     target_path = str(target[0])
 
     if ptab_obj and ptab_obj.is_v3():
-        # v3: Jinja2-only rendering (no gcc -E)
+        # v3: Jinja2-only rendering (no gcc -E / armclang -E)
         import gen_link_lds
 
         build_dir = os.path.dirname(os.path.abspath(target_path))
@@ -737,6 +739,18 @@ def LdsBuild(target, source, env):
             rtconfig_defines,
         )
         gen_link_lds.render_link_lds(str(source[0]), target_path, defines)
+        return
+
+    if rtconfig.PLATFORM == 'armcc':
+        with open(str(source[0]), 'r', encoding='utf-8', errors='ignore') as f:
+            script = f.readlines()
+
+        if script and ('$SDK_ROOT' in script[0] or '$BSP_ROOT' in script[0] or '$BOARD_ROOT' in script[0]):
+            script[0] = script[0].replace('$SDK_ROOT', os.getenv('SIFLI_SDK'))
+            script[0] = script[0].replace('$BSP_ROOT', str(env.get('BSP_ROOT', '')))
+
+        with open(target_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.writelines(script)
         return
 
     # v1/v2: legacy gcc -E preprocessing
@@ -779,23 +793,25 @@ def FsBuild(target, source, env):
 def ModifyLdsTargets(target, source, env):
     import ptab as ptab_module
 
-    target = [os.path.join(env['build_dir'], 'link_copy.lds')]
+    src0 = str(source[0]) if source else ''
+    target_ext = '.sct' if src0.endswith('.sct') or src0.endswith('.sct.jinja2') else '.lds'
+    target = [os.path.join(env['build_dir'], 'link_copy' + target_ext)]
     if 'PTAB_HEADER' in env:
         env.Depends(target, env['PTAB_HEADER'])
 
-    # v3 requires Jinja2 template (link.jinja2), and must not fallback to gcc -E
     ptab_obj = env.GetPtab() if hasattr(env, "GetPtab") else None
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
+    template_path = _get_link_template_path(src0) if src0 else ''
     if ptab_obj and ptab_obj.is_v3():
-        src0 = str(source[0]) if source else ''
-        base, ext = os.path.splitext(src0)
-        template_path = base + '.jinja2'
-        if not os.path.exists(template_path):
+        if not template_path or not os.path.exists(template_path):
             logging.error(f"ptab v3 requires jinja2 link template: {template_path}")
             raise SystemExit(1)
         source = [File(template_path)]
+    elif src0 and not os.path.exists(src0) and template_path and os.path.exists(template_path):
+        logging.error(f"ptab v1/v2 does not support jinja2-only link template: {template_path}")
+        raise SystemExit(1)
 
     return target, source
 
@@ -1026,6 +1042,24 @@ def MergeRtconfig(rtconfig1, rtconfig2):
         if not var.startswith('_') and not var.islower():
             setattr(rtconfig1, var, getattr(rtconfig2, var))
 
+def _get_link_template_path(link_source):
+    link_source = str(link_source or '')
+    if link_source.endswith('.sct'):
+        return link_source + '.jinja2'
+    base, _ = os.path.splitext(link_source)
+    return base + '.jinja2'
+
+
+def _select_link_script_base(candidates, ext):
+    for base, desc in candidates:
+        legacy_path = base + ext
+        template_path = _get_link_template_path(legacy_path)
+        if os.path.exists(legacy_path) or os.path.exists(template_path):
+            logging.debug('Use {} link file: {}'.format(desc, base))
+            return base, (base if os.path.exists(template_path) else None)
+    return None, None
+
+
 def GetLinkScript(proj_path,board,chip,core):
     board_path1, board_path2 = GetBoardPath(board)
     CC_TOOLS = os.getenv('RTT_CC')
@@ -1034,33 +1068,21 @@ def GetLinkScript(proj_path,board,chip,core):
     chip = chip.lower()
     core = core.lower()
     if CC_TOOLS=='keil' or CC_TOOLS=='gcc':
-        if CC_TOOLS=='keil':
-            ext='.sct'
+        ext = '.sct' if CC_TOOLS == 'keil' else '.lds'
+        SIFLI_SDK = os.getenv('SIFLI_SDK')
+        if CC_TOOLS == 'keil':
+            chip_base = os.path.join(SIFLI_SDK, 'drivers/cmsis/{}/Templates/arm/{}/link'.format(chip, core))
         else:
-            ext='.lds'
-        custom_link_file_path = os.path.join(proj_path, board)
-        custom_link_file_path = os.path.join(custom_link_file_path, 'link'+ext)
-        if os.path.exists(custom_link_file_path):
-            link_script = os.path.splitext(custom_link_file_path)[0]
-            logging.debug('Use project board link file: {}'.format(link_script))
-        elif os.path.exists(os.path.join(proj_path, chip + '/link'+ ext)):
-            link_script = os.path.join(proj_path, chip + '/link')
-            logging.debug('Use project chip link file: {}'.format(link_script))
-        elif os.path.exists(os.path.join(proj_path, 'link'+ext)):
-            link_script = os.path.join(proj_path, 'link')
-            logging.debug('Use project link file: {}'.format(link_script))
-        elif os.path.exists(os.path.join(board_path2, 'link'+ext)):    
-            # no custom link file present, use link file defined by board
-            link_script = os.path.join(board_path2, "link")
-            logging.debug('Use board link file: {}'.format(link_script))
-        else:
-            SIFLI_SDK = os.getenv('SIFLI_SDK')
-            if CC_TOOLS=='keil':
-                link_script = os.path.join(SIFLI_SDK, "drivers/cmsis/{}/Templates/arm/{}/link".format(chip.lower(), core.lower()))
-            else:
-                link_script_template = os.path.join(SIFLI_SDK, "drivers/cmsis/{}/Templates/gcc/{}/link".format(chip.lower(), core.lower()))
-                link_script = link_script_template
-            logging.debug('Use chip link file: {}'.format(link_script))
+            chip_base = os.path.join(SIFLI_SDK, 'drivers/cmsis/{}/Templates/gcc/{}/link'.format(chip, core))
+
+        candidates = [
+            (os.path.join(proj_path, board, 'link'), 'project board'),
+            (os.path.join(proj_path, chip + '/link'), 'project chip'),
+            (os.path.join(proj_path, 'link'), 'project'),
+            (os.path.join(board_path2, 'link'), 'board'),
+            (chip_base, 'chip'),
+        ]
+        link_script, link_script_template = _select_link_script_base(candidates, ext)
     return link_script,link_script_template
 
 def AddChildProj(proj_name, proj_path, img_embedded=False, shared_option=None, core=None):
@@ -2586,11 +2608,16 @@ def EndBuilding(target, program = None):
         program_asm = Env.ProgramAsm(program)   
         GenCppdefineFiles()
 
+        link_file = None
         if rtconfig.CROSS_TOOL == 'gcc':
-            lds_file = Env.LdsFile([File(rtconfig.LINK_SCRIPT_SRC + '.lds')])
-            Depends(program, lds_file)
-            # always build lds file as it would not get rebuilt when header file changes
-            AlwaysBuild(lds_file)
+            link_file = Env.LdsFile([File(rtconfig.LINK_SCRIPT_SRC + '.lds')])
+        elif rtconfig.CROSS_TOOL == 'keil':
+            link_file = Env.LdsFile([File(rtconfig.LINK_SCRIPT_SRC + '.sct')])
+
+        if link_file:
+            Depends(program, link_file)
+            # always build link script as it would not get rebuilt when header file changes
+            AlwaysBuild(link_file)
             if "ROM_SYM" in Env and Env['ROM_SYM']:
                 Depends(program, Env['ROM_SYM'])
 
@@ -2960,24 +2987,8 @@ def SifliKeilEnv(cpu, BSP_ROOT=''):
     else:
         no_dsp_fp = False
     
-    # Preproc link_script
-    f = open(rtconfig.LINK_SCRIPT + '.sct', 'r')
-    script = f.readlines()
-    f.close()
-    if '$SDK_ROOT' in script[0] or '$BSP_ROOT' in script[0] or '$BOARD_ROOT' in script[0]:
-        script[0] = script[0].replace('$SDK_ROOT', os.getenv('SIFLI_SDK'))
-        script[0] = script[0].replace('$BSP_ROOT', BSP_ROOT)
-        # if GetBoardName():
-        #     board_path1,board_path2 = GetBoardPath(GetBoardName())
-        #     script[0] = script[0].replace('$BOARD_ROOT', board_path1)
-        new_file_path = os.path.join(rtconfig.OUTPUT_DIR,  os.path.basename(rtconfig.LINK_SCRIPT ) + '.sct')
-        if not os.path.exists(rtconfig.OUTPUT_DIR):
-            logging.debug('sct dir:{}'.format(rtconfig.OUTPUT_DIR))
-            Execute(Mkdir(rtconfig.OUTPUT_DIR))
-        f = open(new_file_path, 'w')
-        f.writelines(script)
-        f.close()  
-        rtconfig.LINK_SCRIPT = os.path.splitext(new_file_path)[0]
+    # Keil always links against a generated scatter file in the build dir.
+    rtconfig.LINK_SCRIPT = os.path.join(rtconfig.OUTPUT_DIR, 'link_copy').replace('\\', '/')
     
     rtconfig.keil_version=SifliKeilVersion()
     logging.debug("Keil version %s"%(rtconfig.keil_version))

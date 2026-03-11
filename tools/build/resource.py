@@ -1617,6 +1617,10 @@ def BuildJLinkLoadScript(main_env):
                     s_file += MakeLine('ADDR{}=0x{:08X}'.format(s_num,info[d]))
                     s_num += 1
             else:
+                if is_ptab_v3 and os.path.isdir(bin_file):
+                    preferred = os.path.join(bin_file, 'ER_IROM1.bin')
+                    assert os.path.isfile(preferred), "{} should contain ER_IROM1.bin as code image".format(env['name'])
+                    bin_file = preferred
                 assert os.path.isfile(bin_file), "{} should be a file as map defines".format(env['name'])
                 s += MakeLine('loadbin {} 0x{:08X}'.format(os.path.relpath(bin_file, work_dir), info))
                 download_file.append({

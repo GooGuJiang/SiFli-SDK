@@ -394,7 +394,19 @@ Generated ftab.bin: build_xxx/ftab.bin (11280 bytes)
 
 ### jinja2 链接脚本模板
 
-在 patb v1/v2 中，链接脚本使用编译器的c风格预处理器进行生成`link_copy.lds`。而在 ptab v3 中，链接脚本片段使用 jinja2 模板生成，模板文件位于 `drivers/cmsis/<chip>` 目录下。和patb v1/v2 类似，如果需要在工程中修改链接模板，可以添加对应的`link.jinja2`文件到工程目录中。另外需要注意的是，patb v3必须使用jinja2模板，不可以再使用c风格预处理器；同样的，patb v1/v2 也不支持jinja2模板。
+在 patb v1/v2 中，链接脚本使用编译器的 c 风格预处理器生成。
+
+在 ptab v3 中：
+
+- GCC 链接脚本使用 jinja2 模板，默认模板位于 `drivers/cmsis/<chip>/Templates/gcc/<core>/link.jinja2`
+- Keil `.sct` 的 jinja2 模板也需要手工维护，默认模板位于 `drivers/cmsis/<chip>/Templates/arm/<core>/link.sct.jinja2`
+
+需要注意：
+
+- `tools/build/migrate_ptab_to_v3.py` 只负责迁移 `ptab.json -> ptab.yaml`，**不会自动迁移任何链接脚本**
+- 如果工程或板级目录有自定义链接脚本，需要手工迁移对应的 `link.jinja2` 或 `link.sct.jinja2`
+- ptab v3 必须使用 jinja2 模板，不可以继续依赖 c 风格预处理器生成链接脚本
+- ptab v1/v2 也不支持 jinja2 模板
 
 ### validate_ptab_v3.py
 
