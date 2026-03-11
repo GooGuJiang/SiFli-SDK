@@ -32,8 +32,6 @@ struct rt_color rgb_color_arry[] =
 
 void rgb_led_init()
 {
-<<<<<<< HEAD   (acdfea [bug][example][example\rt_device\pwm\pwm_dma] The 58-LCD doe)
-=======
 #ifdef SF32LB52X
     HAL_PIN_Set(PAD_PA32, GPTIM2_CH1, PIN_NOPULL, 1);   // RGB LED 52x  pwm3_cc1
 #elif defined SF32LB58X
@@ -41,7 +39,6 @@ void rgb_led_init()
 #elif defined SF32LB56X
     HAL_PIN_Set(PAD_PB09, GPTIM3_CH4, PIN_NOPULL, 0);//566   pwm4_cc4
 #endif
->>>>>>> CHANGE (31e046 [bug][board] Modify the board configuration to support the R)
     /*rgbled poweron*/
 #ifdef SF32LB52X
     HAL_PMU_ConfigPeriLdo(PMU_PERI_LDO3_3V3, true, true);
@@ -106,4 +103,3 @@ int main(void)
     }
     return 0;
 }
-
