@@ -152,10 +152,13 @@ static app_env_t *ble_app_get_env(void)
     return &g_app_env;
 }
 
-#if 0 //CFG_AV_AAC
+//! Using an aac decoder requires about 100k SRAM. 
+//! Therefore, if two aac decoders need to be used at the same time, SRAM is not enough, 
+//! and the memory used for aac decoding needs to be allocated to PSRAM.
+#ifdef CFG_AV_AAC
 #include "mem_section.h"
 
-#define AAC_HEAP_SIZE  (1 * 1024 * 1024)
+#define AAC_HEAP_SIZE  (1 * 300 * 1024)
 
 #if defined(__CC_ARM) || defined(__CLANG_ARM)
     L2_RET_BSS_SECT_BEGIN(g_xz_opus_stack)
