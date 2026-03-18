@@ -193,6 +193,8 @@ def _load_mem_map_ints(sifli_sdk_root: str, cmsis_dir: str) -> Dict[str, int]:
         'LPSYS_RAM_BASE',
         'LPSYS_RAM_CBUS_BASE',
         'LPSYS_RAM_SIZE',
+        'LPSYS_EM_BASE',
+        'LPSYS_EM_SIZE',
         'LCPU_MBOX_SIZE',
         'LCPU_RAM_CODE_SIZE',
         'LCPU_RAM_CODE_START_ADDR',
@@ -474,15 +476,12 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     lpsys_mbox_size = int(mem_map_ints.get('LPSYS_MBOX_BUF_SIZE', 0x400))
 
     # Prefer mem_map.h runtime macros when available; fall back to SiliconSchema.
-    # 52x legacy projects historically linked HCPU RAM against the ptab/memory
-    # window without subtracting HCPU_CUSTOM_CONFIG_SIZE, so keep that layout
-    # for v3 regression compatibility.
     hcpu_ram_base = int(mem_map_ints.get('HCPU_RAM_DATA_START_ADDR', hpsys_base))
     hcpu_ro_data_size = int(mem_map_ints.get('HCPU_RO_DATA_SIZE', 0))
     hcpu_ram_size_total = max(0, int(hpsys_total) - hpsys_mbox_size)
     hcpu_ram_size_fallback = max(0, int(hcpu_ram_size_total) - int(hcpu_ro_data_size))
     hcpu_ram_size = int(mem_map_ints.get('HCPU_RAM_DATA_SIZE', 0))
-    if hcpu_ram_size <= 0 or cmsis_dir == 'sf32lb52x':
+    if hcpu_ram_size <= 0:
         hcpu_ram_size = hcpu_ram_size_fallback
 
     hcpu_rom_ex_size = hcpu_ro_data_size
@@ -498,6 +497,7 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         _match_partition_by_alias(partitions, 'PSRAM_DATA')
         or _find_partition(partitions, name='psram_data')
     )
+    lpsys_ram_part = _find_partition(partitions, name='lpsys_ram')
     hcpu_ram_part = (
         _match_partition_by_alias(partitions, 'HCPU_RAM_DATA')
         or _find_partition(partitions, name='hcpu_ram_data')
@@ -538,6 +538,7 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         base = _select_start_addr(mem_type, sbus, cbus)
         return int(base), int(size), str(region)
 
+    lpsys_ram_base_ptab, lpsys_ram_size_ptab, _ = _partition_to_base_size(lpsys_ram_part)
     hcpu_ram_base_ptab, hcpu_ram_size_ptab, _ = _partition_to_base_size(hcpu_ram_part)
     hcpu_ro_base_ptab, hcpu_ro_size_ptab, _ = _partition_to_base_size(hcpu_ro_part)
     bootloader_ram_base, bootloader_ram_size, _ = _partition_to_base_size(bootloader_ram_part)
@@ -686,9 +687,12 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
             ram_base, ram_size = hcpu_ram_base, hcpu_ram_size
 
     out: Dict[str, Any] = dict(rtconfig_defines or {})
-    # Expose selected mem_map.h constants so migrated templates can stay close
-    # to their legacy layouts instead of hardcoding chip-specific addresses.
+    # Expose selected mem_map.h constants so templates can consume chip-level
+    # addresses without hardcoding them.
     out.update(mem_map_ints)
+    if lpsys_ram_base_ptab and lpsys_ram_size_ptab:
+        out['LPSYS_RAM_BASE'] = int(lpsys_ram_base_ptab)
+        out['LPSYS_RAM_SIZE'] = int(lpsys_ram_size_ptab)
     out['__ROM_BASE'] = int(rom_base)
     out['__ROM_SIZE'] = int(rom_size)
     out['__RAM_BASE'] = int(ram_base)

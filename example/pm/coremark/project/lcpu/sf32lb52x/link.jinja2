@@ -33,14 +33,10 @@
  */
 
 /*
- * CoreMark keeps the legacy 52x custom_mem_map.h layout:
- * - LCPU code window uses 32KB minus mailbox on LPSYS RAM C-Bus.
- * - RW/ZI data lives in LPSYS EM.
+ * CoreMark keeps the legacy 52x link layout:
+ * - The LPSYS RAM code window comes from the effective PTAB overlay.
+ * - RW/ZI data stays in the chip-defined LPSYS EM window.
  */
-{% set lcpu_code_window_size = 32 * 1024 %}
-{% set lcpu_mbox_size = 2 * 512 %}
-{% set lcpu_em_base = 0x20408000 %}
-{% set lcpu_em_size = 24 * 1024 %}
 
 /*---------------------- Flash Configuration ----------------------------------
   <h> Flash Configuration
@@ -49,7 +45,7 @@
   </h>
   -----------------------------------------------------------------------------*/
 __ROM_BASE = {{ hex32(defines['__ROM_BASE']) }};
-__ROM_SIZE = {{ hex32(lcpu_code_window_size - lcpu_mbox_size) }};
+__ROM_SIZE = {{ hex32(defines['LPSYS_RAM_SIZE'] - defines['LCPU_MBOX_SIZE']) }};
 
 
 /*--------------------- Embedded RAM Configuration ----------------------------
@@ -58,8 +54,8 @@ __ROM_SIZE = {{ hex32(lcpu_code_window_size - lcpu_mbox_size) }};
     <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
  -----------------------------------------------------------------------------*/
-__RAM_BASE = {{ hex32(lcpu_em_base) }};
-__RAM_SIZE = {{ hex32(lcpu_em_size) }};
+__RAM_BASE = {{ hex32(defines['LPSYS_EM_BASE']) }};
+__RAM_SIZE = {{ hex32(defines['LPSYS_EM_SIZE']) }};
 
 /*--------------------- Stack / Heap Configuration ----------------------------
   <h> Stack / Heap Configuration

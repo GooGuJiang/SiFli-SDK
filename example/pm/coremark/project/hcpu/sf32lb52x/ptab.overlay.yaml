@@ -1,0 +1,4 @@
+partitions:
+  - op: override
+    name: hcpu_ram_data
+    size: '0x00020000'

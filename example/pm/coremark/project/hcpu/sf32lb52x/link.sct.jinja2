@@ -36,7 +36,7 @@ LR_IROM1 {{ hex32(defines['__ROM_BASE']) }} {{ hex32(defines['__ROM_SIZE']) }}  
   ScatterAssert((ImageLength(RW_PSRAM1)+ImageLength(RW_PSRAM_NON_RET))<{{ hex32(defines['__PSRAM_SIZE']) }})
 {% endif %}
 
-  ER_IRAM0 {{ hex32(defines['HPSYS_RAM0_BASE']) }}  {  ; ZI data, not retained
+  ER_IRAM0 {{ hex32(defines['HCPU_RAM_DATA_START_ADDR']) }}  {  ; ZI data, not retained
   
    core_list_join.o (+RO)
    core_main.o (+RO)
@@ -71,7 +71,7 @@ LR_IROM1 {{ hex32(defines['__ROM_BASE']) }} {{ hex32(defines['__ROM_SIZE']) }}  
 {% endif %}
   }
 
-  ScatterAssert(ImageLength(ER_IRAM0)+ImageLength(RW_IRAM1)<{{ hex32(defines['__RAM_SIZE']) }})
+  ScatterAssert(ImageLength(ER_IRAM0)+ImageLength(RW_IRAM1)<{{ hex32(defines['HCPU_RAM_DATA_SIZE']) }})
 
   RW_IRAM_RET {{ hex32(defines['HPSYS_RAM1_BASE']) }} {{ hex32(defines['HPSYS_RAM1_SIZE']) }} {  
 
@@ -126,5 +126,4 @@ LR_IROM1 {{ hex32(defines['__ROM_BASE']) }} {{ hex32(defines['__ROM_SIZE']) }}  
   }
 
 }
-
 

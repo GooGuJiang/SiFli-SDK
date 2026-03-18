@@ -1,0 +1,4 @@
+partitions:
+  - op: override
+    name: lpsys_ram
+    size: '0x00008000'

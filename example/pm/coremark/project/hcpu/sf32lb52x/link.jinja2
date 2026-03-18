@@ -46,8 +46,8 @@ __ROM_SIZE = {{ hex32(defines['__ROM_SIZE']) }};
     <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
   </h>
  -----------------------------------------------------------------------------*/
-__RAM0_BASE = {{ hex32(defines['HPSYS_RAM0_BASE']) }};
-__RAM0_SIZE = {{ hex32(defines['__RAM_SIZE']) }};
+__RAM0_BASE = {{ hex32(defines['HCPU_RAM_DATA_START_ADDR']) }};
+__RAM0_SIZE = {{ hex32(defines['HCPU_RAM_DATA_SIZE']) }};
 
 __RAM1_BASE = {{ hex32(defines['HPSYS_RAM1_BASE']) }};
 __RAM1_SIZE = {{ hex32(defines['HPSYS_RAM1_SIZE']) }};
@@ -62,17 +62,17 @@ __RAM1_SIZE = {{ hex32(defines['HPSYS_RAM1_SIZE']) }};
 __STACK_SIZE = 0x00002000;
 __HEAP_SIZE  = 0x00000C00;
 
-__ROM_EX_BASE = {{ hex32(defines['__ROM_EX_BASE']) }};
-__ROM_EX_SIZE = {{ hex32(defines['__ROM_EX_SIZE']) }};
+__ROM_EX_BASE = {{ hex32(defines['HCPU_RO_DATA_START_ADDR']) }};
+__ROM_EX_SIZE = {{ hex32(defines['HCPU_RO_DATA_SIZE']) }};
 
-__PSRAM_BASE = {{ hex32(defines['__PSRAM_BASE']) }};
-__PSRAM_SIZE = {{ hex32(defines['__PSRAM_SIZE']) }};
+__PSRAM_BASE = {{ hex32(defines['PSRAM_DATA_START_ADDR']) }};
+__PSRAM_SIZE = {{ hex32(defines['PSRAM_DATA_SIZE']) }};
 
-__ROM2_BASE = {{ hex32(defines['__ROM2_BASE']) }};
-__ROM2_SIZE = {{ hex32(defines['__ROM2_SIZE']) }};
+__ROM2_BASE = {{ hex32(defines['HCPU_FLASH2_IMG_START_ADDR']) }};
+__ROM2_SIZE = {{ hex32(defines['HCPU_FLASH2_IMG_SIZE']) }};
 
-__ROM3_BASE = {{ hex32(defines['__ROM3_BASE']) }};
-__ROM3_SIZE = {{ hex32(defines['__ROM3_SIZE']) }};
+__ROM3_BASE = {{ hex32(defines['HCPU_FLASH2_FONT_START_ADDR']) }};
+__ROM3_SIZE = {{ hex32(defines['HCPU_FLASH2_FONT_SIZE']) }};
 
 
 /*
