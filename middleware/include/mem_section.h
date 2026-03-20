@@ -224,8 +224,7 @@ extern "C" {
 #define L2_RET_BSS_SECT_BEGIN(section_name)        SECTION_ZIDATA_BEGIN(.l2_ret_bss_##section_name)
 /** L2 retained bss section end */
 #define L2_RET_BSS_SECT_END                        SECTION_ZIDATA_END
-
-#if defined(__CC_ARM) || defined(__CLANG_ARM)
+#if defined(__CC_ARM) || defined(__CLANG_ARM) || defined(_MSC_VER)
 /* ARMCC use ITCM_NON_RET_BSS_SECT_BEGIN for backward compatibility, such that no need to update link file */
 #define L2_RET_BSS_SECT(section_name)              //SECTION(STRINGIFY(.bss.l2_ret_bss_##section_name))
 #else
