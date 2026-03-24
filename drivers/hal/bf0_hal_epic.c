@@ -963,93 +963,101 @@ static bool EPIC_ClipLayerSrcByOutput(
 
     if (rot_cfg)
     {
-        AreaMove(&output_layer_area, -rot_cfg->pivot_x, -rot_cfg->pivot_y);
-        /*output_layer_area is base on pivot now*/
-
-        if (1 == rot_cfg->h_mirror)
+        if (rot_cfg->trans_matrix)
         {
-            int16_t x0 = output_layer_area.x0;
-            int16_t x1 = output_layer_area.x1;
-
-            output_layer_area.x0 = EPIC_MIRROR_V(x1, 0);
-            output_layer_area.x1 = EPIC_MIRROR_V(x0, 0);
+            return true;//just return true to let EPIC do the clipping.
         }
-
-        if (1 == rot_cfg->v_mirror)
+        else
         {
-            int16_t y0 = output_layer_area.y0;
-            int16_t y1 = output_layer_area.y1;
+            AreaMove(&output_layer_area, -rot_cfg->pivot_x, -rot_cfg->pivot_y);
+            /*output_layer_area is base on pivot now*/
 
-            output_layer_area.y0 = EPIC_MIRROR_V(y1, 0);
-            output_layer_area.y1 = EPIC_MIRROR_V(y0, 0);
-            v_mirror_enabled = 1;
-        }
+            if (1 == rot_cfg->h_mirror)
+            {
+                int16_t x0 = output_layer_area.x0;
+                int16_t x1 = output_layer_area.x1;
+
+                output_layer_area.x0 = EPIC_MIRROR_V(x1, 0);
+                output_layer_area.x1 = EPIC_MIRROR_V(x0, 0);
+            }
+
+            if (1 == rot_cfg->v_mirror)
+            {
+                int16_t y0 = output_layer_area.y0;
+                int16_t y1 = output_layer_area.y1;
+
+                output_layer_area.y0 = EPIC_MIRROR_V(y1, 0);
+                output_layer_area.y1 = EPIC_MIRROR_V(y0, 0);
+                v_mirror_enabled = 1;
+            }
 
 
-        EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area(base on pivot)");
+            EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area(base on pivot)");
 
-        if ((EPIC_INPUT_SCALING_FACTOR_1 != rot_cfg->scale_x) || (EPIC_INPUT_SCALING_FACTOR_1 != rot_cfg->scale_y))
-        {
-            uint32_t epic_pitch_x;
-            uint32_t epic_pitch_y;
+            if ((EPIC_INPUT_SCALING_FACTOR_1 != rot_cfg->scale_x) || (EPIC_INPUT_SCALING_FACTOR_1 != rot_cfg->scale_y))
+            {
+                uint32_t epic_pitch_x;
+                uint32_t epic_pitch_y;
 
 #ifdef SF32LB55X
-            /*
-                On 55x scaling down value will re-calculate by layer width&height,
-                clipping source layer maybe tearing the image.
+                /*
+                    On 55x scaling down value will re-calculate by layer width&height,
+                    clipping source layer maybe tearing the image.
 
-                So clipping layer when scaling up or coodinates overflow.
-            */
-            EPIC_AreaTypeDef res_area;
-            EPIC_JoinArea(input_layer, output_layer, &res_area);
-            if (((EPIC_INPUT_SCALING_FACTOR_1 < rot_cfg->scale_x) || (EPIC_INPUT_SCALING_FACTOR_1 < rot_cfg->scale_y))
-                    && (!EPCI_IS_TLBR_OVERFLOW(EPIC_L0, res_area.x0, res_area.y0, res_area.x1, res_area.y1)))
-            {
-                return false;
-            }
+                    So clipping layer when scaling up or coodinates overflow.
+                */
+                EPIC_AreaTypeDef res_area;
+                EPIC_JoinArea(input_layer, output_layer, &res_area);
+                if (((EPIC_INPUT_SCALING_FACTOR_1 < rot_cfg->scale_x) || (EPIC_INPUT_SCALING_FACTOR_1 < rot_cfg->scale_y))
+                        && (!EPCI_IS_TLBR_OVERFLOW(EPIC_L0, res_area.x0, res_area.y0, res_area.x1, res_area.y1)))
+                {
+                    return false;
+                }
 #endif /* SF32LB55X */
-            epic_pitch_x = EPIC_CONV_SCALE_FACTOR(rot_cfg->scale_x);
-            epic_pitch_y = EPIC_CONV_SCALE_FACTOR(rot_cfg->scale_y);
+                epic_pitch_x = EPIC_CONV_SCALE_FACTOR(rot_cfg->scale_x);
+                epic_pitch_y = EPIC_CONV_SCALE_FACTOR(rot_cfg->scale_y);
 
-            /*
-                Add '1' pitch pixels around of source layer, to make sure scaling get enough source data.
-             */
-            ext_x += 1;
-            ext_y += 1;
+                /*
+                    Add '1' pitch pixels around of source layer, to make sure scaling get enough source data.
+                 */
+                ext_x += 1;
+                ext_y += 1;
 
-            output_layer_area.x0 = EPIC_RSCALE_INT16(output_layer_area.x0 - ext_x, epic_pitch_x, -(EPIC_SCALE_1 - 1))/*round up RSCALE value*/;
-            output_layer_area.x1 = EPIC_RSCALE_INT16(output_layer_area.x1 + ext_x, epic_pitch_x, EPIC_SCALE_1 - 1);
-            output_layer_area.y0 = EPIC_RSCALE_INT16(output_layer_area.y0 - ext_y, epic_pitch_y, -(EPIC_SCALE_1 - 1));
-            output_layer_area.y1 = EPIC_RSCALE_INT16(output_layer_area.y1 + ext_y, epic_pitch_y, EPIC_SCALE_1 - 1);
+                output_layer_area.x0 = EPIC_RSCALE_INT16(output_layer_area.x0 - ext_x, epic_pitch_x, -(EPIC_SCALE_1 - 1))/*round up RSCALE value*/;
+                output_layer_area.x1 = EPIC_RSCALE_INT16(output_layer_area.x1 + ext_x, epic_pitch_x, EPIC_SCALE_1 - 1);
+                output_layer_area.y0 = EPIC_RSCALE_INT16(output_layer_area.y0 - ext_y, epic_pitch_y, -(EPIC_SCALE_1 - 1));
+                output_layer_area.y1 = EPIC_RSCALE_INT16(output_layer_area.y1 + ext_y, epic_pitch_y, EPIC_SCALE_1 - 1);
 
-            EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area before scale(base on pivot)");
+                EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area before scale(base on pivot)");
 
-            ext_x = 0;
-            ext_y = 0;
+                ext_x = 0;
+                ext_y = 0;
+            }
+
+            if (0 != rot_cfg->angle)
+            {
+                EPIC_PointTypeDef pivot_o;
+
+                //Calculate pivot base on output_layer(output_layer is base on pivot now)
+                pivot_o.x = 0 - output_layer_area.x0;
+                pivot_o.y = 0 - output_layer_area.y0;
+
+                EPIC_GetRotatedArea(&output_layer_area,
+                                    output_layer_area.x1 - output_layer_area.x0 + 1,
+                                    output_layer_area.y1 - output_layer_area.y0 + 1,
+                                    3600 - rot_cfg->angle, &pivot_o);
+
+                //'EPIC_GetRotatedArea' return area is base on output_layer's TL move to pivot
+                AreaMove(&output_layer_area, -pivot_o.x, -pivot_o.y);
+                EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area before rotate(base on pivot)");
+            }
+
+
+            AreaMove(&output_layer_area, rot_cfg->pivot_x, rot_cfg->pivot_y);
+            /*output_layer_area is base on input_layer's TL now*/
         }
-
-        if (0 != rot_cfg->angle)
-        {
-            EPIC_PointTypeDef pivot_o;
-
-            //Calculate pivot base on output_layer(output_layer is base on pivot now)
-            pivot_o.x = 0 - output_layer_area.x0;
-            pivot_o.y = 0 - output_layer_area.y0;
-
-            EPIC_GetRotatedArea(&output_layer_area,
-                                output_layer_area.x1 - output_layer_area.x0 + 1,
-                                output_layer_area.y1 - output_layer_area.y0 + 1,
-                                3600 - rot_cfg->angle, &pivot_o);
-
-            //'EPIC_GetRotatedArea' return area is base on output_layer's TL move to pivot
-            AreaMove(&output_layer_area, -pivot_o.x, -pivot_o.y);
-            EPIC_DEBUG_PRINT_AREA_INFO(&output_layer_area, "output_layer_area before rotate(base on pivot)");
-        }
-
-
-        AreaMove(&output_layer_area, rot_cfg->pivot_x, rot_cfg->pivot_y);
-        /*output_layer_area is base on input_layer's TL now*/
     }
+
 
     if (ext_x != 0)
     {

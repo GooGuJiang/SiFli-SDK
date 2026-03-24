@@ -73,6 +73,7 @@ typedef enum
 */
 void sifli_identity_3x3(sifli_matrix_3x3_t *matrix);
 int sifli_mat_vertex_multiply(sifli_matrix_3x3_t *matrix, float *x, float *y);
+//multed = matrix * mult
 void sifli_mat_multiply_3x3(sifli_matrix_3x3_t *matrix, sifli_matrix_3x3_t *mult, sifli_matrix_3x3_t *multed);
 #define sifli_multiply(matrix, mult) sifli_mat_multiply_3x3(matrix, mult, matrix)
 void sifli_mirror_x(sifli_matrix_3x3_t *matrix);
