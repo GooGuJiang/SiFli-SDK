@@ -15,6 +15,12 @@ class LinkLdsError(RuntimeError):
     pass
 
 
+_LEGACY_BOOTLOADER_RAM_DEFAULTS: Dict[str, Tuple[int, int]] = {
+    'sf32lb56': (0x20020000, 0x00010000),
+    'sf32lb58': (0x20000000, 0x00010000),
+}
+
+
 def hex32(value: int) -> str:
     return '0x{:08X}'.format(value & 0xFFFFFFFF)
 
@@ -542,6 +548,18 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
     hcpu_ram_base_ptab, hcpu_ram_size_ptab, _ = _partition_to_base_size(hcpu_ram_part)
     hcpu_ro_base_ptab, hcpu_ro_size_ptab, _ = _partition_to_base_size(hcpu_ro_part)
     bootloader_ram_base, bootloader_ram_size, _ = _partition_to_base_size(bootloader_ram_part)
+    legacy_bootloader_ram = _LEGACY_BOOTLOADER_RAM_DEFAULTS.get(str(getattr(ptab_obj, 'chip_series', '')).strip().lower())
+    if bootloader_ram_part and legacy_bootloader_ram:
+        try:
+            if ptab_module.partition_matches_default_v3(
+                bootloader_ram_part,
+                partitions,
+                chip_config,
+                getattr(ptab_obj, 'chip_series', None),
+            ):
+                bootloader_ram_base, bootloader_ram_size = legacy_bootloader_ram
+        except Exception:
+            pass
     psram_base0, psram_size0, psram_region0 = _partition_to_base_size(psram_part)
     psram_code_base, psram_code_size, _ = _partition_to_base_size(psram_code_part)
     psram2_base0, psram2_size0, psram2_region0 = _partition_to_base_size(psram2_part)

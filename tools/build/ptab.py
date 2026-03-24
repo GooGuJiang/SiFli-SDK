@@ -776,11 +776,15 @@ _PTAB_V3_SERIES_DEFAULTS: Dict[str, Dict[str, int]] = {
         'flash_table_size': 0x00008000,
         'bootloader_offset': 0x00020000,
         'bootloader_size': 0x00020000,
+        'bootloader_ram_offset': 0x00020000,
+        'bootloader_ram_size': 0x00010000,
     },
     'sf32lb58': {
         'flash_table_size': 0x00005000,
         'bootloader_offset': 0x00020000,
         'bootloader_size': 0x00020000,
+        'bootloader_ram_offset': 0x00000000,
+        'bootloader_ram_size': 0x00010000,
     },
 }
 
@@ -926,6 +930,7 @@ def _infer_default_partitions_v3(
             'region': 'hpsys_ram',
             'offset': cfg['bootloader_ram_offset'],
             'size': cfg['bootloader_ram_size'],
+            'core': 'HCPU',
         }
         defaults['lpsys_ram'] = {
             'name': 'lpsys_ram',
@@ -955,6 +960,15 @@ def _infer_default_partitions_v3(
             'region': 'mpi5',
             'offset': cfg['bootloader_offset'],
         },
+    }
+    defaults['bootloader_ram_data'] = {
+        'name': 'bootloader_ram_data',
+        'type': 'data',
+        'subtype': 'ram',
+        'region': 'hpsys_ram',
+        'offset': cfg['bootloader_ram_offset'],
+        'size': cfg['bootloader_ram_size'],
+        'core': 'HCPU',
     }
     return defaults
 
