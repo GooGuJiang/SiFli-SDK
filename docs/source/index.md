@@ -50,6 +50,7 @@ bootloader
 example/index
 api/index
 contribute/index
+copyright/index
 ```
 
 
