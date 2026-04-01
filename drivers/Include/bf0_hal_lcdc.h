@@ -74,7 +74,9 @@ extern "C" {
   Compressed layer data function
 */
 #if !(defined(SF32LB52X) || defined(SF32LB57X))
-#define LCDC_SUPPORTED_COMPRESSED_LAYER
+#ifdef HAL_EXTDMA_MODULE_ENABLED
+#define LCDC_SUPPORTED_COMPRESSED_LAYER   //TODO: lcpu因为没有开
+#endif /* HAL_EXTDMA_MODULE_ENABLED */
 #ifdef SF32LB58X
 #define LCDC_SUPPORTED_COMPRESSED_LAYER_MAX_WIDTH 1024
 #elif defined(SF32LB55X)||defined(SF32LB56X)
