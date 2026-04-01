@@ -35,11 +35,6 @@ void bf0_disable_pll()
 {
 
 }
-void set_pll_state(uint8_t state)
-{
-
-}
-
 #endif
 
 #if defined(BSP_ENABLE_I2S_CODEC)||defined(BSP_ENABLE_I2S3)||defined(_SIFLI_DOXYGEN_)
