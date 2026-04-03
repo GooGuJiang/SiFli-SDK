@@ -5,19 +5,12 @@
 # Auto-generated. Please review and adjust as needed.
 
 version: 3
-chip: SF32LB52JUD6
+chip: SF32LB523UB6
 memory:
 - mpi: mpi2
   type: nor
+
 partitions:
-
-- name: calibration
-  type: data
-  subtype: calibration
-  region: mpi2
-  offset: '0x00008000'
-  size: '0x00002000'
-
 - name: hcpu_flash_code
   type: app
   subtype: factory
@@ -62,10 +55,3 @@ partitions:
   region: psram1
   offset: '0x00000000'
   size: '0x00400000'
-
-- name: bootloader_ram_data
-  type: data
-  subtype: ram
-  region: hpsys_ram
-  offset: '0x00030000'
-  size: '0x00010000'

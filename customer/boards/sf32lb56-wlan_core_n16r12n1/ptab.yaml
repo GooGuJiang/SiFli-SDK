@@ -3,7 +3,7 @@
 # Chip: SF32LB56X
 
 version: 3
-chip: SF32LB56X
+chip: SF32LB566VCB36
 
 # NOTE:
 # - `memory` only describes external storage devices.
@@ -14,14 +14,6 @@ memory:
     size: 16777216 # 16MB
 
 partitions:
-
-  - name: calibration
-    type: data
-    subtype: calibration
-    region: mpi5
-    offset: 0x8000
-    size: 8KB
-
   - name: hcpu_flash_code
     type: app
     subtype: factory

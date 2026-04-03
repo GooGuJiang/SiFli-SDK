@@ -11,14 +11,6 @@ memory:
     size: 134217728 # 128MB
 
 partitions:
-
-  - name: calibration
-    type: data
-    subtype: calibration
-    region: mpi2
-    offset: 0x20000
-    size: 8KB
-
   - name: hcpu_flash_code
     type: app
     subtype: factory

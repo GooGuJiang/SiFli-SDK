@@ -11,14 +11,6 @@ memory:
     size: 8388608 # 8MB
 
 partitions:
-
-  - name: calibration
-    type: data
-    subtype: calibration
-    region: mpi2
-    offset: 0x8000
-    size: 8KB
-
   - name: hcpu_flash_code
     type: app
     subtype: factory
@@ -75,10 +67,3 @@ partitions:
     region: mpi1
     offset: 0
     size: 8MB
-
-  - name: hcpu_ro_data
-    type: data
-    subtype: ram
-    region: hpsys_ram
-    offset: 0x7FC00
-    size: 1KB

@@ -3,7 +3,7 @@
 # Chip: SF32LB58X
 
 version: 3
-chip: SF32LB58X
+chip: SF32LB586VDD36
 
 # NOTE:
 # - `memory` only describes external storage devices.
@@ -14,14 +14,18 @@ memory:
     size: 16MB
 
 partitions:
-
-  - name: calibration
+  - name: psram_data
     type: data
-    subtype: calibration
-    region: mpi5
-    offset: 0x00005000
-    size: 0x00002000
-
+    subtype: ram
+    region: psram1
+    offset: 0x00200000
+    size: 0x01E00000
+  - name: psram_data2
+    type: data
+    subtype: ram
+    region: psram2
+    offset: 0x00000000
+    size: 0x02000000
   - name: hcpu_flash_code
     type: app
     subtype: factory
@@ -108,17 +112,7 @@ partitions:
       - ACPU_CODE_LOAD_REGION1
     exec:
       region: hpsys_ram
-      offset: 0x00200000
-
-  - name: acpu_code_region1_sbus
-    type: data
-    subtype: raw
-    region: hpsys_ram
-    offset: 0x00200000
-    size: 0x0007C000
-    core: ACPU
-    aliases:
-      - ACPU_CODE_REGION1
+      offset: 0x00200000  # must be put in this place
 
   - name: acpu_cmd_buf
     type: data
