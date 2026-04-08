@@ -617,11 +617,50 @@ def PtabAddAddDefaultRegion(mems):
     ptab.add_default_regions(mems)
 
 
+def _PtabGetHalMemTypeMacro(mem_type):
+    mem_type = str(mem_type or '').strip().lower()
+    if mem_type == 'nor':
+        return 'HAL_MEM_TYPE_NOR_FLASH'
+    elif mem_type == 'nand':
+        return 'HAL_MEM_TYPE_NAND_FLASH'
+    elif mem_type in ('sd', 'sdmmc', 'emmc'):
+        return 'HAL_MEM_TYPE_SDMMC_STORAGE'
+    elif mem_type == 'psram':
+        return 'HAL_MEM_TYPE_PSRAM'
+    else:
+        return None
+
+
+def _PtabDefineMemType(name, mem_type, clear=False):
+    mem_type_macro = _PtabGetHalMemTypeMacro(mem_type)
+    s = ''
+    if clear or mem_type_macro is not None:
+        s += MakeLine('#undef  {}'.format(name))
+    if mem_type_macro is not None:
+        s += MakeLine('#define {:<50} {}'.format(name, mem_type_macro))
+    return s
+
+
+def PtabGetMemType(mem, base):
+    mem = str(mem or '').strip().lower()
+    if "flash" in mem and (base >= 0x10000000) and (base <= 0x1FFFFFFF):
+        return "nor"
+    elif "flash" in mem and (base >= 0x60000000) and (base <= 0x6FFFFFFF):
+        return "nand"
+    elif "emmc" in mem or "sdmmc" in mem or mem.startswith("sd"):
+        return "sd"
+    elif "psram" in mem:
+        return "psram"
+    else:
+        return ""
+
+
 def GenPartitionTableHeaderContentV2(env, mems):
     s =  ''
     PtabAddAddDefaultRegion(mems)
     for mem in mems:
         mem_base = int(mem['base'], 0)
+        mem_type = PtabGetMemType(mem['mem'], mem_base)
         s += MakeLine('')
         s += MakeLine('')
         s += MakeLine('/* {} */'.format(mem['mem']))
@@ -637,12 +676,14 @@ def GenPartitionTableHeaderContentV2(env, mems):
                     start_addr_name = '{}_START_ADDR'.format(tag)
                     size_name = '{}_SIZE'.format(tag)
                     offset_name = '{}_OFFSET'.format(tag)
+                    mem_type_name = '{}_MEM_TYPE'.format(tag)
                     s += MakeLine('#undef  {}'.format(start_addr_name))
                     s += MakeLine('#define {:<50} (0x{:08X})'.format(start_addr_name, start_addr))
                     s += MakeLine('#undef  {}'.format(size_name))
                     s += MakeLine('#define {:<50} (0x{:08X})'.format(size_name, max_size))
                     s += MakeLine('#undef  {}'.format(offset_name))
                     s += MakeLine('#define {:<50} (0x{:08X})'.format(offset_name, offset))
+                    s += _PtabDefineMemType(mem_type_name, mem_type)
 
             if 'custom' in region:
                 for custom in region['custom']:
@@ -709,6 +750,7 @@ def GenPartitionTableHeaderContentV1(env, mems):
     s = ''
     for mem in mems:
         mem_base = int(mem['base'], 0)
+        mem_type = PtabGetMemType(mem['mem'], mem_base)
         s += MakeLine('')
         s += MakeLine('')
         s += MakeLine('/* {} */'.format(mem['mem']))
@@ -720,12 +762,14 @@ def GenPartitionTableHeaderContentV1(env, mems):
                 start_addr_name = '{}_START_ADDR'.format(tag)
                 size_name = '{}_SIZE'.format(tag)
                 offset_name = '{}_OFFSET'.format(tag)
+                mem_type_name = '{}_MEM_TYPE'.format(tag)
                 s += MakeLine('#undef  {}'.format(start_addr_name))
                 s += MakeLine('#define {:<50} (0x{:08X})'.format(start_addr_name, start_addr))
                 s += MakeLine('#undef  {}'.format(size_name))
                 s += MakeLine('#define {:<50} (0x{:08X})'.format(size_name, max_size))
                 s += MakeLine('#undef  {}'.format(offset_name))
                 s += MakeLine('#define {:<50} (0x{:08X})'.format(offset_name, offset))
+                s += _PtabDefineMemType(mem_type_name, mem_type)
             if 'custom' in region:
                 for custom in region['custom']:
                     s += MakeLine('#undef  {}'.format(custom))
@@ -746,7 +790,9 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
 
     This generator keeps v1/v2 compatibility by generating:
     - Name macros: <NAME>_START_ADDR/_SIZE/_OFFSET
+    - Name macros: <NAME>_MEM_TYPE where memory type is known
     - Alias macros: <ALIAS>_START_ADDR/_SIZE/_OFFSET
+    - Alias macros: <ALIAS>_MEM_TYPE where memory type is known
     - FS_REGION_* for filesystem-like partitions
     - FLASH_BOOT_LOADER_* from bootloader.exec (execution address)
     - HCPU_FLASH_CODE_* from HCPU factory app.exec (execution address)
@@ -775,6 +821,8 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
             return 'ram'
         if region == 'psram' or region.startswith('psram'):
             return 'psram'
+        if region.startswith('sdmmc'):
+            return 'sd'
         mpi_name = _mpi_name_from_region(region)
         if mpi_name:
             info = chip_config.get('memory_info', {}).get(mpi_name, {})
@@ -809,6 +857,9 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
         out += MakeLine('#undef  {}'.format(name))
         out += MakeLine('#define {:<50} ({})'.format(name, ref))
         return out
+
+    def _define_mem_type(base_name, mem_type, clear=False):
+        return _PtabDefineMemType('{}_MEM_TYPE'.format(base_name), mem_type, clear=clear)
 
     def _get_flash_boot_loader_size_default():
         # FLASH_BOOT_LOADER_* macros are used by bootloader link scripts as the
@@ -884,11 +935,13 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
 
             sbus_addr, cbus_addr = ptab.resolve_region_address(region, offset, chip_config, core=core)
             start_addr = _select_start_addr(region, sbus_addr, cbus_addr, subtype)
+            region_mem_type = _get_region_mem_type(region)
 
             name_upper = name.upper()
             s += _define_u32('{}_START_ADDR'.format(name_upper), start_addr)
             s += _define_u32('{}_SIZE'.format(name_upper), size)
             s += _define_u32('{}_OFFSET'.format(name_upper), offset)
+            s += _define_mem_type(name_upper, region_mem_type)
 
             # Alias macros
             alias_set = []
@@ -903,6 +956,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
                 s += _define_u32('{}_START_ADDR'.format(a), start_addr)
                 s += _define_u32('{}_SIZE'.format(a), size)
                 s += _define_u32('{}_OFFSET'.format(a), offset)
+                s += _define_mem_type(a, region_mem_type)
 
             # FS_REGION_* macros (compat)
             fs_subtypes = ('littlefs', 'fat', 'fatfs', 'flashdb', 'filesystem')
@@ -910,6 +964,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
                 s += _define_u32('FS_REGION_START_ADDR', start_addr)
                 s += _define_u32('FS_REGION_SIZE', size)
                 s += _define_u32('FS_REGION_OFFSET', offset)
+                s += _define_mem_type('FS_REGION', region_mem_type)
 
             # FlashDB KV macros + FAL_PART_TABLE collection
             if ptype == 'data' and subtype == 'flashdb_kv':
@@ -919,6 +974,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
                 s += _define_u32('{}_START_ADDR'.format(kv_base), start_addr)
                 s += _define_u32('{}_OFFSET'.format(kv_base), offset)
                 s += _define_u32('{}_SIZE'.format(kv_base), size)
+                s += _define_mem_type(kv_base, region_mem_type)
                 flashdb_kv_partitions.append({
                     'db_name': name,
                     'region': region,
@@ -956,6 +1012,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
         s += _define_u32('FLASH_BOOT_LOADER_START_ADDR', bl_exec_addr)
         s += _define_u32('FLASH_BOOT_LOADER_SIZE', bl_size)
         s += _define_u32('FLASH_BOOT_LOADER_OFFSET', exec_offset)
+        s += _define_mem_type('FLASH_BOOT_LOADER', _get_region_mem_type(exec_region), clear=True)
 
     # HCPU_FLASH_CODE_* macros (execution address, from exec)
     hcpu_factory_partition = factory_by_core.get('HCPU')
@@ -973,6 +1030,7 @@ def GenPartitionTableHeaderContentV3(env, ptab_obj):
         s += _define_u32('HCPU_FLASH_CODE_START_ADDR', hcpu_exec_addr)
         s += _define_u32('HCPU_FLASH_CODE_SIZE', hcpu_size)
         s += _define_u32('HCPU_FLASH_CODE_OFFSET', exec_offset)
+        s += _define_mem_type('HCPU_FLASH_CODE', _get_region_mem_type(exec_region), clear=True)
 
     # CODE_START_ADDR/CODE_SIZE for current image (best-effort)
     env_name = (env.get('name') or '').strip().lower()

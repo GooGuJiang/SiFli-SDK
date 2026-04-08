@@ -298,6 +298,22 @@ ptab v3 在解析阶段会自动补齐一部分“系统默认分区”。这意
 #define <NAME>_SIZE          (0x...)  // 分区大小
 #define <NAME>_OFFSET        (0x...)  // 区域内偏移
 ```
+
+当分区所在 region 的存储类型可识别时，还会额外生成：
+
+```c
+#define <NAME>_MEM_TYPE      HAL_MEM_TYPE_...
+```
+
+目前可生成的内存类型常量为：
+
+- `HAL_MEM_TYPE_NOR_FLASH`
+- `HAL_MEM_TYPE_NAND_FLASH`
+- `HAL_MEM_TYPE_SDMMC_STORAGE`
+- `HAL_MEM_TYPE_PSRAM`
+
+对于片上 RAM 等没有对应 HAL memory type 的区域，不会生成 `<NAME>_MEM_TYPE`。
+
 ### 特殊宏
 
 **CODE_START 分区：**
@@ -311,6 +327,8 @@ ptab v3 在解析阶段会自动补齐一部分“系统默认分区”。这意
 
 需要注意的是，`CODE_START_ADDR` 对应 `exec` 字段指定的执行地址。如果没有指定 `exec`，则使用存储的 CBUS 地址。
 
+对于 `HCPU_FLASH_CODE`、`FLASH_BOOT_LOADER` 这类由执行地址兼容出来的宏，若同时生成 `_MEM_TYPE`，其取值也跟随最终执行 region，而不是存储 region。若执行 region 为片上 RAM，则不会保留对应的 `_MEM_TYPE` 定义。
+
 **文件系统分区：**
 
 当 `type=data` 且 `subtype` 为 `filesystem`/`littlefs`/`fat`/`fatfs`/`flashdb` 时生成：
@@ -319,6 +337,7 @@ ptab v3 在解析阶段会自动补齐一部分“系统默认分区”。这意
 #define FS_REGION_START_ADDR  (0x...)
 #define FS_REGION_SIZE        (0x...)
 #define FS_REGION_OFFSET      (0x...)
+#define FS_REGION_MEM_TYPE    HAL_MEM_TYPE_...
 ```
 
 **FlashDB KV 分区：**
@@ -329,6 +348,7 @@ ptab v3 在解析阶段会自动补齐一部分“系统默认分区”。这意
 #define KVDB_<NAME>_REGION_START_ADDR  (0x...)
 #define KVDB_<NAME>_REGION_OFFSET  (0x...)
 #define KVDB_<NAME>_REGION_SIZE    (0x...)
+#define KVDB_<NAME>_REGION_MEM_TYPE HAL_MEM_TYPE_...
 ```
 
 同时自动生成 `FAL_PART_TABLE` 宏，收集所有 `flashdb_kv` 分区：
