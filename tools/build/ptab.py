@@ -32,6 +32,7 @@ _PTAB_OVERLAY_PARTITION_KEYS = {
     'attrs',
     'aliases',
     'exec',
+    'sections',
 }
 
 # SiliconSchema paths
@@ -84,6 +85,94 @@ def _get_silicon_schema_root() -> Path:
 
 # Chip config cache
 _CHIP_CONFIG_CACHE = {}
+
+
+def _normalize_selector_object_name(obj: Any) -> str:
+    """Normalize selector object globs to a basename-oriented pattern."""
+    obj_s = str(obj or '').strip()
+    if not obj_s:
+        return ''
+    while obj_s.startswith('*'):
+        obj_s = obj_s[1:]
+    if obj_s.endswith('.o'):
+        obj_s = obj_s[:-2]
+    return obj_s.strip()
+
+
+def normalize_partition_sections(sections: Any) -> List[Dict[str, str]]:
+    """Normalize structured partition section selectors.
+
+    Canonical form:
+    - [{'section': '.FOO*'}]
+    - [{'object': 'bar_*', 'section': '.rodata*'}]
+    """
+    if sections is None:
+        return []
+
+    if isinstance(sections, dict):
+        items = [sections]
+    elif isinstance(sections, list):
+        items = sections
+    else:
+        return []
+
+    normalized: List[Dict[str, str]] = []
+    seen: Set[Tuple[str, str]] = set()
+    for item in items:
+        if isinstance(item, str):
+            section = item.strip()
+            obj = ''
+        elif isinstance(item, dict):
+            section = str(item.get('section') or '').strip()
+            obj = _normalize_selector_object_name(item.get('object'))
+        else:
+            continue
+
+        if not section:
+            continue
+
+        selector: Dict[str, str] = {'section': section}
+        if obj:
+            selector['object'] = obj
+
+        key = (selector.get('object', ''), selector['section'])
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(selector)
+
+    return normalized
+
+
+def is_app_ex_partition_v3(partition: Any) -> bool:
+    if not isinstance(partition, dict):
+        return False
+    if str(partition.get('type') or '').strip().lower() != 'app':
+        return False
+    return str(partition.get('subtype') or '').strip().lower() == 'ex'
+
+
+def get_partition_selectors_v3(partition: Any) -> List[Dict[str, str]]:
+    """Return canonical selector list for a v3 resource partition."""
+    if not isinstance(partition, dict):
+        return []
+
+    name = str(partition.get('name') or '').strip()
+    if not name:
+        return normalize_partition_sections(partition.get('sections'))
+
+    selectors: List[Dict[str, str]] = [{'section': '.{}*'.format(name.upper())}]
+    selectors.extend(normalize_partition_sections(partition.get('sections')))
+
+    deduped: List[Dict[str, str]] = []
+    seen: Set[Tuple[str, str]] = set()
+    for selector in selectors:
+        key = (selector.get('object', ''), selector.get('section', ''))
+        if not key[1] or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(selector)
+    return deduped
 
 
 class Ptab:
@@ -183,7 +272,7 @@ class PtabV3:
         """Normalize partitions to the canonical v3 shape.
 
         Canonical fields:
-        - name/type/subtype/region/offset/size/core/attrs/aliases/exec
+        - name/type/subtype/region/offset/size/core/attrs/aliases/exec/sections
         """
         if not isinstance(partitions, list):
             return []
@@ -243,6 +332,9 @@ class PtabV3:
                 out['aliases'] = aliases_list
             if exec_def:
                 out['exec'] = exec_def
+            sections = normalize_partition_sections(p.get('sections'))
+            if sections:
+                out['sections'] = sections
 
             normalized.append(out)
 
@@ -695,11 +787,11 @@ class PtabV3:
 
             # 构建 type 列表
             type_list = []
-            if ptype in ('bootloader', 'app'):
+            if ptype == 'bootloader' or (ptype == 'app' and subtype != 'ex'):
                 type_list.append('app_img')
 
             exec_def = partition.get('exec')
-            if ptype == 'app' and not exec_def:
+            if ptype == 'app' and subtype != 'ex' and not exec_def:
                 # XIP case: execution region is the storage region itself
                 type_list.append('app_exec')
             if type_list:
@@ -1299,11 +1391,11 @@ def get_legacy_int_res_kind_v3(partition: Any) -> Optional[str]:
 
 
 def iter_int_res_partitions_v3(ptab_obj: Any, core: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Iterate `int_res` partitions for ptab v3.
+    """Iterate resource partitions for ptab v3.
 
     Filters:
-    - type == 'data'
-    - subtype == 'int_res', or a legacy flash2 resource partition
+    - type == 'app'
+    - subtype == 'ex'
     - core matches (default: 'HCPU')
     """
     if not ptab_obj or not hasattr(ptab_obj, 'is_v3') or not ptab_obj.is_v3():
@@ -1314,10 +1406,7 @@ def iter_int_res_partitions_v3(ptab_obj: Any, core: Optional[str] = None) -> Lis
     for p in getattr(ptab_obj, 'partitions', []) or []:
         if not isinstance(p, dict):
             continue
-        if p.get('type') != 'data':
-            continue
-        subtype = str(p.get('subtype') or '').strip().lower()
-        if subtype != 'int_res' and get_legacy_int_res_kind_v3(p) is None:
+        if not is_app_ex_partition_v3(p):
             continue
         pcore = (p.get('core') or 'HCPU').strip().upper()
         if pcore != core_u:
@@ -1585,6 +1674,12 @@ def _merge_overlay_partition(base: Dict[str, Any], update: Dict[str, Any]) -> Di
                 merged.pop('exec', None)
             else:
                 merged['exec'] = copy.deepcopy(value)
+            continue
+        if key == 'sections':
+            if value is None:
+                merged.pop('sections', None)
+            else:
+                merged['sections'] = copy.deepcopy(value)
             continue
         if value is None and key in ('subtype', 'core'):
             merged.pop(key, None)

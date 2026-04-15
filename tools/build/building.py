@@ -442,6 +442,33 @@ def _infer_build_core(env, fallback: str = 'HCPU') -> str:
         return 'HCPU'
 
 
+def _get_ptab_v3_split_section(partition: dict, ptab_module) -> str:
+    """Map a ptab v3 app/ex partition to the ELF section used for objcopy."""
+    name = (partition.get('name') or '').strip()
+    return '.{}'.format(name) if name else ''
+
+
+def _collect_ptab_v3_split_partitions(ptab_obj, core: str, ptab_module):
+    """Collect app/ex resource partitions and their objcopy split section for a core."""
+    out = []
+
+    for partition in ptab_module.iter_int_res_partitions_v3(ptab_obj, core=core):
+        name = (partition.get('name') or '').strip()
+        if not name:
+            continue
+
+        section = _get_ptab_v3_split_section(partition, ptab_module)
+        if not section:
+            continue
+
+        out.append({
+            'name': name,
+            'section': section,
+        })
+
+    return out
+
+
 def ModifyProgramBinaryTargets(target, source, env):
     import ptab as ptab_module
     import rtconfig
@@ -515,8 +542,8 @@ def ProgramBinaryBuild(target, source, env):
         used_sections = []
         all_sections = []
         present_sections = []
-        for p in ptab_module.iter_int_res_partitions_v3(ptab_obj, core=core):
-            name = (p.get('name') or '').strip()
+        for entry in _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module):
+            name = entry['name']
             if not name:
                 continue
             if name.upper() == code_base_upper:
@@ -525,7 +552,7 @@ def ProgramBinaryBuild(target, source, env):
                     f"(file name collision in '{out_dir}')"
                 )
                 raise SystemExit(1)
-            sec = '.{}'.format(name)
+            sec = entry['section']
             all_sections.append(sec)
             out_file = os.path.join(out_dir, '{}.bin'.format(name.upper()))
             _remove_file_or_dir(out_file)
@@ -539,7 +566,7 @@ def ProgramBinaryBuild(target, source, env):
                 continue
             used_sections.append(sec)
 
-        exclude_args = ['-R{}'.format(s) for s in all_sections]
+        exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(all_sections)]
 
         # Whole image (compat): may include all sections
         if os.path.exists(whole_bin_path) and os.path.isdir(whole_bin_path):
@@ -548,7 +575,7 @@ def ProgramBinaryBuild(target, source, env):
         # Code-only image (target): exclude int_res output sections
         res = subprocess.run([rtconfig.OBJCPY, '-Obinary'] + exclude_args + [program_file, code_bin_path])
         if res.returncode != 0 and present_sections and present_sections != all_sections:
-            exclude_args = ['-R{}'.format(s) for s in present_sections]
+            exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(present_sections)]
             subprocess.run([rtconfig.OBJCPY, '-Obinary'] + exclude_args + [program_file, code_bin_path], check=True)
         else:
             res.check_returncode()
@@ -628,8 +655,8 @@ def ProgramHexBuild(target, source, env):
         used_sections = []
         all_sections = []
         present_sections = []
-        for p in ptab_module.iter_int_res_partitions_v3(ptab_obj, core=core):
-            name = (p.get('name') or '').strip()
+        for entry in _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module):
+            name = entry['name']
             if not name:
                 continue
             if name.upper() == code_base_upper:
@@ -638,7 +665,7 @@ def ProgramHexBuild(target, source, env):
                     f"(file name collision in '{out_dir}')"
                 )
                 raise SystemExit(1)
-            sec = '.{}'.format(name)
+            sec = entry['section']
             all_sections.append(sec)
             out_file = os.path.join(out_dir, '{}.hex'.format(name.upper()))
             _remove_file_or_dir(out_file)
@@ -652,14 +679,14 @@ def ProgramHexBuild(target, source, env):
                 continue
             used_sections.append(sec)
 
-        exclude_args = ['-R{}'.format(s) for s in all_sections]
+        exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(all_sections)]
 
         if os.path.exists(whole_hex_path) and os.path.isdir(whole_hex_path):
             _remove_file_or_dir(whole_hex_path)
         subprocess.run([rtconfig.OBJCPY, '-O', 'ihex', program_file, whole_hex_path], check=True)
         res = subprocess.run([rtconfig.OBJCPY, '-O', 'ihex'] + exclude_args + [program_file, code_hex_path])
         if res.returncode != 0 and present_sections and present_sections != all_sections:
-            exclude_args = ['-R{}'.format(s) for s in present_sections]
+            exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(present_sections)]
             subprocess.run([rtconfig.OBJCPY, '-O', 'ihex'] + exclude_args + [program_file, code_hex_path], check=True)
         else:
             res.check_returncode()

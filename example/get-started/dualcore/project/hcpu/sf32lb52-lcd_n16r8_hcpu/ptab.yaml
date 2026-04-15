@@ -9,7 +9,7 @@ chip: SF32LB525UC6
 memory:
 - mpi: mpi2
   type: nor
-  size: 16777216
+  size: 8388608
 partitions:
 
 - name: calibration
@@ -26,23 +26,44 @@ partitions:
   offset: '0x00020000'
   size: '0x00600000'
   core: HCPU
+- name: hcpu_flash2_img
+  type: app
+  subtype: ex
+  region: mpi2
+  offset: '0x00620000'
+  size: '0x00100000'
+  core: HCPU
+  sections:
+  - section: .ROM1_IMG*
+  - section: .ROM3_IMG*
+- name: hcpu_flash2_font
+  type: app
+  subtype: ex
+  region: mpi2
+  offset: '0x00720000'
+  size: '0x00200000'
+  core: HCPU
+  sections:
+  - section: .SECTION_TTF*
+  - object: lvsf_font_*
+    section: .rodata*
 - name: fs_region
   type: data
   subtype: filesystem
   region: mpi2
-  offset: '0x00620000'
+  offset: '0x00920000'
   size: '0x00400000'
 - name: dfu
   type: data
   subtype: flashdb_kv
   region: mpi2
-  offset: '0x00A20000'
+  offset: '0x00D20000'
   size: '0x00004000'
 - name: ble
   type: data
   subtype: flashdb_kv
   region: mpi2
-  offset: '0x00A24000'
+  offset: '0x00D24000'
   size: '0x00004000'
 - name: psram_code
   type: data

@@ -431,6 +431,28 @@ def _match_partition_by_alias(partitions, alias_base: str) -> Optional[Dict[str,
     return None
 
 
+def _selector_to_gnu(selector: Dict[str, str]) -> str:
+    section = str(selector.get('section') or '').strip()
+    obj = str(selector.get('object') or '').strip()
+    if not section:
+        return ''
+    if obj:
+        return '*{}({})'.format(obj, section)
+    return '*({})'.format(section)
+
+
+def _selector_to_keil(selector: Dict[str, str]) -> str:
+    section = str(selector.get('section') or '').strip()
+    obj = str(selector.get('object') or '').strip()
+    if not section:
+        return ''
+    if obj:
+        if not obj.endswith('.o'):
+            obj = '{}.o'.format(obj)
+        return '{} ({})'.format(obj, section)
+    return '*.o ({})'.format(section)
+
+
 def _find_named_code_partition(partitions, build_name: str, build_core: str) -> Optional[Dict[str, Any]]:
     build_name_l = (build_name or '').strip().lower()
     build_core_u = (build_core or 'HCPU').strip().upper()
@@ -783,10 +805,12 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
             out['__ROM2_BASE'] = int(b_base + bl_size)
         out['__ROM2_SIZE'] = int(mem_map_ints.get('LCPU_FLASH_CODE_SIZE', 0))
 
-    # int_res partitions: dedicated MEMORY regions and output sections
+    # app/ex resource partitions: dedicated MEMORY regions and output sections
     reserved_memory_names = {'ROM', 'RAM', 'ROM_EX', 'PSRAM', 'PSRAM2', 'ROM2', 'ROM3', 'DTCM'}
     int_res_parts: List[Dict[str, Any]] = []
     for p in ptab_module.iter_int_res_partitions_v3(ptab_obj, core=build_core):
+        if ptab_module.get_legacy_int_res_kind_v3(p) is not None:
+            continue
         name = (p.get('name') or '').strip()
         if not name:
             continue
@@ -800,13 +824,16 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         if size <= 0:
             continue
         base = ptab_module.get_download_addr_v3(region, offset, chip_config, core=p.get('core'))
+        selectors = ptab_module.get_partition_selectors_v3(p)
         int_res_parts.append(
             {
                 'name': name,
                 'name_upper': name_upper,
                 'base': int(base),
                 'size': int(size),
-                'legacy_kind': ptab_module.get_legacy_int_res_kind_v3(p) or '',
+                'selectors': selectors,
+                'selectors_gnu': [s for s in (_selector_to_gnu(sel) for sel in selectors) if s],
+                'selectors_keil': [s for s in (_selector_to_keil(sel) for sel in selectors) if s],
             }
         )
     out['INT_RES_PARTS'] = int_res_parts

@@ -62,12 +62,6 @@ __PSRAM_CODE_SIZE = {{ hex32(defines.get('PSRAM_CODE_SIZE', 0)) }};
 __PSRAM_BASE = {{ hex32(defines['PSRAM_DATA_START_ADDR']) }};
 __PSRAM_SIZE = {{ hex32(defines['PSRAM_DATA_SIZE']) }};
 
-__ROM2_BASE = {{ hex32(defines['HCPU_FLASH2_IMG_START_ADDR']) }};
-__ROM2_SIZE = {{ hex32(defines['HCPU_FLASH2_IMG_SIZE']) }};
-
-__ROM3_BASE = {{ hex32(defines['HCPU_FLASH2_FONT_START_ADDR']) }};
-__ROM3_SIZE = {{ hex32(defines['HCPU_FLASH2_FONT_SIZE']) }};
-
 {% for r in defines.get('INT_RES_PARTS', []) %}
 __{{ r.name_upper }}_BASE = {{ hex32(r.base) }};
 __{{ r.name_upper }}_SIZE = {{ hex32(r.size) }};
@@ -83,8 +77,6 @@ MEMORY
     ROM_EX(rw):ORIGIN = __ROM_EX_BASE, LENGTH = __ROM_EX_SIZE
     PSRAM_CODE(rx): ORIGIN = __PSRAM_CODE_BASE, LENGTH = __PSRAM_CODE_SIZE
     PSRAM(rw): ORIGIN = __PSRAM_BASE, LENGTH = __PSRAM_SIZE
-    ROM2 (rx): ORIGIN = __ROM2_BASE, LENGTH = __ROM2_SIZE
-    ROM3 (rx): ORIGIN = __ROM3_BASE, LENGTH = __ROM3_SIZE
 {% for r in defines.get('INT_RES_PARTS', []) %}
     {{ r.name_upper }} (rx): ORIGIN = __{{ r.name_upper }}_BASE, LENGTH = __{{ r.name_upper }}_SIZE
 {% endfor %}
@@ -559,40 +551,13 @@ SECTIONS
   /* Check if data + heap + stack exceeds RAM limit */
   /* ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack") */
 
-{% set legacy_int_res = namespace(img=False, font=False) %}
 {% for r in defines.get('INT_RES_PARTS', []) %}
-{% if r.legacy_kind == 'flash2_img' %}{% set legacy_int_res.img = True %}{% endif %}
-{% if r.legacy_kind == 'flash2_font' %}{% set legacy_int_res.font = True %}{% endif %}
   .{{ r.name }} :
   {
-{% if r.legacy_kind == 'flash2_img' %}
-    *(.ROM1_IMG)
-    *(.ROM3_IMG*.*)
-    *(.ROM3_IMG*)
-{% elif r.legacy_kind == 'flash2_font' %}
-    *lvsf_font_*(.rodata*)
-    *(.SECTION_TTF*.*)
-{% else %}
-    *(.{{ r.name_upper }}_IMG*)
-{% endif %}
+{% for selector in r.selectors_gnu %}
+    {{ selector }}
+{% endfor %}
   } > {{ r.name_upper }}
 {% endfor %}
-
-{% if not legacy_int_res.img %}
-  .rom2 :
-  {
-    *(.ROM1_IMG)
-    *(.ROM3_IMG*.*)
-    *(.ROM3_IMG*)
-  } > ROM2
-{% endif %}
-
-{% if not legacy_int_res.font %}
-  .rom3 :
-  {
-    *lvsf_font_*(.rodata*)
-    *(.SECTION_TTF*.*)
-  } > ROM3
-{% endif %}
 {% endif %}
 }

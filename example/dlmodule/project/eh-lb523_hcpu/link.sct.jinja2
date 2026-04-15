@@ -149,18 +149,15 @@ LR_IROM1 {{ hex32(defines['__ROM_BASE']) }} {{ hex32(defines['__ROM_SIZE']) }}  
   ScatterAssert(ImageLength(RW_IRAM_RET)+ImageLength(RW_IRAM0)+ImageLength(RW_IRAM1)<{{ hex32(defines['__RAM_SIZE']) }})
 }
 
-LR_IROM2 {{ hex32(defines['__ROM2_BASE']) }} {{ hex32(defines['__ROM2_SIZE']) }}  {  ; load region size_region
-  ER_IROM2 {{ hex32(defines['__ROM2_BASE']) }} {{ hex32(defines['__ROM2_SIZE']) }}  {  ; RW data
-   *.o (.ROM1_IMG)
-   *.o (.ROM3_IMG)
+{% for r in defines.get('INT_RES_PARTS', []) %}
+LR_{{ r.name_upper }} {{ hex32(r.base) }} {{ hex32(r.size) }}  {  ; load region size_region
+  ER_{{ r.name_upper }} {{ hex32(r.base) }} {{ hex32(r.size) }}  {  ; RW data
+{% for selector in r.selectors_keil %}
+   {{ selector }}
+{% endfor %}
    }
 }
-
-LR_IROM3 {{ hex32(defines['__ROM3_BASE']) }} {{ hex32(defines['__ROM3_SIZE']) }}  {  ; load region size_region
-  ER_IROM3 {{ hex32(defines['__ROM3_BASE']) }} {{ hex32(defines['__ROM3_SIZE']) }}  {  ; RW data
-   lvsf_font_*.o  (.rodata.*)
-   }
-}
+{% endfor %}
 
 ;LR_IROM2 {{ hex32(defines['__ROM_EX_BASE']) }} {{ hex32(defines['__ROM_EX_SIZE']) }}  {    ; load region size_region
 ;  ER_IROM2 {{ hex32(defines['__ROM_EX_BASE']) }} {{ hex32(defines['__ROM_EX_SIZE']) }}  {  ; load address = execution address

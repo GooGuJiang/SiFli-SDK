@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText 2026 SiFli Technologies(Nanjing) Co., Ltd
 # SPDX-License-Identifier: Apache-2.0
 
 """
@@ -473,6 +474,18 @@ def migrate_ptab_json_to_v3(ptab_json: List[Dict[str, Any]], chip: str, input_pa
             tags.append('ACPU_CODE_REGION1')
         aliases = _dedup_aliases(tags, name)
 
+        alias_upper = {str(a).strip().upper() for a in aliases}
+        legacy_flash2_kind = None
+        if name == 'hcpu_flash2_img' or 'HCPU_FLASH2_IMG' in alias_upper:
+            legacy_flash2_kind = 'img'
+        elif name == 'hcpu_flash2_font' or 'HCPU_FLASH2_FONT' in alias_upper:
+            legacy_flash2_kind = 'font'
+
+        if legacy_flash2_kind is not None:
+            ptype = 'app'
+            subtype = 'ex'
+            core = core or 'HCPU'
+
         part: Dict[str, Any] = OrderedDict()
         part['name'] = name
         part['type'] = ptype
@@ -485,9 +498,16 @@ def migrate_ptab_json_to_v3(ptab_json: List[Dict[str, Any]], chip: str, input_pa
             part['core'] = core
         if aliases:
             part['aliases'] = aliases
+        if legacy_flash2_kind == 'font':
+            part['sections'] = [
+                OrderedDict([
+                    ('object', 'lvsf_font_*'),
+                    ('section', '.rodata*'),
+                ])
+            ]
 
         # Convert exec-only region into exec for bootloader/app partitions
-        if ptype in ('bootloader', 'app'):
+        if ptype in ('bootloader', 'app') and subtype != 'ex':
             # Determine image name to search for exec-only mapping.
             exec_key = (str(r.get('img') or '').strip() or name_hint or _ftab_name(r)).lower()
             if exec_key and exec_key in exec_only:

@@ -15,7 +15,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -154,6 +154,76 @@ def validate_exec(exec_def, partition_name: str, chip_config: dict, core: Option
         errors.append(ValidationError(
             f"Partition '{partition_name}': failed to resolve exec address: {e}"
         ))
+
+    return errors
+
+
+def validate_sections(sections: Any, partition: dict) -> List[ValidationError]:
+    """Validate structured selectors used by app/ex resource partitions."""
+    errors = []
+    pname = partition.get('name', '?')
+    is_app_ex = ptab_module.is_app_ex_partition_v3(partition)
+
+    if sections is None:
+        return errors
+
+    if not is_app_ex:
+        errors.append(ValidationError(
+            f"Partition '{pname}': 'sections' is only supported for type='app', subtype='ex'"
+        ))
+        return errors
+
+    if not isinstance(sections, list):
+        errors.append(ValidationError(
+            f"Partition '{pname}': 'sections' must be a list"
+        ))
+        return errors
+
+    seen = set()
+    for idx, item in enumerate(sections):
+        if not isinstance(item, dict):
+            errors.append(ValidationError(
+                f"Partition '{pname}': sections[{idx}] must be a mapping with keys {{section, object?}}"
+            ))
+            continue
+
+        extra_keys = sorted(set(item.keys()) - {'section', 'object'})
+        if extra_keys:
+            errors.append(ValidationError(
+                f"Partition '{pname}': sections[{idx}] contains unsupported key(s): {', '.join(extra_keys)}"
+            ))
+
+        section = str(item.get('section') or '').strip()
+        if not section:
+            errors.append(ValidationError(
+                f"Partition '{pname}': sections[{idx}].section is required"
+            ))
+            continue
+        if not section.startswith('.'):
+            errors.append(ValidationError(
+                f"Partition '{pname}': sections[{idx}].section must start with '.'"
+            ))
+
+        obj = item.get('object')
+        obj_norm = ''
+        if obj is not None:
+            obj_norm = ptab_module._normalize_selector_object_name(obj)
+            if not obj_norm:
+                errors.append(ValidationError(
+                    f"Partition '{pname}': sections[{idx}].object cannot be empty"
+                ))
+            elif any(ch.isspace() for ch in obj_norm):
+                errors.append(ValidationError(
+                    f"Partition '{pname}': sections[{idx}].object cannot contain whitespace"
+                ))
+
+        key = (obj_norm, section)
+        if key in seen:
+            errors.append(ValidationError(
+                f"Partition '{pname}': duplicate selector in sections[{idx}]"
+            ))
+        else:
+            seen.add(key)
 
     return errors
 
@@ -339,6 +409,7 @@ def validate_ptab_v3(ptab_obj) -> List[ValidationError]:
         errors.extend(validate_size(p.get('offset', 0), 'offset', pname))
         errors.extend(validate_size(p.get('size', 0), 'size', pname))
         errors.extend(validate_exec(p.get('exec'), pname, chip_config, p.get('core')))
+        errors.extend(validate_sections(p.get('sections'), p))
 
         # flashdb_kv partitions must live on an mpiN region for FAL_PART_TABLE generation
         if p.get('type') == 'data' and p.get('subtype') == 'flashdb_kv':

@@ -25,23 +25,44 @@ partitions:
   offset: '0x00020000'
   size: '0x00580000'
   core: HCPU
+- name: hcpu_flash2_img
+  type: app
+  subtype: ex
+  region: mpi2
+  offset: '0x005A0000'
+  size: '0x00100000'
+  core: HCPU
+  sections:
+  - section: .ROM1_IMG*
+  - section: .ROM3_IMG*
+- name: hcpu_flash2_font
+  type: app
+  subtype: ex
+  region: mpi2
+  offset: '0x006A0000'
+  size: '0x00200000'
+  core: HCPU
+  sections:
+  - section: .SECTION_TTF*
+  - object: lvsf_font_*
+    section: .rodata*
 - name: fs_region
   type: data
   subtype: filesystem
   region: mpi2
-  offset: '0x005A0000'
+  offset: '0x008A0000'
   size: '0x00400000'
 - name: dfu
   type: data
   subtype: flashdb_kv
   region: mpi2
-  offset: '0x009A0000'
+  offset: '0x00CA0000'
   size: '0x00004000'
 - name: ble
   type: data
   subtype: flashdb_kv
   region: mpi2
-  offset: '0x009A4000'
+  offset: '0x00CA4000'
   size: '0x00004000'
 - name: psram_code
   type: data

@@ -1591,6 +1591,7 @@ def ConstructImgDownloadInfoV3(img_download_info, ptab_obj):
     for partition in ptab_obj.partitions:
         name = partition.get('name', '')
         ptype = partition.get('type', '')
+        subtype = partition.get('subtype', '')
         region = partition.get('region', '')
         offset = ptab.parse_size(partition.get('offset', 0))
         core = partition.get('core')
@@ -1603,11 +1604,12 @@ def ConstructImgDownloadInfoV3(img_download_info, ptab_obj):
 
         if ptype not in ('app', 'bootloader'):
             continue
+        if ptype == 'app' and str(subtype or '').strip().lower() == 'ex':
+            continue
 
         img_download_info[name] = download_addr
-        
+
         # Add 'main' alias for HCPU factory app (env['name'] is usually 'main')
-        subtype = partition.get('subtype', '')
         part_core = (core or 'HCPU').upper()
         if ptype == 'app' and subtype == 'factory' and part_core == 'HCPU':
             img_download_info['main'] = download_addr
@@ -1704,7 +1706,7 @@ def BuildJLinkLoadScript(main_env):
                 s_file += MakeLine('ADDR{}=0x{:08X}'.format(s_num,info))
                 s_num += 1
 
-                # ptab v3: load int_res bins from the same `int_res/` directory
+                # ptab v3: load app/ex resource bins from the same `int_res/` directory
                 if is_ptab_v3:
                     core = 'HCPU'
                     if env.get('name') == 'lcpu':
@@ -1719,7 +1721,12 @@ def BuildJLinkLoadScript(main_env):
                             continue
                         res_path = os.path.join(res_dir, item['file'])
                         if not os.path.isfile(res_path):
-                            continue
+                            alt_name = 'ER_{}'.format(item['file'])
+                            alt_path = os.path.join(res_dir, alt_name)
+                            if os.path.isfile(alt_path):
+                                res_path = alt_path
+                            else:
+                                continue
                         if os.path.getsize(res_path) <= 0:
                             continue
                         s += MakeLine('loadbin {} 0x{:08X}'.format(os.path.relpath(res_path, work_dir), item['addr']))

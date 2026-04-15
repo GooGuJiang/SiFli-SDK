@@ -149,6 +149,8 @@ def _collect_partition_roles(partitions: List[dict]) -> Dict[str, object]:
     for p in partitions:
         if p.get('type') != 'app':
             continue
+        if str(p.get('subtype') or '').strip().lower() == 'ex':
+            continue
         if p is factory_hcpu_partition or p is dfu_hcpu_partition:
             continue
         extra_app_partitions.append(p)

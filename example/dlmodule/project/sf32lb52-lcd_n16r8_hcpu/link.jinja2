@@ -67,11 +67,10 @@ __PSRAM_CODE_SIZE = {{ hex32(defines.get('PSRAM_CODE_SIZE', 0)) }};
 __PSRAM_BASE = {{ hex32(defines['__PSRAM_BASE']) }};
 __PSRAM_SIZE = {{ hex32(defines['__PSRAM_SIZE']) }};
 
-__ROM2_BASE = {{ hex32(defines['__ROM2_BASE']) }};
-__ROM2_SIZE = {{ hex32(defines['__ROM2_SIZE']) }};
-
-__ROM3_BASE = {{ hex32(defines['__ROM3_BASE']) }};
-__ROM3_SIZE = {{ hex32(defines['__ROM3_SIZE']) }};
+{% for r in defines.get('INT_RES_PARTS', []) %}
+__{{ r.name_upper }}_BASE = {{ hex32(r.base) }};
+__{{ r.name_upper }}_SIZE = {{ hex32(r.size) }};
+{% endfor %}
 
 
 /*
@@ -84,8 +83,9 @@ MEMORY
     ROM_EX(rw):ORIGIN = __ROM_EX_BASE, LENGTH = __ROM_EX_SIZE
     PSRAM_CODE(rx): ORIGIN = __PSRAM_CODE_BASE, LENGTH = __PSRAM_CODE_SIZE
     PSRAM(rw): ORIGIN = __PSRAM_BASE, LENGTH = __PSRAM_SIZE
-    ROM2 (rx): ORIGIN = __ROM2_BASE, LENGTH = __ROM2_SIZE
-    ROM3 (rx): ORIGIN = __ROM3_BASE, LENGTH = __ROM3_SIZE
+{% for r in defines.get('INT_RES_PARTS', []) %}
+    {{ r.name_upper }} (rx): ORIGIN = __{{ r.name_upper }}_BASE, LENGTH = __{{ r.name_upper }}_SIZE
+{% endfor %}
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -559,16 +559,13 @@ SECTIONS
 
   /* Check if data + heap + stack exceeds RAM limit */
   /* ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack") */
-  
-  .rom2 :
+{% for r in defines.get('INT_RES_PARTS', []) %}
+  .{{ r.name }} :
   {
-    *(.ROM1_IMG)
-    *(.ROM3_IMG)
-  } > ROM2
-
-  .rom3 :
-  {
-    *lvsf_font_*(.rodata*)
-  } > ROM3
+{% for selector in r.selectors_gnu %}
+    {{ selector }}
+{% endfor %}
+  } > {{ r.name_upper }}
+{% endfor %}
 {% endif %}
 }

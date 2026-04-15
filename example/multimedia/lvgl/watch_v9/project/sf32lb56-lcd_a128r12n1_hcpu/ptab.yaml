@@ -27,8 +27,8 @@ partitions:
   type: data
   subtype: ram
   region: psram1
-  offset: '0x00300000'
-  size: '0x00500000'
+  offset: '0x00580000'
+  size: '0x00278000'
 - name: psram_data2
   type: data
   subtype: ram
@@ -40,7 +40,7 @@ partitions:
   subtype: factory
   region: mpi3
   offset: '0x00000000'
-  size: '0x00300000'
+  size: '0x00580000'
   core: HCPU
   aliases:
   - HCPU_FLASH_CODE_LOAD_REGION
@@ -51,19 +51,19 @@ partitions:
   type: data
   subtype: filesystem
   region: mpi3
-  offset: '0x00300000'
+  offset: '0x00580000'
   size: '0x00400000'
 - name: dfu
   type: data
   subtype: flashdb_kv
   region: mpi3
-  offset: '0x00700000'
+  offset: '0x00980000'
   size: '0x00004000'
 - name: ble
   type: data
   subtype: flashdb_kv
   region: mpi3
-  offset: '0x00704000'
+  offset: '0x00984000'
   size: '0x00004000'
 - name: hcpu_ram_data
   type: data

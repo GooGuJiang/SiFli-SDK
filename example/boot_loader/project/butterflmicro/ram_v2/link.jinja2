@@ -200,7 +200,9 @@ SECTIONS
 {% for r in defines.get('INT_RES_PARTS', []) %}
   .{{ r.name }} :
   {
-    *(.{{ r.name_upper }}_IMG*)
+{% for selector in r.selectors_gnu %}
+    {{ selector }}
+{% endfor %}
   } > {{ r.name_upper }}
 {% endfor %}
 }
