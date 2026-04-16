@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText 2026 SiFli Technologies(Nanjing) Co., Ltd
 # SPDX-License-Identifier: Apache-2.0
 
 """
@@ -37,6 +38,13 @@ def _repo_root() -> str:
     if sifli:
         return os.path.abspath(sifli)
     return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+
+def _first_existing_path(candidates: List[str]) -> str:
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return candidates[0]
 
 
 def _parse_args() -> argparse.Namespace:
@@ -330,12 +338,20 @@ def main() -> int:
     baseline_main_ptab_h = os.path.join(baseline_dir, 'ptab.h')
     baseline_main_link = os.path.join(baseline_dir, 'link_copy.lds')
     baseline_ftab = os.path.join(baseline_dir, 'ftab', 'ftab.bin')
-    baseline_main_bin = os.path.join(baseline_dir, 'main.bin')
+    baseline_main_bin = _first_existing_path([
+        os.path.join(baseline_dir, 'output', 'main.app.bin'),
+        os.path.join(baseline_dir, 'output', 'main.bin'),
+        os.path.join(baseline_dir, 'main.bin'),
+    ])
 
     baseline_boot_dir = os.path.join(baseline_dir, 'bootloader')
     baseline_boot_ptab_h = os.path.join(baseline_boot_dir, 'ptab.h')
     baseline_boot_link = os.path.join(baseline_boot_dir, 'link_copy.lds')
-    baseline_boot_bin = os.path.join(baseline_boot_dir, 'bootloader.bin')
+    baseline_boot_bin = _first_existing_path([
+        os.path.join(baseline_boot_dir, 'output', 'bootloader.app.bin'),
+        os.path.join(baseline_boot_dir, 'output', 'bootloader.bin'),
+        os.path.join(baseline_boot_dir, 'bootloader.bin'),
+    ])
 
     # Prepare python imports from tools/build
     sys.path.insert(0, os.path.join(root, 'tools', 'build'))

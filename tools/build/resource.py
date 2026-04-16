@@ -1646,7 +1646,7 @@ def BuildJLinkLoadScript(main_env):
                     region = part.get('region', '')
                     offset = ptab.parse_size(part.get('offset', 0))
                     addr = ptab.get_download_addr_v3(region, offset, chip_config, core=part.get('core'))
-                    items.append({'file': '{}.bin'.format(name.upper()), 'addr': addr})
+                    items.append({'name': name, 'addr': addr})
                 int_res_download_items[core] = items
         elif ptab_obj.is_v2():
             ConstructImgDownloadInfoV2(img_download_info, mems)
@@ -1692,7 +1692,13 @@ def BuildJLinkLoadScript(main_env):
                     s_file += MakeLine('ADDR{}=0x{:08X}'.format(s_num,info[d]))
                     s_num += 1
             else:
-                if is_ptab_v3 and os.path.isdir(bin_file):
+                if is_ptab_v3:
+                    bin_file = building.ResolvePtabV3CodeArtifactFromRef(
+                        bin_file,
+                        building.GetPtabV3ArtifactBaseName(env),
+                        '.bin',
+                    )
+                elif os.path.isdir(bin_file):
                     preferred = os.path.join(bin_file, 'ER_IROM1.bin')
                     assert os.path.isfile(preferred), "{} should contain ER_IROM1.bin as code image".format(env['name'])
                     bin_file = preferred
@@ -1706,7 +1712,7 @@ def BuildJLinkLoadScript(main_env):
                 s_file += MakeLine('ADDR{}=0x{:08X}'.format(s_num,info))
                 s_num += 1
 
-                # ptab v3: load app/ex resource bins from the same `int_res/` directory
+                # ptab v3: load app/ex resource bins from the same `output/` directory
                 if is_ptab_v3:
                     core = 'HCPU'
                     if env.get('name') == 'lcpu':
@@ -1715,18 +1721,16 @@ def BuildJLinkLoadScript(main_env):
                         core = 'ACPU'
 
                     res_dir = os.path.dirname(bin_file)
-                    code_base_u = os.path.basename(bin_file).upper()
+                    base_name = building.GetPtabV3ArtifactBaseName(env)
                     for item in int_res_download_items.get(core, []):
-                        if item['file'].upper() == code_base_u:
+                        res_path = building.GetPtabV3ArtifactPath(
+                            res_dir,
+                            base_name,
+                            '.bin',
+                            item['name'],
+                        )
+                        if res_path == bin_file or not os.path.isfile(res_path):
                             continue
-                        res_path = os.path.join(res_dir, item['file'])
-                        if not os.path.isfile(res_path):
-                            alt_name = 'ER_{}'.format(item['file'])
-                            alt_path = os.path.join(res_dir, alt_name)
-                            if os.path.isfile(alt_path):
-                                res_path = alt_path
-                            else:
-                                continue
                         if os.path.getsize(res_path) <= 0:
                             continue
                         s += MakeLine('loadbin {} 0x{:08X}'.format(os.path.relpath(res_path, work_dir), item['addr']))
@@ -1740,6 +1744,12 @@ def BuildJLinkLoadScript(main_env):
         else:
             hex_file = str(env['program_hex'][0])
             # load address is not defined, load hex
+            if is_ptab_v3:
+                hex_file = building.ResolvePtabV3CodeArtifactFromRef(
+                    hex_file,
+                    building.GetPtabV3ArtifactBaseName(env),
+                    '.hex',
+                )
             if os.path.isdir(hex_file):
                 dir_list = os.listdir(hex_file)
                 for d in dir_list:

@@ -40,6 +40,8 @@ def is_verbose():
 
 # maximum extended image number
 MAX_EX_IMG_NUM = 5
+PTAB_V3_PROGRAM_BINARY_STAMP = '.program_binary.stamp'
+PTAB_V3_PROGRAM_HEX_STAMP = '.program_hex.stamp'
 
 # SCons PreProcessor patch
 def start_handling_includes(self, t=None):
@@ -469,6 +471,112 @@ def _collect_ptab_v3_split_partitions(ptab_obj, core: str, ptab_module):
     return out
 
 
+def IsPtabV3ArtifactStampPath(path: str) -> bool:
+    """Return True when path is a synthetic ptab v3 artifact stamp."""
+    name = os.path.basename(str(path))
+    return name in (PTAB_V3_PROGRAM_BINARY_STAMP, PTAB_V3_PROGRAM_HEX_STAMP)
+
+
+def GetPtabV3ArtifactBaseName(env, program_file: str = '') -> str:
+    """Return the base artifact name for a ptab v3 project."""
+    try:
+        proj_name = str(env.get('name') or '').strip()
+    except Exception:
+        proj_name = ''
+    if proj_name:
+        return proj_name
+    if program_file:
+        return os.path.splitext(os.path.basename(str(program_file)))[0] or 'main'
+    return 'main'
+
+
+def GetPtabV3ArtifactOutputDir(program_file: str) -> str:
+    """Return the output directory for final ptab v3 bin/hex artifacts."""
+    return os.path.join(os.path.dirname(str(program_file)), 'output')
+
+
+def GetPtabV3ArtifactPath(output_dir: str, base_name: str, ext: str, suffix: str = None) -> str:
+    """Build a final ptab v3 artifact path."""
+    stem = base_name if not suffix else '{}.{}'.format(base_name, suffix)
+    return os.path.join(output_dir, stem + ext)
+
+
+def GetPtabV3CodeArtifactCandidates(output_dir: str, base_name: str, ext: str):
+    """Return candidate code artifact paths, preferring multi-output naming."""
+    return [
+        GetPtabV3ArtifactPath(output_dir, base_name, ext, 'app'),
+        GetPtabV3ArtifactPath(output_dir, base_name, ext),
+    ]
+
+
+def ResolvePtabV3CodeArtifact(output_dir: str, base_name: str, ext: str) -> str:
+    """Resolve the actual ptab v3 code artifact path from the output directory."""
+    candidates = GetPtabV3CodeArtifactCandidates(output_dir, base_name, ext)
+    for candidate in candidates:
+        if os.path.isfile(candidate) and os.path.getsize(candidate) > 0:
+            return candidate
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    return candidates[-1]
+
+
+def ResolvePtabV3CodeArtifactFromRef(path: str, base_name: str, ext: str) -> str:
+    """Resolve a real code artifact path from a ptab v3 stamp/output reference."""
+    path = str(path)
+    if IsPtabV3ArtifactStampPath(path):
+        return ResolvePtabV3CodeArtifact(os.path.dirname(path), base_name, ext)
+    if os.path.isdir(path):
+        return ResolvePtabV3CodeArtifact(path, base_name, ext)
+    return path
+
+
+def _cleanup_ptab_v3_output_dir(out_dir: str, ext: str, stamp_name: str) -> None:
+    """Clean stale ptab v3 output artifacts for one file type."""
+    if os.path.exists(out_dir) and not os.path.isdir(out_dir):
+        _remove_file_or_dir(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
+    for name in os.listdir(out_dir):
+        if name == stamp_name or name.lower().endswith(ext.lower()):
+            _remove_file_or_dir(os.path.join(out_dir, name))
+
+
+def _cleanup_ptab_v3_legacy_artifacts(program_file: str, ext: str) -> None:
+    """Remove stale legacy ptab v3 artifacts from old locations."""
+    target_dir = os.path.dirname(str(program_file))
+    legacy_whole = os.path.join(
+        target_dir,
+        os.path.splitext(os.path.basename(str(program_file)))[0] + ext,
+    )
+    if os.path.exists(legacy_whole):
+        _remove_file_or_dir(legacy_whole)
+
+    int_res_dir = os.path.join(target_dir, 'int_res')
+    if os.path.isdir(int_res_dir):
+        for name in os.listdir(int_res_dir):
+            if name.lower().endswith(ext.lower()):
+                _remove_file_or_dir(os.path.join(int_res_dir, name))
+
+
+def _validate_ptab_v3_artifact_names(base_name: str, split_entries, out_dir: str) -> None:
+    """Validate split artifact names against code suffix and case-insensitive collisions."""
+    seen = {'app': 'code image'}
+    for entry in split_entries:
+        name = str(entry.get('name') or '').strip()
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen:
+            logging.error(
+                "ptab v3 artifact suffix '%s' conflicts with %s in '%s'",
+                name,
+                seen[key],
+                out_dir,
+            )
+            raise SystemExit(1)
+        seen[key] = "partition '{}'".format(name)
+
+
 def ModifyProgramBinaryTargets(target, source, env):
     import ptab as ptab_module
     import rtconfig
@@ -482,11 +590,8 @@ def ModifyProgramBinaryTargets(target, source, env):
         if core == 'LCPU' and env.get('IMG_EMBEDDED'):
             return target, source
         elf_path = str(source[0]) if source else ''
-        elf_dir = os.path.dirname(elf_path)
-        out_dir = os.path.join(elf_dir, 'int_res')
-        proj_name = env.get('name') or os.path.splitext(os.path.basename(elf_path))[0] or 'main'
-        code_base = 'app' if proj_name == 'main' else proj_name
-        target = [os.path.join(out_dir, code_base + '.bin')]
+        out_dir = GetPtabV3ArtifactOutputDir(elf_path)
+        target = [os.path.join(out_dir, PTAB_V3_PROGRAM_BINARY_STAMP)]
     return target, source
 
 
@@ -503,11 +608,8 @@ def ModifyProgramHexTargets(target, source, env):
         if core == 'LCPU' and env.get('IMG_EMBEDDED'):
             return target, source
         elf_path = str(source[0]) if source else ''
-        elf_dir = os.path.dirname(elf_path)
-        out_dir = os.path.join(elf_dir, 'int_res')
-        proj_name = env.get('name') or os.path.splitext(os.path.basename(elf_path))[0] or 'main'
-        code_base = 'app' if proj_name == 'main' else proj_name
-        target = [os.path.join(out_dir, code_base + '.hex')]
+        out_dir = GetPtabV3ArtifactOutputDir(elf_path)
+        target = [os.path.join(out_dir, PTAB_V3_PROGRAM_HEX_STAMP)]
     return target, source
 
 
@@ -527,34 +629,28 @@ def ProgramBinaryBuild(target, source, env):
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    # ptab v3 (gcc): split int_res sections into `int_res/` and keep whole image in `<program>.bin`
+    # ptab v3 (gcc): split app/ex sections and emit final artifacts into `output/`
     core = _infer_build_core(env, getattr(rtconfig, 'CORE', 'HCPU'))
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3() and not (core == 'LCPU' and env.get('IMG_EMBEDDED')):
-        # Prepare output dir (keep .hex outputs intact)
-        if os.path.exists(out_dir) and not os.path.isdir(out_dir):
-            _remove_file_or_dir(out_dir)
-        os.makedirs(out_dir, exist_ok=True)
-        for d in os.listdir(out_dir):
-            if d.lower().endswith('.bin'):
-                _remove_file_or_dir(os.path.join(out_dir, d))
+        base_name = GetPtabV3ArtifactBaseName(env, program_file)
+        stamp_path = code_bin_path
+        out_dir = os.path.dirname(stamp_path)
+        _cleanup_ptab_v3_output_dir(out_dir, '.bin', PTAB_V3_PROGRAM_BINARY_STAMP)
+        _cleanup_ptab_v3_legacy_artifacts(program_file, '.bin')
 
-        code_base_upper = os.path.splitext(os.path.basename(code_bin_path))[0].upper()
+        split_entries = _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module)
+        _validate_ptab_v3_artifact_names(base_name, split_entries, out_dir)
+
         used_sections = []
         all_sections = []
         present_sections = []
-        for entry in _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module):
+        for entry in split_entries:
             name = entry['name']
             if not name:
                 continue
-            if name.upper() == code_base_upper:
-                logging.error(
-                    f"int_res partition name '{name}' conflicts with code image name '{code_base_upper}' "
-                    f"(file name collision in '{out_dir}')"
-                )
-                raise SystemExit(1)
             sec = entry['section']
             all_sections.append(sec)
-            out_file = os.path.join(out_dir, '{}.bin'.format(name.upper()))
+            out_file = GetPtabV3ArtifactPath(out_dir, base_name, '.bin', name)
             _remove_file_or_dir(out_file)
             res = subprocess.run([rtconfig.OBJCPY, '-Obinary', '-j{}'.format(sec), program_file, out_file])
             if res.returncode != 0:
@@ -566,19 +662,22 @@ def ProgramBinaryBuild(target, source, env):
                 continue
             used_sections.append(sec)
 
+        code_bin_path = GetPtabV3ArtifactPath(
+            out_dir,
+            base_name,
+            '.bin',
+            'app' if used_sections else None,
+        )
         exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(all_sections)]
-
-        # Whole image (compat): may include all sections
-        if os.path.exists(whole_bin_path) and os.path.isdir(whole_bin_path):
-            _remove_file_or_dir(whole_bin_path)
-        subprocess.run([rtconfig.OBJCPY, '-Obinary', program_file, whole_bin_path], check=True)
-        # Code-only image (target): exclude int_res output sections
+        _remove_file_or_dir(code_bin_path)
         res = subprocess.run([rtconfig.OBJCPY, '-Obinary'] + exclude_args + [program_file, code_bin_path])
         if res.returncode != 0 and present_sections and present_sections != all_sections:
             exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(present_sections)]
             subprocess.run([rtconfig.OBJCPY, '-Obinary'] + exclude_args + [program_file, code_bin_path], check=True)
         else:
             res.check_returncode()
+        with open(stamp_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(code_bin_path + '\n')
         return
 
     if os.path.exists(whole_bin_path):
@@ -640,34 +739,28 @@ def ProgramHexBuild(target, source, env):
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    # ptab v3 (gcc): split int_res sections into `int_res/` and keep whole image in `<program>.hex`
+    # ptab v3 (gcc): split app/ex sections and emit final artifacts into `output/`
     core = _infer_build_core(env, getattr(rtconfig, 'CORE', 'HCPU'))
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3() and not (core == 'LCPU' and env.get('IMG_EMBEDDED')):
-        # Prepare output dir (keep .bin outputs intact)
-        if os.path.exists(out_dir) and not os.path.isdir(out_dir):
-            _remove_file_or_dir(out_dir)
-        os.makedirs(out_dir, exist_ok=True)
-        for d in os.listdir(out_dir):
-            if d.lower().endswith('.hex'):
-                _remove_file_or_dir(os.path.join(out_dir, d))
+        base_name = GetPtabV3ArtifactBaseName(env, program_file)
+        stamp_path = code_hex_path
+        out_dir = os.path.dirname(stamp_path)
+        _cleanup_ptab_v3_output_dir(out_dir, '.hex', PTAB_V3_PROGRAM_HEX_STAMP)
+        _cleanup_ptab_v3_legacy_artifacts(program_file, '.hex')
 
-        code_base_upper = os.path.splitext(os.path.basename(code_hex_path))[0].upper()
+        split_entries = _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module)
+        _validate_ptab_v3_artifact_names(base_name, split_entries, out_dir)
+
         used_sections = []
         all_sections = []
         present_sections = []
-        for entry in _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module):
+        for entry in split_entries:
             name = entry['name']
             if not name:
                 continue
-            if name.upper() == code_base_upper:
-                logging.error(
-                    f"int_res partition name '{name}' conflicts with code image name '{code_base_upper}' "
-                    f"(file name collision in '{out_dir}')"
-                )
-                raise SystemExit(1)
             sec = entry['section']
             all_sections.append(sec)
-            out_file = os.path.join(out_dir, '{}.hex'.format(name.upper()))
+            out_file = GetPtabV3ArtifactPath(out_dir, base_name, '.hex', name)
             _remove_file_or_dir(out_file)
             res = subprocess.run([rtconfig.OBJCPY, '-O', 'ihex', '-j{}'.format(sec), program_file, out_file])
             if res.returncode != 0:
@@ -679,17 +772,22 @@ def ProgramHexBuild(target, source, env):
                 continue
             used_sections.append(sec)
 
+        code_hex_path = GetPtabV3ArtifactPath(
+            out_dir,
+            base_name,
+            '.hex',
+            'app' if used_sections else None,
+        )
         exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(all_sections)]
-
-        if os.path.exists(whole_hex_path) and os.path.isdir(whole_hex_path):
-            _remove_file_or_dir(whole_hex_path)
-        subprocess.run([rtconfig.OBJCPY, '-O', 'ihex', program_file, whole_hex_path], check=True)
+        _remove_file_or_dir(code_hex_path)
         res = subprocess.run([rtconfig.OBJCPY, '-O', 'ihex'] + exclude_args + [program_file, code_hex_path])
         if res.returncode != 0 and present_sections and present_sections != all_sections:
             exclude_args = ['-R{}'.format(s) for s in dict.fromkeys(present_sections)]
             subprocess.run([rtconfig.OBJCPY, '-O', 'ihex'] + exclude_args + [program_file, code_hex_path], check=True)
         else:
             res.check_returncode()
+        with open(stamp_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(code_hex_path + '\n')
         return
 
     if os.path.exists(whole_hex_path):
@@ -867,6 +965,8 @@ def EmbeddedImgCFileBuild(target, source, env):
     s = str(source[0])
     if os.path.isdir(s):
         s = os.path.join(s, 'ER_IROM1.bin')
+    elif IsPtabV3ArtifactStampPath(s):
+        s = ResolvePtabV3CodeArtifactFromRef(s, GetPtabV3ArtifactBaseName(env), '.bin')
     if "acpu" in s:
         subprocess.run(['python', GEN_SRC_PATH, 'general', s, target_path, "acpu"], check=True)
         shutil.move(os.path.join(target_path, 'acpu_img.c'), str(target[0]))
@@ -929,8 +1029,10 @@ def FtabBinBuild(target, source, env):
     main_size = 0x200000
     image_sizes = {}
 
-    def _calc_binary_size(path):
+    def _calc_binary_size(path, base_name='main'):
         path = str(path)
+        if IsPtabV3ArtifactStampPath(path):
+            path = ResolvePtabV3CodeArtifactFromRef(path, base_name, '.bin')
         if os.path.isfile(path):
             return os.path.getsize(path)
         if os.path.isdir(path):
@@ -950,7 +1052,7 @@ def FtabBinBuild(target, source, env):
         img_name = img.get('name', '')
         if img_name == 'bootloader' and 'binary' in img:
             try:
-                sz = _calc_binary_size(img['binary'][0])
+                sz = _calc_binary_size(img['binary'][0], img_name)
                 if sz:
                     bootloader_size = sz
                     image_sizes['bootloader'] = int(sz)
@@ -958,7 +1060,7 @@ def FtabBinBuild(target, source, env):
                 pass
         elif img_name == 'main' and 'binary' in img:
             try:
-                sz = _calc_binary_size(img['binary'][0])
+                sz = _calc_binary_size(img['binary'][0], img_name)
                 if sz:
                     main_size = sz
                     image_sizes['main'] = int(sz)
@@ -966,7 +1068,7 @@ def FtabBinBuild(target, source, env):
                 pass
         elif 'binary' in img:
             try:
-                sz = _calc_binary_size(img['binary'][0])
+                sz = _calc_binary_size(img['binary'][0], img_name or 'main')
                 if sz:
                     image_sizes[img_name] = int(sz)
             except:
