@@ -149,41 +149,51 @@ SECTIONS
     KEEP(*(FSymTab))
     __fsymtab_end = .;
 
-	    . = ALIGN(4);
-	    __vsymtab_start = .;
-	    KEEP(*(VSymTab))
-	    __vsymtab_end = .;
-
-	    . = ALIGN(4);
-	    LcdDriverDescTab_start = .;
-	    KEEP(*(LcdDriverDescTab))
-	    LcdDriverDescTab_end = .;
-
-	    . = ALIGN(4);
-	    __rt_utest_tc_tab_start = .;
-	    KEEP(*(UtestTcTab))
-	    __rt_utest_tc_tab_end = .;
-
-    /* section information for initial. */
     . = ALIGN(4);
-	    __rt_init_start = .;
-	    KEEP(*(SORT(.rti_fn*)))
-	    __rt_init_end = .;
+    __vsymtab_start = .;
+    KEEP(*(VSymTab))
+    __vsymtab_end = .;
 
-	    . = ALIGN(4);
-	    BuiltinAppTab_start = .;
-	    KEEP(*(BuiltinAppTab))
-	    BuiltinAppTab_end = .;
+    . = ALIGN(4);
+    LcdDriverDescTab_start = .;
+    KEEP(*(LcdDriverDescTab))
+    LcdDriverDescTab_end = .;
 
-	    . = ALIGN(4);
-	    __app_font_start__ = .;
-	    KEEP(*(.app_font))
-	    __app_font_end__ = .;
+    . = ALIGN(4);
+    __rt_utest_tc_tab_start = .;
+    KEEP(*(UtestTcTab))
+    __rt_utest_tc_tab_end = .;
 
-	    . = ALIGN(4);
-	    __SerialTranExport_start__ = .;
-	    KEEP(*(SerialTranExport))
-	    __SerialTranExport_end__ = .;
+  /* section information for initial. */
+  . = ALIGN(4);
+    __rt_init_start = .;
+    KEEP(*(SORT(.rti_fn*)))
+    __rt_init_end = .;
+
+    . = ALIGN(4);
+    BuiltinApp1Tab_start = .;
+    KEEP(*(.BuiltinApp1Tab))
+    BuiltinApp1Tab_end = .;
+
+    . = ALIGN(4);
+    BuiltinApp2Tab_start = .;
+    KEEP(*(.BuiltinApp2Tab))
+    BuiltinApp2Tab_end = .;
+
+    . = ALIGN(4);
+    __switch_anim_start__ = .;
+    KEEP(*(.switch_anim))
+    __switch_anim_end__ = .;
+
+    . = ALIGN(4);
+    __app_font_start__ = .;
+    KEEP(*(.app_font))
+    __app_font_end__ = .;
+
+    . = ALIGN(4);
+    __SerialTranExport_start__ = .;
+    KEEP(*(SerialTranExport))
+    __SerialTranExport_end__ = .;
 
     . = ALIGN(4);
     __sifli_reg_start__ = .;
