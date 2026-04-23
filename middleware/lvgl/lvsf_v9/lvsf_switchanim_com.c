@@ -12,7 +12,7 @@
 #endif
 #include "lvsf_switchanim.h"
 
-#if 1//LVSF_USING_SWITCHANIM !=0 
+#if LVSF_USING_SWITCHANIM != 0
 
 uint16_t def_anim_major = LV_SWITCHANIM_PUSH;
 uint16_t def_anim_minor = LV_PUSHANIM_AUX;

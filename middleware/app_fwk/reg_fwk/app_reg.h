@@ -60,10 +60,6 @@
 #include "lv_ext_resource_manager.h"
 #include "gui_app_fwk.h"
 
-#ifndef LV_USING_EXT_RESOURCE_MANAGER
-    #error "LV_USING_EXT_RESOURCE_MANAGER must be defined!!!"
-#endif
-
 int gui_app_create_subpage_ext(const char *app_id, const char *sub_id, void *user_data);
 
 typedef struct
@@ -251,4 +247,3 @@ int gui_app_get_ext_app(void);
 int gui_app_get_dyn_app(void);
 
 #endif
-

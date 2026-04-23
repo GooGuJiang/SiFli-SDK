@@ -127,7 +127,11 @@
 #endif
 
 #ifndef LVSF_USING_SWITCHANIM
-    #define LVSF_USING_SWITCHANIM 1
+    #ifdef CONFIG_LVSF_USING_SWITCHANIM
+        #define LVSF_USING_SWITCHANIM 1
+    #else
+        #define LVSF_USING_SWITCHANIM 0
+    #endif
 #endif
 
 #ifndef LVSF_USE_TXTIMG

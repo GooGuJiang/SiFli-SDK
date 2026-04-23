@@ -6,8 +6,15 @@
 
 #include "lvsf_switchanim.h"
 #include "app_mem.h"
+#include "../../../external/lvgl_v9/src/core/lv_obj_private.h"
+#include "../../../external/lvgl_v9/src/core/lv_obj_class_private.h"
+#include "../../../external/lvgl_v9/src/others/snapshot/lv_snapshot.h"
 
-#if 1//LVSF_USING_SWITCHANIM !=0 
+#if LVSF_USING_SWITCHANIM != 0
+
+#if !LV_USE_SNAPSHOT
+#error "LV_USE_SNAPSHOT must be enabled when LVSF_USING_SWITCHANIM is enabled"
+#endif
 
 #define LVSF_ANIM_PERIOD_MS 3000
 
@@ -237,8 +244,15 @@ lv_obj_t *lv_baseanim_create_snapshot(lv_baseanim_t *baseanim, lv_obj_t *parent)
     lv_result_t res = lv_draw_buf_from_image(&draw_buf, snapshot_dsc);
     RT_ASSERT(res == LV_RESULT_OK);
 
-    lv_disp_t *disp = lv_refr_get_disp_refreshing();
-    if (NULL == disp) disp = lv_disp_get_default();
+    lv_display_t *disp = NULL;
+    if (baseanim->screen)
+    {
+        disp = lv_obj_get_display(baseanim->screen);
+    }
+    if (NULL == disp)
+    {
+        disp = lv_display_get_default();
+    }
 
 
 
@@ -254,7 +268,7 @@ lv_obj_t *lv_baseanim_create_snapshot(lv_baseanim_t *baseanim, lv_obj_t *parent)
             lv_snapshot_take_to_draw_buf(baseanim->screen, draw_buf.header.cf, &draw_buf);
 #endif
 #else
-            lv_snapshot_fb_to_dsc(snapshot_dsc);
+            RT_ASSERT(LV_RESULT_OK == lv_snapshot_take_to_draw_buf(baseanim->screen, draw_buf.header.cf, &draw_buf));
 #endif
         }
     }
@@ -330,7 +344,7 @@ void lv_switchanim_manual_run(lv_obj_t *switchanim, int32_t progress)
 }
 void lv_switchanim_refr_cb(lv_timer_t *p_timer)
 {
-    lv_obj_t *switchanim = (lv_obj_t *)p_timer->user_data;
+    lv_obj_t *switchanim = (lv_obj_t *)lv_timer_get_user_data(p_timer);
     LV_ASSERT_OBJ(switchanim, MY_CLASS);
     lv_switchanim_ext_t *ext = (lv_switchanim_ext_t *)(switchanim);
     bool is_finish = false;

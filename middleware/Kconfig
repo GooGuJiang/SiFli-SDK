@@ -252,6 +252,10 @@ menu "Sifli middleware"
         default n
 
 
+    config LVSF_USING_SWITCHANIM
+        bool
+        default n
+
     menuconfig GUI_APP_FRAMEWORK
         bool "Enable GUI application framework"
         default n
@@ -263,8 +267,10 @@ menu "Sifli middleware"
                     bool "No animation (0 buffer)"
                 config APP_TRANS_ANIMATION_OVERWRITE
                     bool "Overwrite animation (0 buffer)"
+                    select LVSF_USING_SWITCHANIM
                 config APP_TRANS_ANIMATION_SCALE
                     bool "Enlarge/Shrink Animation (2 buffers)"
+                    select LVSF_USING_SWITCHANIM
             endchoice
 
             config GUI_MAX_RUNNING_APPS
@@ -506,4 +512,3 @@ menu "Sifli middleware"
     source "$SIFLI_SDK/middleware/crypto/Kconfig"    
 
 endmenu
-

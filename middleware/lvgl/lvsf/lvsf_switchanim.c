@@ -7,7 +7,11 @@
 #include "lvsf_switchanim.h"
 #include "app_mem.h"
 
-#if 1//LVSF_USING_SWITCHANIM !=0 
+#if LVSF_USING_SWITCHANIM != 0
+
+#if !LV_USE_SNAPSHOT
+#error "LV_USE_SNAPSHOT must be enabled when LVSF_USING_SWITCHANIM is enabled"
+#endif
 
 #define LVSF_ANIM_PERIOD_MS 3000
 
