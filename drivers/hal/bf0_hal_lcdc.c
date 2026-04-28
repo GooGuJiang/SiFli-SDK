@@ -1367,15 +1367,6 @@ static HAL_StatusTypeDef WaitBusy2(LCDC_HandleTypeDef *lcdc)
     {
         if ((lcdc->Instance->STATUS & LCD_IF_STATUS_LCD_BUSY) || (lcdc->Instance->LCD_SINGLE & LCD_IF_LCD_SINGLE_LCD_BUSY)) continue;
 
-#ifdef HAL_DSI_MODULE_ENABLED
-        if (HAL_LCDC_IS_DSI_IF(lcdc->Init.lcd_itf))
-        {
-#ifndef HAL_USING_HTOL
-            if (HAL_DSI_IsBusy(&lcdc->hdsi)) continue;
-#endif /* HAL_USING_HTOL */
-        }
-#endif /* HAL_DSI_MODULE_ENABLED */
-
         return HAL_OK;
     }
     while (HAL_GetTick() - start_tick < timeout_ms);
@@ -2712,7 +2703,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_LCDC_DeInit(LCDC_HandleTypeDef *lcdc)
     LCDC_RAMLESS_Stop(lcdc);
 #endif /* HAL_RAMLESS_LCD_ENABLED */
 
-    if (HAL_LCDC_IS_DPI_IF(lcdc->Init.lcd_itf))
+    if (HAL_LCDC_IS_DPI_IF(lcdc->Init.lcd_itf) || HAL_LCDC_IS_DSI_VID_IF(lcdc->Init.lcd_itf))
     {
         /* Disable DPI */
         lcdc->Instance->DPI_CTRL &= ~LCD_IF_DPI_CTRL_DPI_EN;
