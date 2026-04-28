@@ -1,24 +1,16 @@
 # ptab v3 - Partition Table
 # Migrated from: ptab.json
-# Chip: SF32LB52JUD6
+# Chip: SF32LB52X
 #
 # Auto-generated. Please review and adjust as needed.
 
 version: 3
-chip: SF32LB52JUD6
+chip: SF32LB527UD6
 memory:
 - mpi: mpi2
   type: nand
   size: 134217728
 partitions:
-
-- name: calibration
-  type: data
-  subtype: calibration
-  region: mpi2
-  offset: '0x00020000'
-  size: '0x00002000'
-
 - name: hcpu_flash_code
   type: app
   subtype: factory
