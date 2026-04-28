@@ -111,7 +111,7 @@ static void lv_ex_data_notify_string_change(lv_ex_data_t *data, lv_ex_binding_t 
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 }
 
@@ -145,7 +145,7 @@ static void lv_ex_data_notify_int32_change(lv_ex_data_t *data, lv_ex_binding_t *
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 }
 
@@ -179,7 +179,7 @@ static void lv_ex_data_notify_uint32_change(lv_ex_data_t *data, lv_ex_binding_t 
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 
 
@@ -215,13 +215,13 @@ static void lv_ex_data_notify_float_change(lv_ex_data_t *data, lv_ex_binding_t *
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 }
 
 static void lv_ex_data_notify_time_change(lv_ex_data_t *data, lv_ex_binding_t *binding)
 {
-    LV_DEBUG_ASSERT(0, "not support yet", 0);
+    LV_DEBUG_ASSERT(0, "not support yet %llu", 0);
 
 }
 
@@ -248,7 +248,7 @@ static void lv_ex_data_notify_pointer_change(lv_ex_data_t *data, lv_ex_binding_t
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 }
 
@@ -269,7 +269,7 @@ static void lv_ex_data_notify_list_change(lv_ex_data_t *data, lv_ex_binding_t *b
     }
     else
     {
-        LV_DEBUG_ASSERT(0, "type mismatch", binding->arg_type);
+        LV_DEBUG_ASSERT(0, "type mismatch %llu", binding->arg_type);
     }
 }
 
@@ -456,7 +456,7 @@ void lv_ex_process_data(void)
         _LV_LL_READ(&data->listener, listener)
         {
             binding = (lv_ex_binding_t *)listener;
-            LV_DEBUG_ASSERT(data->type < LV_EX_DATA_CHANGE_NOTIFIER_NUM, "invalid data type", data->type);
+            LV_DEBUG_ASSERT(data->type < LV_EX_DATA_CHANGE_NOTIFIER_NUM, "invalid data type %llu", data->type);
             lv_ex_data_change_notify[data->type](data, binding);
         }
         data->updated = false;
