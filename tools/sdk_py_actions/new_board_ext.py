@@ -37,7 +37,7 @@ def register(registry: CommandRegistry) -> None:
         help="Create a new board from interactive prompts or a JSON config file.",
         options=[
             {
-                "names": ["--config", "-c"],
+                "names": ["--config", "-c", "config_path"],
                 "help": "Path to a JSON config file for non-interactive board creation.",
                 "type": click.Path(exists=True, dir_okay=False, resolve_path=False),
                 "default": None,
