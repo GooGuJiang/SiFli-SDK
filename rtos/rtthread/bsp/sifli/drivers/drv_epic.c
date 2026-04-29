@@ -78,13 +78,13 @@ void drv_gpu_open(void)
 #ifdef HAL_EZIP_MODULE_ENABLED
         epic->hezip = &drv_epic.ezip_handle;
         epic->hezip->Instance = EZIP;
-#if ((defined(BSP_QSPI3_MODE) && (BSP_QSPI3_MODE == 1)) || (defined(BSP_QSPI2_MODE) && (BSP_QSPI2_MODE == 1)) || (defined(BSP_QSPI4_MODE) && (BSP_QSPI4_MODE == 1)))
-        epic->hezip->flash_handle_query_cb = (EZIP_FlashHandleQueryCbTypeDef)rt_flash_get_handle_by_addr;
-#elif defined(SF32LB56X)
-        epic->hezip->flash_handle_query_cb = (EZIP_FlashHandleQueryCbTypeDef)rt_flash_get_handle_by_addr;
-#else
+        /*
+            There are some reasons to set flash_handle_query_cb to NULL:
+            1. It cannot skip bad blocks on NAND flash.
+            2. Direct reading may cause NAND flash read-back error.
+            3. It may cause bus error on dual-core mode if the cb function located on some memory which is not accessible by another core, for example, ITCM.
+        */
         epic->hezip->flash_handle_query_cb = NULL;
-#endif
         epic->hezip->RamInstance = &drv_epic.RamEZIP;
 
         HAL_EZIP_Init(epic->hezip);
