@@ -190,6 +190,11 @@ class Partition:
     attrs: Optional[Dict[str, Any]] = None
 
 
+class PtabYamlDumper(yaml.SafeDumper):
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
+        return super().increase_indent(flow, False)
+
+
 def run_new_board(config_path: Optional[str], output_root: str) -> None:
     import click
 
@@ -361,26 +366,24 @@ def prompt_for_config(variants: Dict[str, List[ChipVariant]]) -> Dict[str, Any]:
         base_name = ask(
             questionary.text(
                 'Input existing base name',
-                validate=lambda text: True if BOARD_NAME_RE.fullmatch(text or '') else 'Use lowercase letters, digits, "_" or "-".',
+                validate=lambda text: True if (text or '').strip() else 'Enter existing base name or path.',
             ),
             'Board creation cancelled.',
         )
 
-    summary = [
-        f'series: {SERIES_LABEL.get(series, series)}',
-        f'chip_model: {chip_model}',
-        f'storage_type: {storage_type}',
-    ]
-    if storage_port:
-        summary.append(f'storage_port: {storage_port}')
-    if storage_size_mb is not None:
-        summary.append(f'storage_size_mb: {storage_size_mb}')
-    summary.append(f'board_name: {board_name}')
-    summary.append(f'base_name: {base_name}')
-    summary.append(f'generate_base: {generate_base}')
+    summary = build_confirmation_summary(
+        series=series,
+        chip_model=chip_model,
+        storage_type=storage_type,
+        storage_port=storage_port,
+        storage_size_mb=storage_size_mb,
+        board_name=board_name,
+        base_name=base_name,
+        generate_base=generate_base,
+    )
 
     confirmed = ask(
-        questionary.confirm('Create board with this configuration?\n\n' + '\n'.join(summary), default=True),
+        questionary.confirm('Review new board configuration:\n\n' + '\n'.join(summary) + '\n\nCreate board?', default=True),
         'Board creation cancelled.',
     )
     if not confirmed:
@@ -401,6 +404,42 @@ def prompt_for_config(variants: Dict[str, List[ChipVariant]]) -> Dict[str, Any]:
     if storage_port is not None:
         config['storage_port'] = storage_port
     return config
+
+
+def build_confirmation_summary(
+    series: str,
+    chip_model: str,
+    storage_type: str,
+    storage_port: Optional[str],
+    storage_size_mb: Optional[int],
+    board_name: str,
+    base_name: str,
+    generate_base: bool,
+) -> List[str]:
+    lines = [
+        '[Chip]',
+        f'  series: {SERIES_LABEL.get(series, series)}',
+        f'  chip_model: {chip_model}',
+        '',
+        '[Storage]',
+        f'  type: {storage_type}',
+    ]
+    if storage_port:
+        lines.append(f'  port: {storage_port}')
+    if storage_size_mb is not None:
+        lines.append(f'  capacity_mb: {storage_size_mb}')
+
+    lines.extend([
+        '',
+        '[Board]',
+        f'  board_name: {board_name}',
+        '',
+        '[Base board]',
+        f'  mode: {"create new base board" if generate_base else "reuse existing base board"}',
+        f'  base_name_or_path: {base_name}',
+    ])
+
+    return lines
 
 
 def normalize_spec(
@@ -424,8 +463,8 @@ def normalize_spec(
 
     if not BOARD_NAME_RE.fullmatch(board_name):
         raise FatalError(f'Invalid board_name: {board_name}')
-    if not generate_base and not BOARD_NAME_RE.fullmatch(base_name):
-        raise FatalError(f'Invalid base_name: {base_name}')
+    if not generate_base and not base_name:
+        raise FatalError('base_name is required when generate_base is false.')
 
     matching = [item for item in variants.get(series, []) if item.part_number.upper() == chip_model.upper()]
     if not matching:
@@ -457,8 +496,6 @@ def normalize_spec(
 
     if generate_base:
         base_name = f'{board_name}_base'
-    elif not base_name:
-        raise FatalError('base_name is required when generate_base is false.')
 
     spec = Spec(
         series=series,
@@ -501,8 +538,9 @@ def render_board_files(
     output_root: Path,
     assets_root: Path,
 ) -> Dict[Path, str]:
-    board_dir = output_root / spec.board_name
-    base_dir = output_root / spec.base_name
+    output_root = output_root.resolve()
+    board_dir = (output_root / spec.board_name).resolve()
+    base_dir = resolve_base_dir(output_root, spec)
 
     if board_dir.exists():
         raise FatalError(f'Board directory already exists: {board_dir}')
@@ -538,22 +576,35 @@ def render_board_files(
 
     memory_entries = build_external_memory_entries(spec)
     partitions = build_partitions(spec, variant)
+    base_reference_files = {
+        'kconfig': base_dir / 'Kconfig.board',
+        'sconscript': (base_dir / 'script' / 'SConscript') if base_kind == 'script' else (base_dir / 'SConscript.base'),
+    }
+    use_absolute_base_reference = not spec.generate_base and Path(spec.base_name).expanduser().is_absolute()
+    if use_absolute_base_reference:
+        base_reference_paths = {name: path.as_posix() for name, path in base_reference_files.items()}
+    else:
+        base_reference_paths = {
+            name: Path(os.path.relpath(path, start=board_dir)).as_posix()
+            for name, path in base_reference_files.items()
+        }
 
     rendered: Dict[Path, str] = {}
 
     rendered[board_dir / 'Kconfig.board'] = render_template(env, template_prefix + 'Kconfig.board.jinja2', {
-        'base_kconfig_path': (base_dir / 'Kconfig.board').as_posix(),
+        'base_kconfig_directive': 'source' if use_absolute_base_reference else 'rsource',
+        'base_kconfig_path': base_reference_paths['kconfig'],
     })
     rendered[board_dir / 'SConscript'] = render_template(env, template_prefix + 'SConscript.jinja2', {
         'board_symbol': board_symbol,
-        'base_sconscript_path': ((base_dir / 'script' / 'SConscript') if base_kind == 'script' else (base_dir / 'SConscript.base')).as_posix(),
+        'base_sconscript_path': base_reference_paths['sconscript'],
     })
-    rendered[board_dir / 'ptab.yaml'] = render_template(env, template_prefix + 'ptab.yaml.jinja2', {
-        'board_name': spec.board_name,
-        'chip_model': spec.chip_model,
-        'memory_entries': memory_entries,
-        'partitions': partitions,
-    })
+    rendered[board_dir / 'ptab.yaml'] = render_ptab_yaml(
+        board_name=spec.board_name,
+        chip_model=spec.chip_model,
+        memory_entries=memory_entries,
+        partitions=partitions,
+    )
 
     for core_name, core_select, extra_select in core_definitions(spec.series):
         core_dir = board_dir / core_name.lower()
@@ -605,6 +656,16 @@ def render_board_files(
     return rendered
 
 
+def resolve_base_dir(output_root: Path, spec: Spec) -> Path:
+    if spec.generate_base:
+        return (output_root / spec.base_name).resolve()
+
+    base_path = Path(spec.base_name).expanduser()
+    if base_path.is_absolute():
+        return base_path.resolve()
+    return (output_root / base_path).resolve()
+
+
 def write_rendered_files(rendered: Dict[Path, str]) -> None:
     for path, content in rendered.items():
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -631,16 +692,62 @@ def render_template(env: Any, template_name: str, context: Dict[str, Any]) -> st
     return env.get_template(template_name).render(**context)
 
 
+def render_ptab_yaml(
+    board_name: str,
+    chip_model: str,
+    memory_entries: List[Dict[str, Any]],
+    partitions: List[Partition],
+) -> str:
+    data: Dict[str, Any] = {
+        'version': 3,
+        'chip': chip_model,
+    }
+    if memory_entries:
+        data['memory'] = memory_entries
+
+    partition_items: List[Dict[str, Any]] = []
+    for part in partitions:
+        item: Dict[str, Any] = {
+            'name': part.name,
+            'type': part.part_type,
+        }
+        if part.subtype:
+            item['subtype'] = part.subtype
+        item['region'] = part.region
+        item['offset'] = part.offset
+        item['size'] = part.size
+        if part.core:
+            item['core'] = part.core
+        if part.aliases:
+            item['aliases'] = list(part.aliases)
+        if part.exec_region:
+            item['exec'] = {
+                'region': part.exec_region,
+                'offset': part.exec_offset,
+            }
+        if part.attrs:
+            item['attrs'] = part.attrs
+        partition_items.append(item)
+
+    data['partitions'] = partition_items
+    header = f'# ptab v3 - Partition Table\n# Board: {board_name}\n# Chip: {chip_model}\n\n'
+    return header + yaml.dump(data, Dumper=PtabYamlDumper, sort_keys=False, allow_unicode=True)
+
+
 def build_external_memory_entries(spec: Spec) -> List[Dict[str, Any]]:
     if spec.storage_type == 'none':
         return []
     storage_region = storage_region_for_spec(spec)
     memory_type = 'sd' if spec.storage_type == 'sdmmc' else spec.storage_type
-    return [{
-        'mpi': storage_region,
+    memory_entry: Dict[str, Any] = {
         'type': memory_type,
         'size': spec.storage_size_mb * MB,
-    }]
+    }
+    if spec.storage_type == 'sdmmc':
+        memory_entry = {'sdmmc': storage_region, **memory_entry}
+    else:
+        memory_entry = {'mpi': storage_region, **memory_entry}
+    return [memory_entry]
 
 
 def build_partitions(spec: Spec, variant: ChipVariant) -> List[Partition]:
@@ -883,12 +990,12 @@ def storage_region_for_spec(spec: Spec, none_region: Optional[str] = None) -> st
         if none_region:
             return none_region
         raise FatalError('none storage region requires an explicit internal storage region.')
+    if spec.storage_type == 'sdmmc':
+        return 'sdmmc2' if spec.series == '58' else 'sdmmc1'
     if spec.series == '52':
         return 'mpi2'
     if spec.series == '56':
         return 'mpi3'
-    if spec.storage_type == 'sdmmc':
-        return 'mpi4'
     return str(spec.storage_port)
 
 

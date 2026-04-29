@@ -107,12 +107,14 @@ def validate_region(region: str, partition_name: str, chip_config: dict) -> List
 
     # Check if region exists
     mpi_config = chip_config.get('mpi', {})
+    sdmmc_config = chip_config.get('sdmmc', {})
     ram_config = chip_config.get('ram', {})
 
     known_regions = set(mpi_config.keys())
+    known_regions.update(sdmmc_config.keys())
     known_regions.update(['hpsys_ram', 'lpsys_ram', 'psram', 'psram1', 'psram2'])
 
-    if region not in known_regions and not region.startswith('mpi') and not region.startswith('psram'):
+    if region not in known_regions and not region.startswith('mpi') and not region.startswith('psram') and not region.startswith('sdmmc'):
         errors.append(ValidationError(
             f"Partition '{partition_name}': unknown region '{region}'",
             severity="warning"

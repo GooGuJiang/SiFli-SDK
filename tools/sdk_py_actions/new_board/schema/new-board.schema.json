@@ -48,7 +48,7 @@
     },
     "base_name": {
       "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      "minLength": 1
     }
   },
   "allOf": [
