@@ -25,6 +25,7 @@ int get_pdm_volume();
 
 #define PRIVATE_DEFAULT_VOLUME              10
 
+#define PDM_NOISE_DROP_FRAMES               6
 #ifdef PKG_USING_SOUNDPLUS
     #define MIC_NOISE_DROP_FRAMES           16
     #define CODEC_DATA_UNIT_LEN             (480)

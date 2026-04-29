@@ -666,7 +666,13 @@ static inline void process_speaker_rx(audio_server_t *server, audio_device_speak
 
     if (my->is_need_3a)
     {
-#ifndef AUDIO_RX_USING_PDM
+#ifdef AUDIO_RX_USING_PDM
+        if (my->rx_drop_cnt < PDM_NOISE_DROP_FRAMES)
+        {
+            my->rx_drop_cnt++;
+            memset(my->rx_data_tmp, 0, readlen);
+        }
+#else
         if (my->rx_drop_cnt < MIC_NOISE_DROP_FRAMES)
         {
             my->rx_drop_cnt++;
@@ -4730,6 +4736,11 @@ static void simu_audio_data_timer_handle(void *param)
 bool audio_data_capture(void)
 {
     return false;
+}
+void audio_dump_data_flush(void)
+{
+    if (is_audio_dump_enable())
+        audio_data_write_uart();
 }
 int audio_data_cmd(int argc, char **argv)
 {

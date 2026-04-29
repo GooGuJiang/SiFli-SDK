@@ -249,19 +249,15 @@ static void my_notify(T_ECHO_EVENT event, T_pVOID param, T_HANDLE cb_notify_para
     //rt_kprintf("~~~~notify: 0x%x\n", code);
 }
 
+RT_WEAK void anyka_dump_data(T_ECHO_DUMP_ITEM_ID item_id, T_S32 size, T_pCVOID data, T_pCVOID meta, T_HANDLE cb_dump_param, T_U8 pathId)
+{
+
+}
 static void my_dump(T_ECHO_DUMP_ITEM_ID item_id, T_S32 size, T_pCVOID data, T_pCVOID meta, T_HANDLE cb_dump_param, T_U8 pathId)
 {
-#if 0
-    if (item_id == ECHO_ITEM_ADC_STREAM)
-    {
-        wav_save_data(data_adc, sizeof(data_adc), (uint8_t *)data, size, &data_adc_len);
-    }
-    else if (item_id == ECHO_ITEM_NEAR_DENC)
-    {
-        wav_save_data(data_denc, sizeof(data_denc), (uint8_t *)data, size, &data_denc_len);
-    }
-#endif
+    anyka_dump_data(item_id, size, data, meta, cb_dump_param, pathId);
 }
+
 static T_pVOID my_malloc(T_U32 size)
 {
     return audio_mem_malloc(size);
