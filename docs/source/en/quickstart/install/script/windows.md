@@ -123,6 +123,14 @@ cd C:\OpenSiFli\SiFli-SDK
 - install the SDK toolchain versions bound by `tools/locks/default/lock.json`
 - initialize the profile-specific Conan home under `SIFLI_SDK_TOOLS_PATH`
 
+If you need to build with Keil/ARMCLANG, record the Keil root during installation. The directory must already exist and contain `ARM\ARMCLANG\bin`:
+
+```powershell
+.\install.ps1 --keil C:\Keil_v5
+```
+
+If the SDK environment is already installed, run the same command again. `install.ps1` is idempotent: it reuses the existing Python, tool, and Conan state, and records the Keil path in `${SIFLI_SDK_TOOLS_PATH}\sifli-sdk-env.json`.
+
 ````{note}
 Domestic users in China can use the following commands to enable the bundled China mirror preset and avoid slow downloads from default sources. Note that if you choose to execute the following commands, you do not need to execute the commands in the above code block.
 
@@ -173,6 +181,18 @@ Please run the following command in terminal windows where you need to use compi
 ```powershell
 cd C:\OpenSiFli\SiFli-SDK
 .\export.ps1
+```
+
+Without `-t`, `export.ps1` exports the GCC environment. This is equivalent to:
+
+```powershell
+.\export.ps1 -t gcc
+```
+
+If you have recorded a Keil root with `install.ps1 --keil`, switch to Keil/ARMCLANG with:
+
+```powershell
+.\export.ps1 -t keil
 ```
 
 `export.ps1` now reads the installed profile bootstrap information from `${SIFLI_SDK_TOOLS_PATH}/sifli-sdk-env.json` and uses the Python virtual environment recorded there. If that profile environment has not been installed yet, the state file is missing, or the installation record is from an older incompatible layout, `export.ps1` will fail immediately and ask you to run `.\install.ps1` again.

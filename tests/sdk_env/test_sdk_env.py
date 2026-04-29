@@ -15,6 +15,7 @@ import tempfile
 import textwrap
 import tomllib
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -22,6 +23,16 @@ ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
 import sdk_env  # noqa: E402
+
+
+class FakeTool:
+    is_executable = False
+
+    def __init__(self, export_paths: list[list[str]] | None = None) -> None:
+        self._current_options = SimpleNamespace(export_paths=export_paths or [["bin"]])
+
+    def get_export_vars(self, _version: str) -> dict[str, str]:
+        return {}
 
 
 class CompatHashTests(unittest.TestCase):
@@ -179,6 +190,7 @@ class StateAndPathTests(unittest.TestCase):
             "from_bundle": None,
             "profile": "default",
             "shell": "bash",
+            "toolchain": "gcc",
         }
         defaults.update(overrides)
         return argparse.Namespace(**defaults)
@@ -199,6 +211,79 @@ class StateAndPathTests(unittest.TestCase):
         self.assertIsNotNone(loaded)
         self.assertEqual(loaded["installed"], installed)
         self.assertEqual(loaded["preferences"]["auto_reconcile"], "always")
+
+    def test_write_profile_state_preserves_keil_toolchain_when_install_updates_state(self) -> None:
+        temp_dir = tempfile.mkdtemp(prefix="sdk-env-state-")
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        state_path = os.path.join(temp_dir, "sifli-sdk-env.json")
+        keil = {"root": "/Keil_v5", "armclang_bin": "/Keil_v5/ARM/ARMCLANG/bin"}
+
+        sdk_env.write_profile_state(
+            state_path,
+            "/repo",
+            "default",
+            installed={"python": {"env_path": "/tmp/old-env"}},
+            toolchains={"keil": keil},
+        )
+        sdk_env.write_profile_state(
+            state_path,
+            "/repo",
+            "default",
+            installed={"python": {"env_path": "/tmp/new-env"}},
+        )
+
+        loaded = sdk_env.read_profile_state(state_path, "/repo", "default")
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded["installed"]["python"]["env_path"], "/tmp/new-env")
+        self.assertEqual(loaded["toolchains"]["keil"], keil)
+
+    def test_validate_keil_toolchain_requires_windows(self) -> None:
+        with mock.patch("sdk_env.is_windows_host", return_value=False):
+            with self.assertRaisesRegex(sdk_env.SDKEnvError, "Windows"):
+                sdk_env.validate_keil_toolchain("/Keil_v5")
+
+    def test_handle_install_rejects_keil_on_non_windows_before_loading_config(self) -> None:
+        args = argparse.Namespace(
+            profile="default",
+            targets=None,
+            keil="/Keil_v5",
+            cache_dir=None,
+            staging_dir=None,
+            mirror=None,
+            offline=False,
+            from_bundle=None,
+            compat_args=[],
+        )
+
+        with mock.patch("sdk_env.is_windows_host", return_value=False):
+            with mock.patch("sdk_env.RuntimeConfig.load") as load_config:
+                with self.assertRaisesRegex(sdk_env.SDKEnvError, "Windows"):
+                    sdk_env.handle_install(args)
+
+        load_config.assert_not_called()
+
+    def test_validate_keil_toolchain_records_normalized_paths(self) -> None:
+        temp_dir = tempfile.mkdtemp(prefix="sdk-env-keil-")
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        keil_root = os.path.join(temp_dir, "Keil_v5")
+        armclang_bin = os.path.join(keil_root, "ARM", "ARMCLANG", "bin")
+        os.makedirs(armclang_bin)
+
+        with mock.patch("sdk_env.is_windows_host", return_value=True):
+            keil = sdk_env.validate_keil_toolchain(os.path.join(temp_dir, "Keil_v5", "."))
+
+        self.assertEqual(keil["root"], os.path.realpath(keil_root))
+        self.assertEqual(keil["armclang_bin"], os.path.realpath(armclang_bin))
+
+    def test_validate_keil_toolchain_requires_armclang_bin(self) -> None:
+        temp_dir = tempfile.mkdtemp(prefix="sdk-env-keil-")
+        self.addCleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
+        keil_root = os.path.join(temp_dir, "Keil_v5")
+        os.makedirs(keil_root)
+
+        with mock.patch("sdk_env.is_windows_host", return_value=True):
+            with self.assertRaisesRegex(sdk_env.SDKEnvError, "ARM/ARMCLANG/bin"):
+                sdk_env.validate_keil_toolchain(keil_root)
 
     def test_merge_managed_paths_replaces_previous_paths_and_dedupes(self) -> None:
         merged = sdk_env.merge_managed_paths(
@@ -344,11 +429,19 @@ class StateAndPathTests(unittest.TestCase):
             conan_remote_url="https://example.com",
             conan_home_subdir="default",
         )
-        args = self.make_args(profile="default", shell="bash", offline=True, mirror="https://mirror.example")
+        args = self.make_args(
+            profile="default",
+            shell="bash",
+            offline=True,
+            mirror="https://mirror.example",
+            toolchain="keil",
+        )
         argv = sdk_env.export_reexec_argv(args, config, lock)
 
         self.assertEqual(argv[0], sdk_env.python_executable(sdk_env.python_env_path(config, lock)))
         self.assertEqual(argv[1:5], [os.path.join(ROOT, "tools", "sdk_env.py"), "export", "--profile", "default"])
+        self.assertIn("--toolchain", argv)
+        self.assertEqual(argv[argv.index("--toolchain") + 1], "keil")
         self.assertIn("--offline", argv)
         self.assertIn("https://mirror.example", argv)
 
@@ -377,6 +470,10 @@ class TargetParsingTests(unittest.TestCase):
         self.assertEqual(sdk_env.install_command_hint("default", "bash"), "./install.sh --profile default")
         self.assertEqual(sdk_env.install_command_hint("default", "zsh"), "./install.sh --profile default")
         self.assertEqual(sdk_env.install_command_hint("default", "powershell"), ".\\install.ps1 --profile default")
+
+    def test_export_parser_accepts_short_toolchain_option(self) -> None:
+        args = sdk_env.build_parser().parse_args(["export", "--shell", "powershell", "-t", "keil"])
+        self.assertEqual(args.toolchain, "keil")
 
 
 class SDKVersionTests(unittest.TestCase):
@@ -419,18 +516,123 @@ class SDKVersionTests(unittest.TestCase):
             with mock.patch("sdk_env.read_sdk_release_line", return_value="2.4"):
                 with mock.patch("sdk_env.current_git_head", return_value="deadbeef"):
                     with mock.patch("sdk_env.installed_tool_versions", return_value={}):
-                        with mock.patch.dict(os.environ, {"PATH": "/usr/bin"}, clear=True):
-                            env_map = sdk_env.build_export_environment(
-                                config=config,
-                                lock=lock,
-                                plans=[],
-                                env_path="/tmp/.sifli/python_env/default/py3.13.11",
-                                shell="bash",
-                            )
+                        with mock.patch("sdk_env.gcc_exec_path", return_value="/tmp/.sifli/tools/arm-none-eabi-gcc/14.2.1/bin"):
+                            with mock.patch.dict(os.environ, {"PATH": "/usr/bin"}, clear=True):
+                                env_map = sdk_env.build_export_environment(
+                                    config=config,
+                                    lock=lock,
+                                    plans=[],
+                                    env_path="/tmp/.sifli/python_env/default/py3.13.11",
+                                    shell="bash",
+                                )
 
         self.assertEqual(env_map["SIFLI_SDK_VERSION"], "2.4")
         self.assertEqual(env_map["SIFLI_SDK_PATH"], "/repo")
         self.assertEqual(env_map["SIFLI_SDK_GIT_HEAD"], "deadbeef")
+
+
+class ToolchainExportTests(unittest.TestCase):
+    def make_config(self) -> sdk_env.RuntimeConfig:
+        temp_root = tempfile.mkdtemp(prefix="sdk-env-toolchain-")
+        self.addCleanup(lambda: shutil.rmtree(temp_root, ignore_errors=True))
+        return sdk_env.RuntimeConfig(
+            install_root=temp_root,
+            cache_root=os.path.join(temp_root, "cache"),
+            staging_root=os.path.join(temp_root, "staging"),
+            offline=False,
+            python_default_index="https://pypi.org/simple",
+            python_indexes=[],
+            python_index_strategy="first-index",
+            sources=[],
+        )
+
+    def make_lock(self) -> sdk_env.ProfileLock:
+        return sdk_env.ProfileLock(
+            path="/tmp/lock.json",
+            schema_version=1,
+            profile="default",
+            python_version="3.13.11",
+            python_project_dir="tools/locks/default",
+            python_lock_file="tools/locks/default/uv.lock",
+            default_targets=["all"],
+            tools={sdk_env.GCC_TOOL_NAME: "14.2.1"},
+            path_order=[sdk_env.GCC_TOOL_NAME],
+            conan_config_id="sdk.conan-config.v2.4",
+            conan_remote_name="artifactory",
+            conan_remote_url="https://example.com",
+            conan_home_subdir="default",
+        )
+
+    def build_env(self, config: sdk_env.RuntimeConfig, lock: sdk_env.ProfileLock, toolchain: str) -> dict[str, str]:
+        gcc_plan = sdk_env.ToolPlan(
+            name=sdk_env.GCC_TOOL_NAME,
+            version="14.2.1",
+            required=True,
+            tool=FakeTool(),
+        )
+        env_path = os.path.join(config.install_root, "python_env", "default", "py3.13.11")
+        with mock.patch("sdk_env.repo_root", return_value="/repo"):
+            with mock.patch("sdk_env.read_sdk_release_line", return_value="2.4"):
+                with mock.patch("sdk_env.current_git_head", return_value="deadbeef"):
+                    with mock.patch("sdk_env.installed_tool_versions", return_value={sdk_env.GCC_TOOL_NAME: "14.2.1"}):
+                        with mock.patch.dict(os.environ, {"PATH": "/usr/bin"}, clear=True):
+                            return sdk_env.build_export_environment(
+                                config=config,
+                                lock=lock,
+                                plans=[gcc_plan],
+                                env_path=env_path,
+                                shell="powershell",
+                                toolchain=toolchain,
+                            )
+
+    def test_gcc_export_sets_rtt_exec_path_to_installed_gcc_bin(self) -> None:
+        config = self.make_config()
+        lock = self.make_lock()
+        env_map = self.build_env(config, lock, "gcc")
+
+        expected_gcc_bin = os.path.realpath(
+            os.path.join(config.install_root, "tools", sdk_env.GCC_TOOL_NAME, "14.2.1", "bin")
+        )
+        self.assertEqual(env_map["RTT_CC"], "gcc")
+        self.assertEqual(env_map["RTT_EXEC_PATH"], expected_gcc_bin)
+        self.assertIn(expected_gcc_bin, env_map["SIFLI_SDK_MANAGED_PATHS"].split(os.pathsep))
+
+    def test_keil_export_uses_recorded_keil_root_and_armclang_path(self) -> None:
+        config = self.make_config()
+        lock = self.make_lock()
+        keil_root = os.path.join(config.install_root, "Keil_v5")
+        armclang_bin = os.path.join(keil_root, "ARM", "ARMCLANG", "bin")
+        os.makedirs(armclang_bin)
+        sdk_env.write_profile_state(
+            config.state_path,
+            "/repo",
+            "default",
+            toolchains={"keil": {"root": os.path.realpath(keil_root), "armclang_bin": os.path.realpath(armclang_bin)}},
+        )
+
+        with mock.patch("sdk_env.is_windows_host", return_value=True):
+            env_map = self.build_env(config, lock, "keil")
+
+        self.assertEqual(env_map["RTT_CC"], "keil")
+        self.assertEqual(env_map["RTT_EXEC_PATH"], os.path.realpath(keil_root))
+        self.assertIn(os.path.realpath(armclang_bin), env_map["SIFLI_SDK_MANAGED_PATHS"].split(os.pathsep))
+        self.assertIn("--toolchain keil", env_map["SIFLI_SDK_TOOLS_EXPORT_CMD"])
+
+    def test_keil_export_requires_recorded_state(self) -> None:
+        config = self.make_config()
+        lock = self.make_lock()
+
+        with mock.patch("sdk_env.is_windows_host", return_value=True):
+            with self.assertRaisesRegex(sdk_env.SDKEnvError, "not configured"):
+                self.build_env(config, lock, "keil")
+
+    def test_keil_export_requires_windows(self) -> None:
+        config = self.make_config()
+        lock = self.make_lock()
+
+        with mock.patch("sdk_env.is_windows_host", return_value=False):
+            with self.assertRaisesRegex(sdk_env.SDKEnvError, "Windows"):
+                self.build_env(config, lock, "keil")
 
 
 class ExportErrorMessageTests(unittest.TestCase):

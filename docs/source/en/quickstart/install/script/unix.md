@@ -167,6 +167,8 @@ cd ~/OpenSiFli/SiFli-SDK
 - install the SDK toolchain versions bound by `tools/locks/default/lock.json`
 - initialize the profile-specific Conan home under `SIFLI_SDK_TOOLS_PATH`
 
+Keil/ARMCLANG path recording and `export -t keil` are Windows-only; the macOS and Linux scripts export the GCC toolchain by default.
+
 For domestic users in China, you can enable the bundled China mirror preset with `SIFLI_SDK_MIRROR_CHINA`:
 
 ```bash
