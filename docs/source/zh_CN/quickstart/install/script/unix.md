@@ -159,6 +159,8 @@ cd ~/OpenSiFli/SiFli-SDK
 - 根据 `tools/locks/default/lock.json` 安装当前 profile 绑定的工具版本
 - 在 `SIFLI_SDK_TOOLS_PATH` 下初始化 profile 级别的 Conan 环境
 
+Keil/ARMCLANG 路径记录和 `export -t keil` 仅支持 Windows；macOS 和 Linux 的脚本默认导出 GCC 工具链。
+
 对于国内用户，可以通过 `SIFLI_SDK_MIRROR_CHINA` 一键启用国内镜像预设：
 
 ```bash

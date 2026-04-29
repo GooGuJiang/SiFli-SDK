@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -55,6 +56,10 @@ DEFAULT_PYPI_FILES_PREFIX = "https://files.pythonhosted.org/packages"
 DEFAULT_UPSTREAM_URL = "https://downloads.sifli.com/dl/sifli-sdk"
 CONFIG_FILE_NAME = "config.json"
 STATE_FILE_NAME = "sifli-sdk-env.json"
+TOOLCHAIN_GCC = "gcc"
+TOOLCHAIN_KEIL = "keil"
+SUPPORTED_TOOLCHAINS = (TOOLCHAIN_GCC, TOOLCHAIN_KEIL)
+GCC_TOOL_NAME = "arm-none-eabi-gcc"
 CHINA_MIRROR_ENV_NAME = "SIFLI_SDK_MIRROR_CHINA"
 CHINA_MIRROR_PRESET = {
     "SIFLI_SDK_GITHUB_ASSETS": "https://downloads.sifli.com/github_assets",
@@ -399,12 +404,46 @@ def parse_csv_env(value: Optional[str]) -> List[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def is_windows_host() -> bool:
+    return os.name == "nt"
+
+
 def normalize_target(value: str) -> str:
     return value.strip().lower().replace("-", "")
 
 
 def normalize_path(path: str) -> str:
     return os.path.normcase(os.path.normpath(path))
+
+
+def normalize_filesystem_path(path: str) -> str:
+    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+
+
+def keil_armclang_bin(root: str) -> str:
+    return os.path.join(root, "ARM", "ARMCLANG", "bin")
+
+
+def validate_keil_toolchain(root: str) -> Dict[str, str]:
+    if not is_windows_host():
+        raise SDKEnvError("--keil is only supported on Windows")
+    if not root or not str(root).strip():
+        raise SDKEnvError("--keil requires a Keil root directory")
+
+    normalized_root = normalize_filesystem_path(str(root).strip())
+    if not os.path.isdir(normalized_root):
+        raise SDKEnvError(f"Keil root directory does not exist: {normalized_root}")
+
+    armclang_bin = normalize_filesystem_path(keil_armclang_bin(normalized_root))
+    if not os.path.isdir(armclang_bin):
+        raise SDKEnvError(
+            f"Keil root directory must contain ARM/ARMCLANG/bin: {normalized_root}"
+        )
+
+    return {
+        "root": normalized_root,
+        "armclang_bin": armclang_bin,
+    }
 
 
 def shell_kind(shell: str) -> str:
@@ -547,11 +586,25 @@ def write_profile_state(
     profile: str,
     installed: Optional[Dict[str, Any]] = None,
     auto_reconcile: Optional[str] = None,
+    toolchains: Optional[Dict[str, Optional[Dict[str, str]]]] = None,
 ) -> None:
     state_doc = load_state(path)
     profile_state = get_profile_state(state_doc, root, profile)
     if installed is not None:
         profile_state["installed"] = installed
+    if toolchains is not None:
+        existing_toolchains = profile_state.get("toolchains")
+        if not isinstance(existing_toolchains, dict):
+            existing_toolchains = {}
+        for name, value in toolchains.items():
+            if value is None:
+                existing_toolchains.pop(name, None)
+            else:
+                existing_toolchains[name] = value
+        if existing_toolchains:
+            profile_state["toolchains"] = existing_toolchains
+        else:
+            profile_state.pop("toolchains", None)
     profile_state.setdefault("preferences", {})
     if auto_reconcile is not None:
         profile_state["preferences"]["auto_reconcile"] = auto_reconcile
@@ -587,6 +640,17 @@ def read_version_txt(root: str) -> str:
     path = os.path.join(root, "version.txt")
     with open(path, "r", encoding="utf-8") as f:
         return f.read().strip()
+
+
+def sdk_release_line(version_txt: str) -> str:
+    match = re.match(r"^v?([0-9]+)\.([0-9]+)(?:\.[0-9]+)?(?:[-+][0-9A-Za-z.-]+)?$", version_txt.strip())
+    if not match:
+        raise SDKEnvError(f"failed to parse SDK release line from version '{version_txt}'")
+    return f"{match.group(1)}.{match.group(2)}"
+
+
+def read_sdk_release_line(root: str) -> str:
+    return sdk_release_line(read_version_txt(root))
 
 
 def python_env_path(config: RuntimeConfig, lock: ProfileLock) -> str:
@@ -1194,19 +1258,89 @@ def install_command_hint(profile: str, shell: str) -> str:
     return f"./install.sh --profile {profile}"
 
 
+def keil_install_command_hint(profile: str) -> str:
+    base = ".\\install.ps1"
+    if profile != DEFAULT_PROFILE:
+        base += f" --profile {profile}"
+    return base + r" --keil C:\Keil_v5"
+
+
+def export_command_name(shell: str) -> str:
+    return "export.ps1" if shell_kind(shell) == "powershell" else "export.sh"
+
+
+def render_export_command(root: str, profile: str, shell: str, toolchain: str) -> str:
+    command = f"{os.path.join(root, export_command_name(shell))} --profile {profile}"
+    if toolchain != TOOLCHAIN_GCC:
+        command += f" --toolchain {toolchain}"
+    return command
+
+
+def load_keil_toolchain_state(config: RuntimeConfig, lock: ProfileLock) -> Dict[str, str]:
+    if not is_windows_host():
+        raise SDKEnvError("Keil export is only supported on Windows")
+
+    profile_state = read_profile_state(config.state_path, repo_root(), lock.profile)
+    toolchains = profile_state.get("toolchains") if isinstance(profile_state, dict) else None
+    keil = toolchains.get(TOOLCHAIN_KEIL) if isinstance(toolchains, dict) else None
+    if not isinstance(keil, dict):
+        raise SDKEnvError(
+            f"Keil toolchain is not configured for profile '{lock.profile}'. "
+            f"Run `{keil_install_command_hint(lock.profile)}` first."
+        )
+
+    root = str(keil.get("root", "")).strip()
+    armclang_bin = str(keil.get("armclang_bin", "")).strip()
+    if not root or not armclang_bin:
+        raise SDKEnvError(
+            f"Keil toolchain state for profile '{lock.profile}' is incomplete. "
+            f"Run `{keil_install_command_hint(lock.profile)}` again."
+        )
+
+    validated = validate_keil_toolchain(root)
+    recorded_bin = normalize_filesystem_path(armclang_bin)
+    if recorded_bin != validated["armclang_bin"]:
+        raise SDKEnvError(
+            f"Keil toolchain state for profile '{lock.profile}' is inconsistent. "
+            f"Run `{keil_install_command_hint(lock.profile)}` again."
+        )
+    return validated
+
+
+def gcc_exec_path(plans: Sequence[ToolPlan], config: RuntimeConfig, installed: Dict[str, str]) -> str:
+    for plan in plans:
+        if plan.name != GCC_TOOL_NAME:
+            continue
+        if installed.get(plan.name) != plan.version:
+            continue
+        paths = tool_export_paths(plan, tool_install_dir(config, plan))
+        if paths:
+            return os.path.realpath(paths[0])
+    raise SDKEnvError(
+        f"installed {GCC_TOOL_NAME} toolchain was not found. "
+        "Run the install script again before exporting the GCC environment."
+    )
+
+
 def build_export_environment(
     config: RuntimeConfig,
     lock: ProfileLock,
     plans: Sequence[ToolPlan],
     env_path: str,
     shell: str,
+    toolchain: str = TOOLCHAIN_GCC,
 ) -> Dict[str, str]:
     root = repo_root()
     install_cmd_name = "install.ps1" if shell_kind(shell) == "powershell" else "install.sh"
-    export_cmd_name = "export.ps1" if shell_kind(shell) == "powershell" else "export.sh"
     current_path = os.environ.get("PATH", "")
     old_managed = [item for item in os.environ.get("SIFLI_SDK_MANAGED_PATHS", "").split(os.pathsep) if item]
     installed = installed_tool_versions(plans, config)
+    if toolchain not in SUPPORTED_TOOLCHAINS:
+        raise SDKEnvError(f"unsupported toolchain '{toolchain}'")
+
+    keil_toolchain: Optional[Dict[str, str]] = None
+    if toolchain == TOOLCHAIN_KEIL:
+        keil_toolchain = load_keil_toolchain_state(config, lock)
 
     managed_paths: List[str] = [python_bin_dir(env_path)]
     for tool_name in lock.path_order:
@@ -1216,29 +1350,33 @@ def build_export_environment(
             if installed.get(plan.name) != plan.version:
                 continue
             managed_paths.extend(tool_export_paths(plan, tool_install_dir(config, plan)))
+    if keil_toolchain is not None:
+        managed_paths.append(keil_toolchain["armclang_bin"])
     managed_paths.append(repo_tools_dir(root))
 
     managed_paths = [os.path.realpath(path) for path in managed_paths]
     path_value = merge_managed_paths(current_path, old_managed, managed_paths)
+    rtt_cc = TOOLCHAIN_KEIL if keil_toolchain is not None else TOOLCHAIN_GCC
+    rtt_exec_path = keil_toolchain["root"] if keil_toolchain is not None else gcc_exec_path(plans, config, installed)
 
     env_map: Dict[str, str] = {
         "SIFLI_SDK_PATH": root,
-        "SIFLI_SDK_VERSION": read_version_txt(root),
+        "SIFLI_SDK_VERSION": read_sdk_release_line(root),
         "SIFLI_SDK_GIT_HEAD": current_git_head(root),
         "SIFLI_SDK_PROFILE": lock.profile,
         "SIFLI_SDK_PYTHON_ENV_PATH": env_path,
         "SIFLI_SDK_MANAGED_PATHS": os.pathsep.join(managed_paths),
         "SIFLI_SDK_TOOLS_INSTALL_CMD": f"{os.path.join(root, install_cmd_name)} --profile {lock.profile}",
-        "SIFLI_SDK_TOOLS_EXPORT_CMD": f"{os.path.join(root, export_cmd_name)} --profile {lock.profile}",
+        "SIFLI_SDK_TOOLS_EXPORT_CMD": render_export_command(root, lock.profile, shell, toolchain),
         "SIFLI_SDK": root,
         "CONAN_HOME": conan_home_path(config, lock),
         "ENV_ROOT": env_path,
         "PKGS_ROOT": pkg_root(config),
         "PKGS_DIR": pkg_root(config),
-        "RTT_CC": "gcc",
+        "RTT_CC": rtt_cc,
         "PYTHONPATH": os.path.join(root, "tools", "build"),
         "PATH": path_value,
-        "RTT_EXEC_PATH": path_value,
+        "RTT_EXEC_PATH": rtt_exec_path,
     }
 
     for plan in plans:
@@ -1284,6 +1422,8 @@ def export_reexec_argv(args: argparse.Namespace, config: RuntimeConfig, lock: Pr
         lock.profile,
         "--shell",
         args.shell,
+        "--toolchain",
+        getattr(args, "toolchain", TOOLCHAIN_GCC),
     ]
     if args.cache_dir:
         argv.extend(["--cache-dir", args.cache_dir])
@@ -1377,6 +1517,7 @@ def perform_install(
     lock: ProfileLock,
     targets: Sequence[str],
     auto_reconcile: Optional[str] = None,
+    keil_toolchain: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     log_step(f"Starting install for profile '{lock.profile}'")
     log_kv("mode", "install")
@@ -1394,6 +1535,7 @@ def perform_install(
         lock.profile,
         installed=installed_state,
         auto_reconcile=preference,
+        toolchains={TOOLCHAIN_KEIL: keil_toolchain} if keil_toolchain is not None else None,
     )
     log_ok(f"Install completed for profile '{lock.profile}'")
     return installed_state
@@ -1414,6 +1556,8 @@ def warn_non_blocking_drift(config: RuntimeConfig, lock: ProfileLock) -> None:
 
 
 def handle_install(args: argparse.Namespace) -> int:
+    keil_arg = getattr(args, "keil", None)
+    keil_toolchain = validate_keil_toolchain(keil_arg) if keil_arg else None
     config = RuntimeConfig.load(args)
     lock = ProfileLock.load(repo_root(), args.profile)
     targets = parse_install_targets(lock, args.targets, args.compat_args)
@@ -1422,7 +1566,10 @@ def handle_install(args: argparse.Namespace) -> int:
         f"profile={lock.profile}",
     )
     log_kv("selected targets", ",".join(targets))
-    perform_install(args, config, lock, targets)
+    if keil_toolchain is not None:
+        log_kv("keil root", keil_toolchain["root"])
+        log_kv("keil armclang bin", keil_toolchain["armclang_bin"])
+    perform_install(args, config, lock, targets, keil_toolchain=keil_toolchain)
     log_ok(f"SiFli-SDK profile '{lock.profile}' installed.")
     return 0
 
@@ -1448,6 +1595,7 @@ def handle_check(args: argparse.Namespace) -> int:
 
 
 def handle_export(args: argparse.Namespace) -> int:
+    toolchain = getattr(args, "toolchain", TOOLCHAIN_GCC)
     config = RuntimeConfig.load(args)
     lock = ProfileLock.load(repo_root(), args.profile)
     log_banner(
@@ -1455,6 +1603,9 @@ def handle_export(args: argparse.Namespace) -> int:
         f"profile={lock.profile}",
     )
     log_kv("shell", args.shell)
+    log_kv("toolchain", toolchain)
+    if toolchain == TOOLCHAIN_KEIL and not is_windows_host():
+        raise SDKEnvError("Keil export is only supported on Windows")
     plans = load_tool_plans(repo_root(), config, lock, lock.default_targets)
     reasons, _compat = detect_drift(config, lock, plans)
     preference = auto_reconcile_preference(config, lock.profile)
@@ -1487,6 +1638,7 @@ def handle_export(args: argparse.Namespace) -> int:
                 offline=args.offline,
                 mirror=args.mirror,
                 from_bundle=args.from_bundle,
+                toolchain=toolchain,
             ),
             config,
             lock,
@@ -1509,7 +1661,14 @@ def handle_export(args: argparse.Namespace) -> int:
 
     warn_non_blocking_drift(config, lock)
     log_value("Identified shell", args.shell)
-    env_map = build_export_environment(config, lock, plans, python_env_path(config, lock), args.shell)
+    env_map = build_export_environment(
+        config,
+        lock,
+        plans,
+        python_env_path(config, lock),
+        args.shell,
+        toolchain,
+    )
     script_path = write_export_script(env_map, args.shell)
     log_done("Generating shell export script")
     log_value("Export script", script_path)
@@ -1524,6 +1683,7 @@ def build_parser() -> argparse.ArgumentParser:
     install = subparsers.add_parser("install", help="Install the current profile environment")
     install.add_argument("--profile", default=DEFAULT_PROFILE)
     install.add_argument("--targets")
+    install.add_argument("--keil", metavar="PATH", help="record a Windows Keil root containing ARM/ARMCLANG/bin")
     install.add_argument("--cache-dir")
     install.add_argument("--staging-dir")
     install.add_argument("--mirror")
@@ -1534,6 +1694,7 @@ def build_parser() -> argparse.ArgumentParser:
     export = subparsers.add_parser("export", help="Export shell environment for the current profile")
     export.add_argument("--profile", default=DEFAULT_PROFILE)
     export.add_argument("--shell", required=True)
+    export.add_argument("-t", "--toolchain", choices=SUPPORTED_TOOLCHAINS, default=TOOLCHAIN_GCC)
     export.add_argument("--cache-dir")
     export.add_argument("--staging-dir")
     export.add_argument("--mirror")

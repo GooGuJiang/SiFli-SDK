@@ -28,13 +28,15 @@ export SIFLI_SDK_PATH="${sdk_path}"
 
 show_help() {
     cat <<'EOF'
-usage: . ./export.sh [--profile PROFILE]
+usage: . ./export.sh [--profile PROFILE] [-t TOOLCHAIN]
 
 Activate the installed SiFli-SDK environment in the current shell.
 
 options:
-  --profile PROFILE   profile to export, defaults to "default"
-  -h, --help          show this help message and exit
+  --profile PROFILE      profile to export, defaults to "default"
+  -t, --toolchain TOOLCHAIN
+                         toolchain to export: gcc (default); Keil is Windows-only
+  -h, --help             show this help message and exit
 EOF
 }
 
@@ -45,6 +47,11 @@ do
     if [ "${prev}" = "--profile" ]
     then
         profile="${arg}"
+        prev=""
+        continue
+    fi
+    if [ "${prev}" = "--toolchain" ]
+    then
         prev=""
         continue
     fi
@@ -60,12 +67,23 @@ do
         --profile=*)
             profile="${arg#--profile=}"
             ;;
+        -t|--toolchain)
+            prev="--toolchain"
+            ;;
+        --toolchain=*)
+            ;;
     esac
 done
 
 if [ "${prev}" = "--profile" ]
 then
     echo "ERROR: --profile requires a value." >&2
+    unset sdk_path
+    return 1
+fi
+if [ "${prev}" = "--toolchain" ]
+then
+    echo "ERROR: --toolchain requires a value." >&2
     unset sdk_path
     return 1
 fi

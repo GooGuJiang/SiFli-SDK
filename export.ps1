@@ -22,13 +22,15 @@ function Get-JsonProperty {
 }
 
 function Show-ExportHelp {
-    Write-Output "usage: .\export.ps1 [--profile PROFILE]"
+    Write-Output "usage: .\export.ps1 [--profile PROFILE] [-t TOOLCHAIN]"
     Write-Output ""
     Write-Output "Activate the installed SiFli-SDK environment in the current shell."
     Write-Output ""
     Write-Output "options:"
-    Write-Output "  --profile PROFILE   profile to export, defaults to `"default`""
-    Write-Output "  -h, --help          show this help message and exit"
+    Write-Output "  --profile PROFILE      profile to export, defaults to `"default`""
+    Write-Output "  -t, --toolchain TOOLCHAIN"
+    Write-Output "                         toolchain to export: gcc (default) or keil (Windows only)"
+    Write-Output "  -h, --help             show this help message and exit"
 }
 
 $profile = "default"
@@ -49,6 +51,18 @@ for ($i = 0; $i -lt $args.Count; $i++) {
     }
     if ($arg.StartsWith("--profile=")) {
         $profile = $arg.Substring("--profile=".Length)
+        continue
+    }
+    if ($arg -eq "-t" -or $arg -eq "--toolchain") {
+        if ($i + 1 -ge $args.Count) {
+            Write-Error "$arg requires a value."
+            exit 1
+        }
+        $i++
+        continue
+    }
+    if ($arg.StartsWith("--toolchain=")) {
+        continue
     }
 }
 

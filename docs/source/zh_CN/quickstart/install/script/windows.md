@@ -123,6 +123,14 @@ cd C:\OpenSiFli\SiFli-SDK
 - 根据 `tools/locks/default/lock.json` 安装当前 profile 绑定的工具版本
 - 在 `SIFLI_SDK_TOOLS_PATH` 下初始化 profile 级别的 Conan 环境
 
+如果需要使用 Keil/ARMCLANG 编译，请在安装时记录 Keil 根目录。该目录必须已经存在，并包含 `ARM\ARMCLANG\bin`：
+
+```powershell
+.\install.ps1 --keil C:\Keil_v5
+```
+
+已经安装过 SDK 环境的用户也可以直接重新运行上面的命令。`install.ps1` 是幂等的，会复用已有 Python、工具和 Conan 状态，并把 Keil 路径补录到 `${SIFLI_SDK_TOOLS_PATH}\sifli-sdk-env.json`。
+
 ````{note}
 国内用户可以改用下面的命令一键启用国内镜像预设，避免默认源下载速度慢。注意，选择执行下述命令的时候不需要再执行上述代码块中的命令。
 
@@ -173,6 +181,18 @@ $env:SIFLI_SDK_TOOLS_PATH="D:\SIFLI\tools"
 ```powershell
 cd C:\OpenSiFli\SiFli-SDK
 .\export.ps1
+```
+
+默认不传 `-t` 时导出 GCC 环境，等价于：
+
+```powershell
+.\export.ps1 -t gcc
+```
+
+如果已经通过 `install.ps1 --keil` 记录过 Keil 根目录，可以切换到 Keil/ARMCLANG：
+
+```powershell
+.\export.ps1 -t keil
 ```
 
 `export.ps1` 现在会从 `${SIFLI_SDK_TOOLS_PATH}/sifli-sdk-env.json` 读取已安装 profile 的 bootstrap 信息，并使用其中记录的 Python 虚拟环境。如果当前 profile 的虚拟环境尚未安装、本地 state 文件缺失，或者安装记录来自旧的不兼容布局，`export.ps1` 会立即失败，并提示重新执行 `.\install.ps1`。

@@ -12,6 +12,7 @@ import sys
 import logging
 import ptab
 import re
+from collections import OrderedDict
 
 output_folder = "output"
 img_folder = "images"
@@ -20,8 +21,11 @@ font_folder = "fonts"
 font_config_src_file = "fonts/config.json"
 font_config_output_file = "fonts_config"
 lang_pack_name = "lang_pack"
+# Keep string keys in a list, not a set.
+# The generated lang_pack.h field order must stay deterministic and must match
+# the packing order used by external language-pack generation.
 resource_db = {'images': set(),
-               'strings': set()}
+               'strings': []}
 
 # gen_src_file_folder = "../applications"
 
@@ -102,6 +106,9 @@ const lv_i18n_lang_t {}_lang =
 }};
 '''
     data = u''
+    # Do not collect resource_db['strings'] here.
+    # Key schema is resolved centrally from the full language set so builtin
+    # headers and external .bin packs always share the same field order.
     for k, v in s.items():
         # k = "str_" + k
         # data = data + u'char *{} = "{}";\n'.format(k,v)
@@ -110,8 +117,6 @@ const lv_i18n_lang_t {}_lang =
         # plural
         translation = translation + u', {0}'
         data = data + u"    .{} = {{{}}},\n".format(k, translation)
-        resource_db['strings'].add(k)
-
     data = template.format(lang, data, lang, lang, lang)
 
     str_cfile_filename = lang + ".c"
@@ -121,6 +126,63 @@ const lv_i18n_lang_t {}_lang =
         f.write(data)
     finally:
         f.close()
+
+
+def _load_lang_jsons(str_src_dir):
+    lang_files = sorted(glob.glob(os.path.join(str_src_dir, '*.json')))
+    lang_items = []
+
+    for f_name in lang_files:
+        try:
+            f = open(f_name, encoding='utf-8')
+            # Preserve key order from the source json so the generated header
+            # layout follows the declared language schema exactly.
+            s = json.load(f, object_pairs_hook=OrderedDict)
+        finally:
+            f.close()
+
+        str_file_basename = os.path.basename(f_name)
+        str_file_basename = os.path.splitext(str_file_basename)[0]
+        lang_items.append((str_file_basename, s))
+
+    return lang_items
+
+
+def _resolve_string_key_order(lang_items):
+    if not lang_items:
+        return []
+
+    source_dict = None
+
+    # Use the default language as the canonical schema source when possible.
+    # This keeps generated struct fields stable across builds and boards.
+    for lang, data in lang_items:
+        if lang == default_language:
+            source_dict = data
+            break
+
+    if source_dict is None:
+        _, source_dict = lang_items[0]
+
+    key_order = list(source_dict.keys())
+    key_set = set(key_order)
+
+    # All language json files must describe the same key set. If not, fail
+    # early instead of generating a mismatched lang_pack.h silently.
+    for lang, data in lang_items:
+        current_key_set = set(data.keys())
+        if current_key_set != key_set:
+            missing = sorted(key_set - current_key_set)
+            extra = sorted(current_key_set - key_set)
+            err = ["language json keys mismatch: {}".format(lang)]
+            if missing:
+                err.append("missing: {}".format(", ".join(missing)))
+            if extra:
+                err.append("extra: {}".format(", ".join(extra)))
+            raise RuntimeError("; ".join(err))
+
+    resource_db['strings'] = key_order
+    return key_order
 
 
 def GenerateLangPackCFile(lang_pack, output_dir):
@@ -195,7 +257,10 @@ def GenerateLangPackHFile(lang_pack, output_dir):
 
 # Generate string resource file
 def GenerateStrRes(str_src_dir, str_output_dir):
-    string_res_file = glob.glob(str_src_dir + '/*.json')
+    lang_items = _load_lang_jsons(str_src_dir)
+    # Reset the shared key cache for each generation pass so incremental builds
+    # do not reuse stale schema data from previous invocations.
+    resource_db['strings'] = []
     if not os.path.exists(str_output_dir):
         os.makedirs(str_output_dir)
     else:
@@ -203,19 +268,16 @@ def GenerateStrRes(str_src_dir, str_output_dir):
         file_list += glob.glob(os.path.join(str_output_dir, "SConscript"))
         [os.remove(f) for f in file_list]
 
-    lang_pack = set()
-    for f_name in string_res_file:
-        try:
-            f = open(f_name, encoding='utf-8')
-            s = json.load(f)
-        finally:
-            f.close()
+    key_order = _resolve_string_key_order(lang_items)
+    if not key_order:
+        return
 
-        str_file_basename = os.path.basename(f_name)
-        str_file_basename = os.path.splitext(str_file_basename)[0]
-
+    # Keep language pack names ordered deterministically for reproducible
+    # generated sources. Do not switch this back to a set.
+    lang_pack = []
+    for str_file_basename, s in lang_items:
         GenerateLangCFile(str_file_basename, s, str_output_dir)
-        lang_pack.add(str_file_basename)
+        lang_pack.append(str_file_basename)
 
     GenerateLangPackCFile(lang_pack, str_output_dir)
     GenerateLangPackHFile(lang_pack, str_output_dir)
