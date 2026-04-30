@@ -322,22 +322,15 @@ static void set_pll_state(uint8_t state)
 
 extern HAL_StatusTypeDef HAL_AUDPRC_Config_ADCPath_Volume(AUDPRC_HandleTypeDef *haprc, int channel, int volume);
 extern AUDPRC_HandleTypeDef *get_audprc_handle();
-#if BSP_ENABLE_AUD_CODEC
-extern AUDCODEC_HandleTypeDef *get_audcodec_handle();
-extern HAL_StatusTypeDef HAL_AUDCODEC_Config_ADCPath_Volume(AUDCODEC_HandleTypeDef *hacodec, int channel, int volume);
-#else
-AUDCODEC_HandleTypeDef *get_audcodec_handle()
+__weak AUDCODEC_HandleTypeDef *get_audcodec_handle()
 {
     RT_ASSERT(0);
     return NULL;
 }
-HAL_StatusTypeDef HAL_AUDCODEC_Config_ADCPath_Volume(AUDCODEC_HandleTypeDef *hacodec, int channel, int volume)
+__weak HAL_StatusTypeDef HAL_AUDCODEC_Config_ADCPath_Volume(AUDCODEC_HandleTypeDef *hacodec, int channel, int volume)
 {
     return HAL_ERROR;
 }
-#endif
-
-extern HAL_StatusTypeDef HAL_AUDCODEC_Config_ADCPath_Volume(AUDCODEC_HandleTypeDef *hacodec, int channel, int volume);
 
 #define AUDPRC_DMA_RBF_NUM  16
 struct bf0_audio_prc
