@@ -14,7 +14,9 @@ extern "C" {
 #include "stdint.h"
 //#define HAL_DEBUG_ENABLED
 //#define TARMAC
+#ifndef WIN32
 #include "register.h"
+#endif /* !WIN32 */
 /* Includes ------------------------------------------------------------------*/
 #ifdef SOC_BF0_HCPU
 #include "bf0_hal_conf_hcpu.h"
@@ -463,7 +465,7 @@ __STATIC_INLINE void HAL_EnableInterrupt(uint32_t mask)
 {
     __set_PRIMASK(mask);
 }
-#else
+#elif defined(__RV_CSR_CLEAR)
 __STATIC_INLINE uint32_t HAL_DisableInterrupt(void)
 {
     __RV_CSR_CLEAR(CSR_MSTATUS, MSTATUS_MIE);

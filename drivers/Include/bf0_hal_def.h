@@ -26,6 +26,7 @@ extern "C" {
 #include <stdbool.h>
 /* Exported types ------------------------------------------------------------*/
 
+#ifndef WIN32
 #define _FOREACH_FUNC_0(fn, pad, a)
 #define _FOREACH_FUNC_1(fn, pad, a)       fn(pad, a)
 #define _FOREACH_FUNC_2(fn, pad, a, ...)  fn(pad, a), _FOREACH_FUNC_1(fn, pad, __VA_ARGS__)
@@ -343,6 +344,8 @@ extern "C" {
 #define _FOREACH_FUNC_II(N, fn, pad, ...)                            \
     _FOREACH_FUNC_##N(fn, pad, __VA_ARGS__)
 
+
+#endif /* !WIN32 */    
 
 #define HAL_CONCAT_2_(p1, p2)     p1##p2
 
