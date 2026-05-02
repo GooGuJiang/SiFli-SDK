@@ -722,6 +722,7 @@ def compute_link_defines(ptab_obj, build_name: str, build_core: str, rtconfig_de
         hcpu_ram_size = int(hcpu_ram_size_ptab)
         if not hcpu_ro_base_ptab and hcpu_ro_size_ptab == 0:
             hcpu_ro_base_ptab = int(hcpu_ram_base + hcpu_ram_size)
+            hcpu_ro_size_ptab = hcpu_ro_data_size
         hcpu_rom_ex_base = int(hcpu_ro_base_ptab)
         hcpu_rom_ex_size = int(hcpu_ro_size_ptab)
         if build_name != 'bootloader':
