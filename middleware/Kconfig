@@ -1,4 +1,4 @@
-menu "Sifli middleware"
+menu "SiFli Built-in Components"
     choice
         prompt "Select HAL Assert Type"
         default BSP_USING_EMPTY_ASSERT

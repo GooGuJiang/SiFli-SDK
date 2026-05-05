@@ -1,4 +1,4 @@
-menu "On-chip Peripheral RTOS Drivers"
+menu "On-chip Peripherals"
 
     menuconfig BSP_USING_GPIO
         bool "Enable GPIO"
