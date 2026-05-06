@@ -1,45 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <string.h>             // for memcpy
 //#include <rtthread.h>
 //#include <rtdevice.h>
 #include <stdlib.h>
 #include <board.h>
 
-void enable_spi3_trx() ;
 
-void disable_spi3_trx() ;
 
-void set_spi3_tdata(uint32_t tdata) ;
+void enable_spi1_trx() ;
 
-uint32_t get_spi3_rdata() ;
+void disable_spi1_trx() ;
 
-void set_spi3_frm_width(uint8_t frm_width) ;
+void set_spi1_tdata(uint32_t tdata) ;
 
-void set_spi3_sph() ;
+uint32_t get_spi1_rdata() ;
 
-void clear_spi3_sph();
+void set_spi1_frm_width(uint8_t frm_width) ;
 
-void set_spi3_spo();
+void set_spi1_sph() ;
 
-void clear_spi3_spo();
+void clear_spi1_sph();
 
-void set_spi3_clkdiv(uint8_t div);
+void set_spi1_spo();
 
-void enable_spi4_trx() ;
+void clear_spi1_spo();
 
-void disable_spi4_trx() ;
+void set_spi1_clkdiv(uint8_t div);
 
-void set_spi4_tdata(uint32_t tdata) ;
-
-uint32_t get_spi4_rdata() ;
-
-void set_spi4_frm_width(uint8_t frm_width) ;
-
-void set_spi4_sph() ;
-
-void clear_spi4_sph();
-
-void set_spi4_spo();
-
-void clear_spi4_spo();
-
-void set_spi4_clkdiv(uint8_t div);

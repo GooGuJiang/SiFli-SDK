@@ -395,9 +395,15 @@ __HAL_ROM_USED  HAL_StatusTypeDef HAL_LPAON_GetWakeupPinMode(uint8_t wakeup_pin,
 #endif
 void HAL_LPAON_ConfigStartAddr(uint32_t *start_addr)
 {
+#ifndef SF32LB57X
     hwp_lpsys_aon->SPR = (*start_addr);
     start_addr++;
     hwp_lpsys_aon->PCR = (*start_addr);
+#else
+    hwp_lpsys_aon->SPR = 0;
+    start_addr++;
+    hwp_lpsys_aon->PCR = 0;
+#endif
 }
 
 __HAL_ROM_USED void HAL_LPAON_Deactivate(void)

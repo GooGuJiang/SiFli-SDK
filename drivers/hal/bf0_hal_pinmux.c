@@ -2517,6 +2517,7 @@ HAL_RAM_RET_CODE_SECT(HAL_PIN_Restore, HAL_StatusTypeDef HAL_PIN_Restore(PIN_Bac
 
     HAL_ASSERT(buf);
 
+#if defined(PIN_SAVE_PINMUX_INSTANCE_SIZE) && (PIN_SAVE_PINMUX_INSTANCE_SIZE > 0)
 #ifdef SOC_BF0_HCPU
     reg = (__IO uint32_t *)hwp_pinmux1;
 #else
@@ -2546,6 +2547,7 @@ HAL_RAM_RET_CODE_SECT(HAL_PIN_Restore, HAL_StatusTypeDef HAL_PIN_Restore(PIN_Bac
     }
 #endif /* PIN_SAVE_PINMUX_EXT_INSTANCE_SIZE */
 
+#endif /* PIN_SAVE_PINMUX_INSTANCE_SIZE   && PIN_SAVE_PINMUX_INSTANCE_SIZE > 0*/
     return HAL_OK;
 }
 

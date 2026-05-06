@@ -1,50 +1,8 @@
-/**
-  ******************************************************************************
-  * @file   bf0_lcpu_init.c
-  * @author Sifli software development team
-  * @brief
- * @{
-  ******************************************************************************
-*/
-/**
- * @attention
- * Copyright (c) 2019 - 2025,  Sifli Technology
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
  *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form, except as embedded into a Sifli integrated circuit
- *    in a product or a software update for such product, must reproduce the above
- *    copyright notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Sifli nor the names of its contributors may be used to endorse
- *    or promote products derived from this software without specific prior written permission.
- *
- * 4. This software, with or without modification, must only be used with a
- *    Sifli integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY SIFLI TECHNOLOGY "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL SIFLI TECHNOLOGY OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
-
 #include <rtconfig.h>
 #include <bf0_hal.h>
 #include <string.h>
@@ -54,9 +12,8 @@
     #define bt_rf_cal()
 #else
     #if defined(FPGA)
-        // TODO: need to enanble after ble_rf_fulcal_ad9364 is available
-        // #define bt_rf_cal bt_rf_cal_9364
-        #define bt_rf_cal()
+        extern void bt_rf_cal_9364();
+        #define bt_rf_cal() bt_rf_cal_9364()
     #endif
     // extern void bt_rf_cal(void);
 #endif
@@ -153,11 +110,7 @@ uint8_t lcpu_power_on(void)
         HAL_ASSERT(HAL_RCC_GetHCLKFreq(CORE_ID_LCPU) <= 24000000);
     }
 
-    uint8_t rev_id = __HAL_SYSCFG_GET_REVID();
-    if (rev_id < HAL_CHIP_REV_ID_A4)
-    {
-        lcpu_img_install();
-    }
+
 
     HAL_LPAON_ConfigStartAddr((uint32_t *)HCPU_LCPU_CODE_START_ADDR);
     lcpu_ble_patch_install();
@@ -166,6 +119,7 @@ uint8_t lcpu_power_on(void)
 #ifdef USING_SEC_ENV
     // hcpu_exit_safe_mode()
     HAL_SECU_SetAttr(SECU_MOD_HCPU, SECU_ROLE_MASTER, SECU_FLAG_NONE);
+    HAL_SECU_Apply(SECU_GROUP_HPMST);
 #endif
     return 0;
 }

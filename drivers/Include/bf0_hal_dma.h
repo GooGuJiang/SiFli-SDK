@@ -19,7 +19,7 @@ extern "C" {
 /* For Keil Flash download algorithm, don't enable dynamic alloc as bss section is not initialized automatically,
    so dma_ch_pool is not initialized correclty.
  */
-#if defined(SOC_BF0_LCPU) && (defined(SF32LB55X) || defined(SF32LB58X) || defined(SF32LB52X))
+#if defined(SOC_BF0_LCPU) && (defined(SF32LB55X) || defined(SF32LB58X) || defined(SF32LB52X) || defined(SF32LB57X))
 #else
 /* SF32LB55X, SF32LB58X and SF32LB52X LCPU doesn't support DMA channel dynamic allocation,
  * SF32LB52X LCPU uses DMA for RF register restore and DMA driver uses ROM implementation
@@ -168,7 +168,7 @@ typedef struct __DMA_HandleTypeDef
     DMAC_TypeDef           *DmaBaseAddress;                                            /*!< DMA Channel Base Address             */
 
     uint32_t               ChannelIndex;                                               /*!< DMA Channel Index, the value is left-shifted by 2 bits */
-#ifdef DMA_SUPPORT_GPDMA    
+#ifdef DMA_SUPPORT_GPDMA
     uint32_t               OrgChannelIndex: 31;                                        /*!< Channel index without any change, range is 0~7 */
     uint32_t               IsGPDMA: 1;                                                 /*!< Is GPDMA channel                     */
 #endif /* DMA_SUPPORT_GPDMA */

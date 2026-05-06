@@ -1,15 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "register.h"
 #include "ad9361.h"
 #include "spi_tst_drv.h"
+#include "ble_rf_cal.h"
+#include "ptab.h"
+
 
 #define RPL_FREQTAB_OFFSET 0
 #define TEST_FAIL       0x0
 #define TEST_PASS       0x1
 #define TEST_UNFINISHED 0x2
 
-#define read_memory(addr)        (*(volatile unsigned int *)((addr)))
-#define write_memory(addr,value) (*(volatile unsigned int *)((addr))) = (value)
 #define read_byte(addr)          (*(volatile unsigned char *)((addr)))
 #define write_byte(addr,value)   (*(volatile unsigned char *)((addr))) = (value)
 #define read_hword(addr)         (*(volatile unsigned short *)((addr)))
@@ -21,6 +27,15 @@
     #define SPI_TEMP_LCPU_ADDRESS 0x2041F300
 #endif
 
+typedef struct
+{
+    uint32_t ctrl;
+    uint32_t src_addr;
+    uint32_t dst_addr;
+    uint32_t ndt_sel;
+} gpdma_list;
+
+#if 0
 uint32_t spi_9364_table[80 * 4 * 2] =
 {
     0x82750B, 0x827477, 0x827330, 0x827178,
@@ -185,84 +200,258 @@ uint32_t spi_9364_table[80 * 4 * 2] =
     0x82357E, 0x82349F, 0x8233E0, 0x82317B,
     0x000000, 0x000000, 0x000000, 0x000000
 };
+#endif
+
+uint32_t spi_9364_table[88 * 4 * 2] =
+{
+    0x82750C, 0x8274CC, 0x8273CC, 0x827178,
+    0x827513, 0x827433, 0x827333, 0x827178,
+    0x827519, 0x827499, 0x827399, 0x827178,
+    0x827520, 0x827400, 0x827300, 0x827178,
+    0x827526, 0x827466, 0x827366, 0x827178,
+    0x82752C, 0x8274CC, 0x8273CC, 0x827178,
+    0x827533, 0x827433, 0x827333, 0x827178,
+    0x827539, 0x827499, 0x827399, 0x827178,
+    0x827540, 0x827400, 0x827300, 0x827178,
+    0x827546, 0x827466, 0x827366, 0x827178,
+    0x82754C, 0x8274CC, 0x8273CC, 0x827178,
+    0x827553, 0x827433, 0x827333, 0x827178,
+    0x827559, 0x827499, 0x827399, 0x827178,
+    0x827560, 0x827400, 0x827300, 0x827178,
+    0x827566, 0x827466, 0x827366, 0x827178,
+    0x82756C, 0x8274CC, 0x8273CC, 0x827178,
+    0x827573, 0x827433, 0x827333, 0x827178,
+    0x827579, 0x827499, 0x827399, 0x827178,
+    0x827500, 0x827400, 0x827300, 0x827179,
+    0x827506, 0x827466, 0x827366, 0x827179,
+    0x82750C, 0x8274CC, 0x8273CC, 0x827179,
+    0x827513, 0x827433, 0x827333, 0x827179,
+    0x827519, 0x827499, 0x827399, 0x827179,
+    0x827520, 0x827400, 0x827300, 0x827179,
+    0x827526, 0x827466, 0x827366, 0x827179,
+    0x82752C, 0x8274CC, 0x8273CC, 0x827179,
+    0x827533, 0x827433, 0x827333, 0x827179,
+    0x827539, 0x827499, 0x827399, 0x827179,
+    0x827540, 0x827400, 0x827300, 0x827179,
+    0x827546, 0x827466, 0x827366, 0x827179,
+    0x82754C, 0x8274CC, 0x8273CC, 0x827179,
+    0x827553, 0x827433, 0x827333, 0x827179,
+    0x827559, 0x827499, 0x827399, 0x827179,
+    0x827560, 0x827400, 0x827300, 0x827179,
+    0x827566, 0x827466, 0x827366, 0x827179,
+    0x82756C, 0x8274CC, 0x8273CC, 0x827179,
+    0x827573, 0x827433, 0x827333, 0x827179,
+    0x827579, 0x827499, 0x827399, 0x827179,
+    0x827500, 0x827400, 0x827300, 0x82717A,
+    0x827506, 0x827466, 0x827366, 0x82717A,
+    0x82750C, 0x8274CC, 0x8273CC, 0x82717A,
+    0x827513, 0x827433, 0x827333, 0x82717A,
+    0x827519, 0x827499, 0x827399, 0x82717A,
+    0x827520, 0x827400, 0x827300, 0x82717A,
+    0x827526, 0x827466, 0x827366, 0x82717A,
+    0x82752C, 0x8274CC, 0x8273CC, 0x82717A,
+    0x827533, 0x827433, 0x827333, 0x82717A,
+    0x827539, 0x827499, 0x827399, 0x82717A,
+    0x827540, 0x827400, 0x827300, 0x82717A,
+    0x827546, 0x827466, 0x827366, 0x82717A,
+    0x82754C, 0x8274CC, 0x8273CC, 0x82717A,
+    0x827553, 0x827433, 0x827333, 0x82717A,
+    0x827559, 0x827499, 0x827399, 0x82717A,
+    0x827560, 0x827400, 0x827300, 0x82717A,
+    0x827566, 0x827466, 0x827366, 0x82717A,
+    0x82756C, 0x8274CC, 0x8273CC, 0x82717A,
+    0x827573, 0x827433, 0x827333, 0x82717A,
+    0x827579, 0x827499, 0x827399, 0x82717A,
+    0x827500, 0x827400, 0x827300, 0x82717B,
+    0x827506, 0x827466, 0x827366, 0x82717B,
+    0x82750C, 0x8274CC, 0x8273CC, 0x82717B,
+    0x827513, 0x827433, 0x827333, 0x82717B,
+    0x827519, 0x827499, 0x827399, 0x82717B,
+    0x827520, 0x827400, 0x827300, 0x82717B,
+    0x827526, 0x827466, 0x827366, 0x82717B,
+    0x82752C, 0x8274CC, 0x8273CC, 0x82717B,
+    0x827533, 0x827433, 0x827333, 0x82717B,
+    0x827539, 0x827499, 0x827399, 0x82717B,
+    0x827540, 0x827400, 0x827300, 0x82717B,
+    0x827546, 0x827466, 0x827366, 0x82717B,
+    0x82754C, 0x8274CC, 0x8273CC, 0x82717B,
+    0x827553, 0x827433, 0x827333, 0x82717B,
+    0x827559, 0x827499, 0x827399, 0x82717B,
+    0x827560, 0x827400, 0x827300, 0x82717B,
+    0x827566, 0x827466, 0x827366, 0x82717B,
+    0x82756C, 0x8274CC, 0x8273CC, 0x82717B,
+    0x827573, 0x827433, 0x827333, 0x82717B,
+    0x827579, 0x827499, 0x827399, 0x82717B,
+    0x827500, 0x827400, 0x827300, 0x82717C,
+    0x827506, 0x827466, 0x827366, 0x82717C,
+    0x82750C, 0x8274CC, 0x8273CD, 0x82717C,
+    0x827513, 0x827433, 0x827333, 0x82717C,
+    0x827519, 0x827499, 0x82739A, 0x82717C,
+    0x827520, 0x827400, 0x827300, 0x82717C,
+    0x827526, 0x827466, 0x827366, 0x82717C,
+    0x82752C, 0x8274CC, 0x8273CD, 0x82717C,
+    0x827533, 0x827433, 0x827333, 0x82717C,
+    0x000000, 0x000000, 0x000000, 0x000000,
+//rxpll table
+    0x82350C, 0x8234CC, 0x8233CC, 0x823178,
+    0x823513, 0x823433, 0x823333, 0x823178,
+    0x823519, 0x823499, 0x823399, 0x823178,
+    0x823520, 0x823400, 0x823300, 0x823178,
+    0x823526, 0x823466, 0x823366, 0x823178,
+    0x82352C, 0x8234CC, 0x8233CC, 0x823178,
+    0x823533, 0x823433, 0x823333, 0x823178,
+    0x823539, 0x823499, 0x823399, 0x823178,
+    0x823540, 0x823400, 0x823300, 0x823178,
+    0x823546, 0x823466, 0x823366, 0x823178,
+    0x82354C, 0x8234CC, 0x8233CC, 0x823178,
+    0x823553, 0x823433, 0x823333, 0x823178,
+    0x823559, 0x823499, 0x823399, 0x823178,
+    0x823560, 0x823400, 0x823300, 0x823178,
+    0x823566, 0x823466, 0x823366, 0x823178,
+    0x82356C, 0x8234CC, 0x8233CC, 0x823178,
+    0x823573, 0x823433, 0x823333, 0x823178,
+    0x823579, 0x823499, 0x823399, 0x823178,
+    0x823500, 0x823400, 0x823300, 0x823179,
+    0x823506, 0x823466, 0x823366, 0x823179,
+    0x82350C, 0x8234CC, 0x8233CC, 0x823179,
+    0x823513, 0x823433, 0x823333, 0x823179,
+    0x823519, 0x823499, 0x823399, 0x823179,
+    0x823520, 0x823400, 0x823300, 0x823179,
+    0x823526, 0x823466, 0x823366, 0x823179,
+    0x82352C, 0x8234CC, 0x8233CC, 0x823179,
+    0x823533, 0x823433, 0x823333, 0x823179,
+    0x823539, 0x823499, 0x823399, 0x823179,
+    0x823540, 0x823400, 0x823300, 0x823179,
+    0x823546, 0x823466, 0x823366, 0x823179,
+    0x82354C, 0x8234CC, 0x8233CC, 0x823179,
+    0x823553, 0x823433, 0x823333, 0x823179,
+    0x823559, 0x823499, 0x823399, 0x823179,
+    0x823560, 0x823400, 0x823300, 0x823179,
+    0x823566, 0x823466, 0x823366, 0x823179,
+    0x82356C, 0x8234CC, 0x8233CC, 0x823179,
+    0x823573, 0x823433, 0x823333, 0x823179,
+    0x823579, 0x823499, 0x823399, 0x823179,
+    0x823500, 0x823400, 0x823300, 0x82317A,
+    0x823506, 0x823466, 0x823366, 0x82317A,
+    0x82350C, 0x8234CC, 0x8233CC, 0x82317A,
+    0x823513, 0x823433, 0x823333, 0x82317A,
+    0x823519, 0x823499, 0x823399, 0x82317A,
+    0x823520, 0x823400, 0x823300, 0x82317A,
+    0x823526, 0x823466, 0x823366, 0x82317A,
+    0x82352C, 0x8234CC, 0x8233CC, 0x82317A,
+    0x823533, 0x823433, 0x823333, 0x82317A,
+    0x823539, 0x823499, 0x823399, 0x82317A,
+    0x823540, 0x823400, 0x823300, 0x82317A,
+    0x823546, 0x823466, 0x823366, 0x82317A,
+    0x82354C, 0x8234CC, 0x8233CC, 0x82317A,
+    0x823553, 0x823433, 0x823333, 0x82317A,
+    0x823559, 0x823499, 0x823399, 0x82317A,
+    0x823560, 0x823400, 0x823300, 0x82317A,
+    0x823566, 0x823466, 0x823366, 0x82317A,
+    0x82356C, 0x8234CC, 0x8233CC, 0x82317A,
+    0x823573, 0x823433, 0x823333, 0x82317A,
+    0x823579, 0x823499, 0x823399, 0x82317A,
+    0x823500, 0x823400, 0x823300, 0x82317B,
+    0x823506, 0x823466, 0x823366, 0x82317B,
+    0x82350C, 0x8234CC, 0x8233CC, 0x82317B,
+    0x823513, 0x823433, 0x823333, 0x82317B,
+    0x823519, 0x823499, 0x823399, 0x82317B,
+    0x823520, 0x823400, 0x823300, 0x82317B,
+    0x823526, 0x823466, 0x823366, 0x82317B,
+    0x82352C, 0x8234CC, 0x8233CC, 0x82317B,
+    0x823533, 0x823433, 0x823333, 0x82317B,
+    0x823539, 0x823499, 0x823399, 0x82317B,
+    0x823540, 0x823400, 0x823300, 0x82317B,
+    0x823546, 0x823466, 0x823366, 0x82317B,
+    0x82354C, 0x8234CC, 0x8233CC, 0x82317B,
+    0x823553, 0x823433, 0x823333, 0x82317B,
+    0x823559, 0x823499, 0x823399, 0x82317B,
+    0x823560, 0x823400, 0x823300, 0x82317B,
+    0x823566, 0x823466, 0x823366, 0x82317B,
+    0x82356C, 0x8234CC, 0x8233CC, 0x82317B,
+    0x823573, 0x823433, 0x823333, 0x82317B,
+    0x823579, 0x823499, 0x823399, 0x82317B,
+    0x823500, 0x823400, 0x823300, 0x82317C,
+    0x823506, 0x823466, 0x823366, 0x82317C,
+    0x82350C, 0x8234CC, 0x8233CD, 0x82317C,
+    0x823513, 0x823433, 0x823333, 0x82317C,
+    0x823519, 0x823499, 0x82339A, 0x82317C,
+    0x823520, 0x823400, 0x823300, 0x82317C,
+    0x823526, 0x823466, 0x823366, 0x82317C,
+    0x82352C, 0x8234CC, 0x8233CD, 0x82317C,
+    0x823533, 0x823433, 0x823333, 0x82317C,
+    0x000000, 0x000000, 0x000000, 0x000000
+};
+
+
+
+static __attribute__((aligned(4))) gpdma_list g_list1;
+static __attribute__((aligned(4))) gpdma_list g_list2;
+
 
 void ad9364_bt_cfg()
 {
+
+    //&list1[0] = 0x20040000;
+    //&list1[1] = 0x20040010;
     //initialization
     hwp_spi1->FIFO_CTRL |= SPI_FIFO_CTRL_TSRE;
     hwp_spi1->INTE |= SPI_INTE_TIE;
 
+    hwp_bt_mac->DMRADIOCNTL4 = (uint32_t) & (spi_9364_table);
+    //hwp_gpdma1->CSELR1 |= (28 << DMAC_CSELR1_C4S_Pos);
 
-    //memcpy((uint8_t *)SPI_TEMP_LCPU_ADDRESS, (uint8_t *)&spi_9364_table, sizeof(spi_9364_table));
-    //hwp_bt_mac->DMRADIOCNTL4 = ((uint32_t)(&spi_9364_table) + 0x0a000000);
-    //hwp_bt_mac->DMRADIOCNTL4 = SPI_TEMP_LCPU_ADDRESS;
-//#ifdef SOC_BF0_HCPU
-//    hwp_bt_mac->DMRADIOCNTL4 = ((uint32_t)(&spi_9364_table) + 0x0a000000);
-//#else
-    hwp_bt_mac->DMRADIOCNTL4 = (uint32_t)&spi_9364_table;
-//#endif
-    hwp_dmac1->CM0AR5 = (uint32_t) & (hwp_bt_mac->DMRADIOCNTL4);
-    hwp_dmac1->CPAR5 = (uint32_t) & (hwp_dmac1->CM0AR4);
-    hwp_dmac1->CNDTR5 = 0;
-    hwp_dmac1->CCR5 = DMAC_CCR5_DIR | DMAC_CCR5_MINC | DMAC_CCR5_MEM2MEM;
-    hwp_dmac1->CCR5 |= (0x2 << DMAC_CCR5_MSIZE_Pos);
-    hwp_dmac1->CCR5 |= (0x2 << DMAC_CCR5_PSIZE_Pos);
-    hwp_dmac1->CCR5 |= DMAC_CCR5_EN;
-    //dmac2 hannel 4 for spi3 tx
-    hwp_dmac1->CM0AR4 = 0;
-    hwp_dmac1->CPAR4  = SPI1_BASE + 0x14;
-    hwp_dmac1->CNDTR4 = 0;
+    g_list1.ctrl = GPDMA_CCR4_DIR | GPDMA_CCR4_MEM2MEM | GPDMA_CCR4_MINC | (0x2 << GPDMA_CCR4_MSIZE_Pos) | (0x2 << GPDMA_CCR4_PSIZE_Pos); //SRC
+    g_list1.ctrl |= 0x80000000; //link to next
+    g_list1.src_addr = (uint32_t) & (hwp_bt_mac->DMRADIOCNTL4);
+    g_list1.dst_addr = (uint32_t) & (g_list2.src_addr);
+    g_list1.ndt_sel  = 1;
 
-    hwp_dmac1->CSELR1 |= (28 << DMAC_CSELR1_C4S_Pos);
-    hwp_dmac1->CCR4 = DMAC_CCR4_DIR | DMAC_CCR4_MINC;
-    hwp_dmac1->CCR4 |= (0x2 << DMAC_CCR4_MSIZE_Pos);
-    hwp_dmac1->CCR4 |= (0x2 << DMAC_CCR4_PSIZE_Pos);
-    hwp_dmac1->CCR4 |= DMAC_CCR4_EN;
+    g_list2.ctrl = GPDMA_CCR4_DIR | GPDMA_CCR4_MINC | (0x2 << GPDMA_CCR4_MSIZE_Pos) | (0x2 << GPDMA_CCR4_PSIZE_Pos); //SRC
+    g_list2.src_addr = 0;
+    g_list2.dst_addr = SPI1_BASE + 0x14;
+    g_list2.ndt_sel  = 28 << 16 | 4; //28 << 16 : hwp_gpdma1->CSELR1 |= (28 << DMAC_CSELR1_C4S_Pos);
 
     //ptc controls gpio toggle
-    hwp_gpio1->DOER = 0x3;
+    ((GPIO1_TypeDef *)hwp_gpio1)->DOER0 = 0x3;
     hwp_ptc2->TCR1 = (PTC_OP_OR << PTC_TCR1_OP_Pos) | 99; //trigger ble_phytxstart
     hwp_ptc2->TAR1 = (uint32_t) & (((GPIO1_TypeDef *)hwp_gpio1)->DOR0);
-    hwp_ptc2->TDR1 = 0x3; //set PA00, PA01
+    hwp_ptc2->TDR1 = 0x3; //set PA00,PA01
     hwp_ptc2->TCR2 = (PTC_OP_AND << PTC_TCR2_OP_Pos) | 100; //trigger ble_txdone
     hwp_ptc2->TAR2 = (uint32_t) & (((GPIO1_TypeDef *)hwp_gpio1)->DOR0);
-    hwp_ptc2->TDR2 = 0; //clear PA00, PA01
+    hwp_ptc2->TDR2 = 0x0; //clear PA00,PA01
     hwp_ptc2->TCR3 = (PTC_OP_OR << PTC_TCR3_OP_Pos) | 102; //trigger ble_phyrxstart
     hwp_ptc2->TAR3 = (uint32_t) & (((GPIO1_TypeDef *)hwp_gpio1)->DOR0);
     hwp_ptc2->TDR3 = 0x1; //set PA00
     hwp_ptc2->TCR4 = (PTC_OP_AND << PTC_TCR4_OP_Pos) | 103; //trigger ble_rxdone
     hwp_ptc2->TAR4 = (uint32_t) & (((GPIO1_TypeDef *)hwp_gpio1)->DOR0);
-    hwp_ptc2->TDR4 = 0; //clear PPA00
+    hwp_ptc2->TDR4 = 0x0; //clear PB00,PB01,PB06
 
-
+    //ptc controls channel config
     hwp_ptc2->TCR5 = (PTC_OP_WRITE << PTC_TCR5_OP_Pos) | 98; //trigger ble_rftxstart
-    hwp_ptc2->TAR5 = (uint32_t) & (hwp_dmac1->CNDTR5);
-    hwp_ptc2->TDR5 = 0x1; //start dmac2 channel5
-    hwp_ptc1->TCR6 = (PTC_OP_WRITE << PTC_TCR6_OP_Pos) | 28; //trigger dmac2_done5
-    hwp_ptc1->TAR6 = (uint32_t) & (hwp_dmac1->CNDTR4);
-    hwp_ptc1->TDR6 = 0x4; //start dmac2 channel4
+    hwp_ptc2->TAR5 = (uint32_t) & (hwp_gpdma1->LCR4);
+    hwp_ptc2->TDR5 = (uint32_t)&g_list1 | 0x1; //start dmac1 channel5
+
     hwp_ptc2->TCR7 = (PTC_OP_WRITE << PTC_TCR7_OP_Pos) | 101; //trigger ble_rfrxstart
-    hwp_ptc2->TAR7 = (uint32_t) & (hwp_dmac1->CNDTR5);
-    hwp_ptc2->TDR7 = 0x1; //start dmac2 channel5
-    hwp_ptc1->TCR8 = (PTC_OP_WRITE << PTC_TCR8_OP_Pos) | 28; //trigger dmac2_done5
-    hwp_ptc1->TAR8 = (uint32_t) & (hwp_dmac1->IFCR);
-    hwp_ptc1->TDR8 = DMAC_ISR_GIF5; //clear dmac2_done5
+    hwp_ptc2->TAR7 = (uint32_t) & (hwp_gpdma1->LCR4);
+    hwp_ptc2->TDR7 = (uint32_t)&g_list1 | 0x1; //start dmac1 channel5
+
 }
 
-void pinmux_spi3()
+void pinmux_spi()
 {
 
-    hwp_pinmux1->PAD_PA29 = 0x52; //clk
-    hwp_pinmux1->PAD_PA24 = 0x52; //cs
-    hwp_pinmux1->PAD_PA25 = 0x52; //di
-    hwp_pinmux1->PAD_PA28 = 0x52; //do/dio
+    hwp_pinmux1->PAD_PA29 = 0x4C19; //clk
+    hwp_pinmux1->PAD_PA24 = 0x4C1B; //cs
+    hwp_pinmux1->PAD_PA25 = 0x4C1A; //di
+    hwp_pinmux1->PAD_PA28 = 0x4C18; //do/dio
 }
 
 
 
 static void wait(uint32_t cycle)
 {
-
+    cycle *= 10;
     for (uint32_t i = 0; i < cycle; i++)
     {
         __NOP();
@@ -271,70 +460,22 @@ static void wait(uint32_t cycle)
 
 void ad9364_spi_init()
 {
-#if 0
-    // SPI init, should put into system.
-    rt_err_t ret;
-    g_spi_handle = rt_device_find("spi3");
-    do
-    {
 
-        uint16_t oflag = RT_DEVICE_OFLAG_RDWR;
-        RT_ASSERT(g_spi_handle);
-        ret = rt_device_init(g_spi_handle);
-        if (ret != RT_EOK)
-            break;
-
-
-
-        if (g_spi_handle->flag & RT_DEVICE_FLAG_DMA_RX)
-        {
-            oflag |= RT_DEVICE_FLAG_DMA_RX;
-        }
-        else
-        {
-            oflag |= RT_DEVICE_FLAG_INT_RX;
-        }
-
-        if (g_spi_handle->flag & RT_DEVICE_FLAG_DMA_TX)
-        {
-            oflag |= RT_DEVICE_FLAG_DMA_TX;
-        }
-        else
-        {
-            oflag |= RT_DEVICE_FLAG_INT_TX;
-        }
-        ret = rt_device_open(g_spi_handle, oflag);
-
-        if (ret != RT_EOK)
-            break;
-
-        struct rt_spi_configuration cfg;
-        cfg.data_width = 24;
-        cfg.mode =  RT_SPI_CPHA;
-        cfg.frameMode = RT_SPI_MOTO;
-        cfg.max_hz =
-    }
-    while (0)
-        RT_ASSERT(ret == RT_EOK);
-#else
-
-    pinmux_spi3();
+    pinmux_spi();
 
     //24bit data width
-    set_spi3_frm_width(24);
+    set_spi1_frm_width(24);
 
     //clk cfg
     //div 2 by default
 
     //sclk phase to 1, polarity stay 0
     //sclk is 0 when idle, and lanch data at posedge
-    set_spi3_sph();
+    set_spi1_sph();
 
-    //enable enable spi3
-    enable_spi3_trx();
-    write_memory(0x5009503c, 0x1);
+    //enable enable spi1
+    enable_spi1_trx();
 
-#endif
 }
 
 
@@ -349,19 +490,18 @@ void ad9364_spi_write(uint16_t addr, uint8_t data)
 #else
     uint32_t tx_data;
     uint32_t rx_data;
-    uint32_t spi3_rne;
+    uint32_t spi1_rne;
 
     tx_data = 0x800000 | ((uint32_t)addr << 8) | data;
-    set_spi3_tdata(tx_data);
+    set_spi1_tdata(tx_data);
     //clear rx fifo
-    spi3_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
-    while (!spi3_rne)
+    spi1_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
+    while (!spi1_rne)
     {
-        spi3_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
+        spi1_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
     }
-    rx_data = get_spi3_rdata();
-    wait(40);
-
+    rx_data = get_spi1_rdata();
+    wait(3);
 #endif
 
 }
@@ -377,17 +517,17 @@ uint8_t ad9364_spi_read(uint16_t addr)
 #else
     uint32_t tx_data;
     uint32_t rx_data;
-    uint32_t spi3_rne;
+    uint32_t spi1_rne;
 
     tx_data = ((uint32_t)addr << 8);
-    set_spi3_tdata(tx_data);
+    set_spi1_tdata(tx_data);
     //read rx fifo
-    spi3_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
-    while (!spi3_rne)
+    spi1_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
+    while (!spi1_rne)
     {
-        spi3_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
+        spi1_rne = hwp_spi1->STATUS & SPI_STATUS_RNE;
     }
-    rx_data = get_spi3_rdata();
+    rx_data = get_spi1_rdata();
     return (uint8_t)rx_data;
 
 #endif
@@ -404,9 +544,10 @@ uint8_t ad9364_calibration()
     uint8_t test_result = TEST_UNFINISHED;
     //uint16_t i;
     //uint32_t rdata;
-    //__asm__ __volatile__("B .");
 
+    hwp_hpsys_rcc->ENR1 |= HPSYS_RCC_ENR1_SPI1;
     ad9364_spi_init();
+    ad9364_spi_write(REG_CTRL_OUTPUT_ENABLE, 0x0);
     ad9364_spi_write(REG_CTRL_OUTPUT_POINTER, 0xB);
 
     ad9364_spi_write(REG_CTRL, 0x1);
@@ -2039,8 +2180,9 @@ uint8_t ad9364_calibration()
     //ad9364_spi_write(0x013,0x01);   // Set ENSM FDD mode*/
 
     ad9364_spi_write(REG_RX_CP_CONFIG, 0x4);
+
     wait(1000);
-    while (!(ad9364_spi_read(REG_RX_CAL_STATUS) & 0x80));
+    while (!(ad9364_spi_read(REG_RX_CAL_STATUS) & 0x80)) {};
 
     ad9364_spi_write(REG_TX_CP_CONFIG, 0x4);
     wait(1000);
@@ -2692,7 +2834,7 @@ uint8_t ad9364_calibration()
     //************************************************************
     // Set Tx Attenuation: Tx1: 10.00 dB,  Tx2: 10.00 dB
     //************************************************************
-    ad9364_spi_write(0x073, 0x00);
+    ad9364_spi_write(0x073, 0x08);
     ad9364_spi_write(0x074, 0x00);
     ad9364_spi_write(0x075, 0x00);
     ad9364_spi_write(0x076, 0x00);
@@ -2721,11 +2863,14 @@ uint8_t ad9364_calibration()
     //ad9364_spi_write(REG_ENSM_CONFIG_1,0x2B);
 
     ad9364_spi_write(REG_CTRL_OUTPUT_POINTER, 0x16);
-    ad9364_spi_write(0x08e, 00);
-    ad9364_spi_write(0x08f, 00);
-    ad9364_spi_write(0x092, 00);
-    ad9364_spi_write(0x093, 00);
-    ad9364_spi_write(0x09f, 05);
+
+    //ad9364_spi_write(0x0FA, 0xE4);  // Gain Control Mode Select
+
+    ad9364_spi_write(0x08E, 0x00);
+    ad9364_spi_write(0x08f, 0x00);
+    ad9364_spi_write(0x092, 0x00);
+    ad9364_spi_write(0x093, 0x00);
+    ad9364_spi_write(0x09f, 0x05);
 
 
     if (test_result != TEST_FAIL)
@@ -2736,10 +2881,982 @@ uint8_t ad9364_calibration()
     return test_result;
 }
 
+void bt_rfc_init()
+{
+    uint8_t EDR_LO3G = 0 ;
+    uint8_t EDR_LO5G = 1 ;
+
+    uint32_t i;
+
+    uint32_t rxon_addr;
+    uint32_t rxoff_addr;
+    uint32_t txon_addr;
+    uint32_t txoff_addr;
+    uint32_t bt_txon_addr;
+    uint32_t bt_txoff_addr;
+
+    uint32_t rxon_cmd_num;
+    uint32_t rxoff_cmd_num;
+    uint32_t txon_cmd_num;
+    uint32_t txoff_cmd_num;
+    uint32_t bt_txon_cmd_num;
+    uint32_t bt_txoff_cmd_num;
+
+    uint32_t rxon_cmd[90];
+    uint32_t rxoff_cmd[70];
+    uint32_t txon_cmd[90];
+    uint32_t txoff_cmd[70];
+    uint32_t bt_txon_cmd[90];
+    uint32_t bt_txoff_cmd[70];
+
+    uint32_t tmxbuf_cp_factor[8] = {0x466, 0x600, 0x79A, 0x933, 0xACD, 0xC66, 0xE00, 0xF9A};
+    uint32_t cmd;
+    uint32_t reg_data;
+
+    if (EDR_LO3G)
+        hwp_bt_phy->TX_CTRL |=  BT_PHY_TX_CTRL_MMDIV_SEL;
+    else
+        hwp_bt_phy->TX_CTRL &= ~BT_PHY_TX_CTRL_MMDIV_SEL;
+
+    //enable q path
+    hwp_bt_phy->RX_CTRL1 |= BT_PHY_RX_CTRL1_ADC_Q_EN_1;
+    hwp_bt_phy->RX_CTRL2 |= BT_PHY_RX_CTRL2_ADC_Q_EN_2;
+    hwp_bt_phy->RX_CTRL2 |= BT_PHY_RX_CTRL2_ADC_Q_EN_C;
+    hwp_bt_phy->RX_CTRL2 |= BT_PHY_RX_CTRL2_ADC_Q_EN_BR;
+    //zero if
+    hwp_bt_phy->TX_IF_MOD_CFG  &= ~BT_PHY_TX_IF_MOD_CFG_TX_IF_PHASE_BLE_Msk ;
+    hwp_bt_phy->MIXER_CFG1 = 0;
+
+    //reset rccal
+    hwp_bt_rfc->RBB_REG5 &= ~BT_RFC_RBB_REG5_BRF_RSTB_RCCAL_LV ;
+    //release adc reset
+    hwp_bt_rfc->ADC_REG  |= BT_RFC_ADC_REG_BRF_RSTB_ADC_LV ;
+    //enable rf ref clk and adc clk
+    hwp_bt_rfc->MISC_CTRL_REG |= BT_RFC_MISC_CTRL_REG_PKDET_EN_EARLY_OFF_EN;
+    hwp_bt_rfc->MISC_CTRL_REG |= BT_RFC_MISC_CTRL_REG_XTAL_REF_EN;
+    hwp_bt_rfc->MISC_CTRL_REG |= BT_RFC_MISC_CTRL_REG_ADC_CLK_EN;
+
+    //set edr gfsk gain mul factor
+    hwp_bt_phy->TX_IF_MOD_CFG2 = 0x180 << BT_PHY_TX_IF_MOD_CFG2_EDR_GGAIN_SAT_Pos |
+                                 0x160 << BT_PHY_TX_IF_MOD_CFG2_GGAIN_SAT_Pos |
+                                 0x600 << BT_PHY_TX_IF_MOD_CFG2_EDR_GGAIN_MUL_Pos;
+
+    hwp_bt_phy->TX_IF_MOD_CFG2  |= 0x140 << BT_PHY_TX_IF_MOD_CFG_DGAIN_SAT_Pos;
+    //change adc fifo wr clk phase
+    //hwp_bt_rfc->MISC_CTRL_REG |= BT_RFC_MISC_CTRL_REG_ADC_FIFO_CLK_PHASE_SEL;
+    //{{{---------fulcal and dccal data for debug----------------------------
+    uint32_t reg_addr = 0x0 ;
+    reg_data = 0;
+    //store ble rx cal result
+    hwp_bt_rfc->CAL_ADDR_REG1 = 0;
+    hwp_bt_rfc->CAL_ADDR_REG1 = reg_addr;
+    for (i = 0; i < 40; i++)
+    {
+        reg_data = ((((79 - i) << BT_RFC_VCO_REG3_BRF_VCO_IDAC_LV_Pos) + ((79 - i) << BT_RFC_VCO_REG3_BRF_VCO_PDX_LV_Pos)) << 16) + \
+                   (i << BT_RFC_VCO_REG3_BRF_VCO_IDAC_LV_Pos) + (i << BT_RFC_VCO_REG3_BRF_VCO_PDX_LV_Pos);
+        //printf("reg_data is %x i=%d\n",reg_data, i);
+        write_memory(BT_RFC_MEM_BASE + reg_addr, reg_data);
+        reg_addr += 4;
+    }
+    //store bt rx cal result
+    hwp_bt_rfc->CAL_ADDR_REG1 += reg_addr << 16;
+    for (i = 0; i < 40; i++)
+    {
+        reg_data = ((((i * 2) << BT_RFC_VCO_REG3_BRF_VCO_IDAC_LV_Pos)   + ((i * 2) << BT_RFC_VCO_REG3_BRF_VCO_PDX_LV_Pos)) << 16) + \
+                   ((i * 2 + 1) << BT_RFC_VCO_REG3_BRF_VCO_IDAC_LV_Pos)  + ((i * 2 + 1) << BT_RFC_VCO_REG3_BRF_VCO_PDX_LV_Pos);
+        //printf("reg_data is %x i=%d\n",reg_data, i);
+        write_memory(BT_RFC_MEM_BASE + reg_addr, reg_data);
+        reg_addr += 4;
+    }
+    //store ble tx cal result
+    hwp_bt_rfc->CAL_ADDR_REG2 = reg_addr;
+    for (i = 0; i < 79; i++)
+    {
+        reg_data = ((79 - i) << BT_RFC_VCO_REG3_TX_KCAL_Pos) + ((79 - i) << BT_RFC_VCO_REG3_BRF_VCO_IDAC_LV_Pos) + ((79 - i) << BT_RFC_VCO_REG3_BRF_VCO_PDX_LV_Pos) + 0x80000000;
+        write_memory(BT_RFC_MEM_BASE + reg_addr, reg_data);
+        reg_addr += 4;
+    }
+    //store bt tx cal result
+    hwp_bt_rfc->CAL_ADDR_REG2 += reg_addr << 16;
+    for (i = 0; i < 79; i++)
+    {
+        reg_data = (((i) << BT_RFC_EDR_CAL_REG1_BRF_OSLO_FC_LV_Pos) & BT_RFC_EDR_CAL_REG1_BRF_OSLO_FC_LV_Msk) + \
+                   (((i) << BT_RFC_EDR_CAL_REG1_BRF_OSLO_BM_LV_Pos) & BT_RFC_EDR_CAL_REG1_BRF_OSLO_BM_LV_Msk) + \
+                   (((i) << BT_RFC_EDR_CAL_REG1_BRF_EDR_VCO_IDAC_LV_Pos) & BT_RFC_EDR_CAL_REG1_BRF_EDR_VCO_IDAC_LV_Msk) + \
+                   (((i) << BT_RFC_EDR_CAL_REG1_BRF_EDR_VCO_PDX_LV_Pos) & BT_RFC_EDR_CAL_REG1_BRF_EDR_VCO_PDX_LV_Msk) + \
+                   (((i) << BT_RFC_EDR_CAL_REG1_BRF_TRF_EDR_TMXCAP_SEL_LV_Pos) & BT_RFC_EDR_CAL_REG1_BRF_TRF_EDR_TMXCAP_SEL_LV_Msk) + ((i & 0x1F) << 27);
+
+        //printf("reg_data is %x i=%d\n",reg_data, i);
+        write_memory(BT_RFC_MEM_BASE + reg_addr, reg_data);
+        reg_addr += 4;
+    }
+    //store txdc cal result
+    hwp_bt_rfc->CAL_ADDR_REG3 = reg_addr;
+    for (i = 0; i < 8; i++)
+    {
+        reg_data = (i + 1) + ((0x1000 + i + 1) << BT_RFC_IQ_PWR_REG1_0_TX_DC_CAL_COEF1_Pos) + ((i + 1) << BT_RFC_IQ_PWR_REG1_0_EDR_TMXBUF_GC_GFSK_Pos);
+        write_memory(BT_RFC_REG_BASE + 0xAC + i * 0xC, reg_data);
+        //reg_addr +=4;
+        reg_data = (8 - i) + ((8 - i) << BT_RFC_IQ_PWR_REG2_0_TX_DC_CAL_OFFSET_I_Pos) + ((8 - i) << BT_RFC_IQ_PWR_REG2_0_BRF_TRF_EDR_PA_BM_LV_Pos) + ((8 - i) << BT_RFC_IQ_PWR_REG2_0_EDR_TMXBUF_GC_DPSK_Pos) + ((i % 2) << BT_RFC_IQ_PWR_REG2_0_EDR_LPF_BYPASS_Pos);
+        write_memory(BT_RFC_REG_BASE + 0xB0 + i * 0xC, reg_data);
+        //reg_addr +=4;
+        //reg_data = 0x200 + i*0x40;
+        write_memory(BT_RFC_REG_BASE + 0xB4 + i * 0xC, tmxbuf_cp_factor[i]);
+    }
+
+    write_memory(BT_RFC_MEM_BASE + 0x764, 0x73727170);
+    write_memory(BT_RFC_MEM_BASE + 0x768, 0x77767574);
+    write_memory(BT_RFC_MEM_BASE + 0x76C, 0x7b7a7978);
+    write_memory(BT_RFC_MEM_BASE + 0x770, 0x7f7e7d7c);
+    write_memory(BT_RFC_MEM_BASE + 0x774, 0x83828180);
+    write_memory(BT_RFC_MEM_BASE + 0x778, 0x87868584);
+    write_memory(BT_RFC_MEM_BASE + 0x77C, 0x8b8a8988);
+    write_memory(BT_RFC_MEM_BASE + 0x780, 0x8f8e8d8c);
+
+    write_memory(BT_RFC_MEM_BASE + 0x784, 0x011D0141);
+    write_memory(BT_RFC_MEM_BASE + 0x788, 0x00E300FE);
+    write_memory(BT_RFC_MEM_BASE + 0x78C, 0x00B400CA);
+    write_memory(BT_RFC_MEM_BASE + 0x790, 0x008F00A0);
+    write_memory(BT_RFC_MEM_BASE + 0x794, 0x0072007F);
+    write_memory(BT_RFC_MEM_BASE + 0x798, 0x005A0065);
+    write_memory(BT_RFC_MEM_BASE + 0x79C, 0x00480050);
+    write_memory(BT_RFC_MEM_BASE + 0x7a0, 0x00390041);
+
+
+    //}}}
+
+    //temp bp dccal_coef
+    //hwp_bt_phy->TX_DC_CAL_CFG3 |=BT_PHY_TX_DC_CAL_CFG3_TX_DC_CAL_COEF_FRC_EN ;
+
+    //inccal time setting
+    hwp_bt_rfc->INCCAL_REG1 |= (0x3f << BT_RFC_INCCAL_REG1_VCO3G_INCFCAL_WAIT_TIME_Pos) | \
+                               (0x3f << BT_RFC_INCCAL_REG1_VCO3G_INCACAL_WAIT_TIME_Pos) ;
+    hwp_bt_rfc->INCCAL_REG2 |= (0x3f << BT_RFC_INCCAL_REG2_VCO5G_INCFCAL_WAIT_TIME_Pos) | \
+                               (0x3f << BT_RFC_INCCAL_REG2_VCO5G_INCACAL_WAIT_TIME_Pos) ;
+    hwp_bt_rfc->INCCAL_REG1 &= ~BT_RFC_INCCAL_REG1_FRC_INCCAL_CLK_ON ;
+    //printf("BLE rf inccal init start\n");
+    //----------------RXON CMD----------------{{{
+    i = 0;
+    //VDDPSW/RFBG_EN/LO_IARY_EN
+    //rxon_cmd[i++] = RD( 0x10 ) ;
+    rxon_cmd[i++] = RD(0x10) ;
+    rxon_cmd[i++] = OR(16) ;
+    rxon_cmd[i++] = OR(17) ;
+    rxon_cmd[i++] = OR(18) ;
+    rxon_cmd[i++] = WR(0x10) ;
+
+    //wait 2us
+    rxon_cmd[i++] = WAIT(6) ;
+
+    //VCO_EN
+    rxon_cmd[i++] = RD(0x0) ;
+    rxon_cmd[i++] = OR(12) ;
+    rxon_cmd[i++] = WR(0x0) ;
+
+    //FBDV_EN
+    rxon_cmd[i++] = RD(0x14) ;
+    rxon_cmd[i++] = OR(12) ;
+    rxon_cmd[i++] = WR(0x14) ;
+
+    //PFDCP_EN
+    rxon_cmd[i++] = RD(0x1C) ;
+    rxon_cmd[i++] = OR(19) ;
+    rxon_cmd[i++] = WR(0x1C) ;
+
+    //LDO11_EN & LNA_SHUNTSW
+    rxon_cmd[i++] = RD(0x44) ;
+    rxon_cmd[i++] = OR(22) ;
+    rxon_cmd[i++] = AND(6) ;
+    rxon_cmd[i++] = WR(0x44) ;
+
+    //ADC & LDO_ADC & LDO_ADCREF
+    rxon_cmd[i++] = RD(0x60) ;
+    rxon_cmd[i++] = OR(4) ;
+    rxon_cmd[i++] = OR(9) ;
+    rxon_cmd[i++] = OR(21) ;
+    rxon_cmd[i++] = OR(20) ;   //if disable adc-1, change to 22
+    rxon_cmd[i++] = WR(0x60) ;
+
+    //LDO_RBB
+    rxon_cmd[i++] = RD(0x48) ;
+    rxon_cmd[i++] = OR(13) ;
+    rxon_cmd[i++] = WR(0x48) ;
+
+    //PA_TX_RX
+    rxon_cmd[i++] = RD(0x34) ;
+    rxon_cmd[i++] = AND(9) ;
+    rxon_cmd[i++] = WR(0x34) ;
+
+    //EN_IARRAY & EN_OSDAC
+    rxon_cmd[i++] = RD(0x58) ;
+    rxon_cmd[i++] = OR(5) ;
+    rxon_cmd[i++] = OR(6) ;
+    rxon_cmd[i++] = OR(7) ;
+    rxon_cmd[i++] = WR(0x58) ;
+
+    //EN_CBPF & EN_RVGA
+    rxon_cmd[i++] = RD(0x4C) ;
+    rxon_cmd[i++] = OR(27) ;
+    rxon_cmd[i++] = OR(6) ;
+    rxon_cmd[i++] = OR(7) ;
+    rxon_cmd[i++] = WR(0x4C) ;
+
+    //EN_PKDET
+    rxon_cmd[i++] = RD(0x50) ;
+    rxon_cmd[i++] = OR(0) ;
+    rxon_cmd[i++] = OR(1) ;
+    rxon_cmd[i++] = OR(2) ;
+    rxon_cmd[i++] = OR(3) ;
+    rxon_cmd[i++] = WR(0x50) ;
+
+    //wait 4us
+    rxon_cmd[i++] = WAIT(12) ;
+
+    //LODIST_RX_EN
+    rxon_cmd[i++] = RD(0x10) ;
+    rxon_cmd[i++] = OR(9) ;
+    rxon_cmd[i++] = WR(0x10) ;
+
+    //LNA_PU & MX_PU
+    rxon_cmd[i++] = RD(0x44) ;
+    rxon_cmd[i++] = OR(3) ;
+    rxon_cmd[i++] = OR(17) ;
+    rxon_cmd[i++] = WR(0x44) ;
+
+    //REG_INIT
+    if (i % 2)
+    {
+        rxon_cmd[i++] = RD(0) ;
+    }
+    rxon_cmd[i++] = REG_INIT(0x123);
+    rxon_cmd[i++] = 0x4567 ;
+    rxon_cmd[i++] = WR(0x6c) ;
+
+    //FULCAL RSLT
+    rxon_cmd[i++] = RD_FULCAL;
+    rxon_cmd[i++] = WR(0x8) ;
+
+    //wait 6us
+    rxon_cmd[i++] = WAIT(18) ;
+
+    //VCO_FLT_EN
+    //rxon_cmd[i++] = RD( 0x0 ) ;
+    //rxon_cmd[i++] = OR( 7 ) ;
+    //rxon_cmd[i++] = WR( 0x0 ) ;
+
+    //FBDV_RSTB
+    rxon_cmd[i++] = RD(0x14) ;
+    rxon_cmd[i++] = AND(0x7) ;
+    rxon_cmd[i++] = WR(0x14) ;
+
+    //wait 30us for lo lock
+    rxon_cmd[i++] = WAIT(90) ;
+
+    //START INCCAL
+    rxon_cmd[i++] = RD(0x74) ;   //inccal start
+    rxon_cmd[i++] = OR(29) ;
+    rxon_cmd[i++] = WR(0x74) ;
+
+    rxon_cmd[i++] = WAIT(30) ;
+    //END
+    rxon_cmd[i++] = END ;
+    if (i % 2)
+    {
+        rxon_cmd[i++] = END ;
+    }
+    rxon_cmd_num = i ;
+    //}}}
+
+    //----------------RXOFF CMD----------------------{{{
+    i = 0;
+    //VDDPSW/RFBG/LODIST_RX_EN
+    //rxoff_cmd[i++] = RD( 0x10 ) ; //to avoid rx on/off collision in normal rx
+    //rxoff_cmd[i++] = END ; //to retain rx state when rx off in dc_est mode
+    rxoff_cmd[i++] = RD(0x10) ;
+    rxoff_cmd[i++] = AND(9) ;
+    rxoff_cmd[i++] = AND(16) ;
+    rxoff_cmd[i++] = AND(17) ;
+    rxoff_cmd[i++] = AND(18) ;
+    rxoff_cmd[i++] = WR(0x10) ;
+    //VCO_EN
+    rxoff_cmd[i++] = RD(0x0) ;
+    rxoff_cmd[i++] = AND(12) ;
+    rxoff_cmd[i++] = WR(0x0) ;
+    //FBDV_EN
+    //FBDV RSTB
+    rxoff_cmd[i++] = RD(0x14) ;
+    rxoff_cmd[i++] = AND(12) ;
+    rxoff_cmd[i++] = OR(7) ;
+    rxoff_cmd[i++] = WR(0x14) ;
+
+    //PFDCP_EN
+    rxoff_cmd[i++] = RD(0x1C) ;
+    rxoff_cmd[i++] = AND(19) ;
+    rxoff_cmd[i++] = WR(0x1C) ;
+
+    //LNA_PU & MX_PU & LDO11_EN & LNA_SHUNTSW
+    rxoff_cmd[i++] = RD(0x44) ;
+    rxoff_cmd[i++] = AND(3) ;
+    rxoff_cmd[i++] = OR(6) ;
+    rxoff_cmd[i++] = AND(17) ;
+    rxoff_cmd[i++] = AND(22) ;
+    rxoff_cmd[i++] = WR(0x44) ;
+
+    //ADC & LDO_ADC & LDO_ADCREF
+    rxoff_cmd[i++] = RD(0x60) ;
+    rxoff_cmd[i++] = AND(4) ;
+    rxoff_cmd[i++] = AND(9) ;
+    rxoff_cmd[i++] = AND(21) ;
+    rxoff_cmd[i++] = AND(20) ;
+    rxoff_cmd[i++] = WR(0x60) ;
+
+    //LDO_RBB
+    rxoff_cmd[i++] = RD(0x48) ;
+    rxoff_cmd[i++] = AND(13) ;
+    rxoff_cmd[i++] = WR(0x48) ;
+
+    //PA_TX_RX
+    rxoff_cmd[i++] = RD(0x34) ;
+    rxoff_cmd[i++] = OR(9) ;
+    rxoff_cmd[i++] = WR(0x34) ;
+
+    //EN_IARRAY & EN_OSDAC
+    rxoff_cmd[i++] = RD(0x58) ;
+    rxoff_cmd[i++] = AND(5) ;
+    rxoff_cmd[i++] = AND(6) ;
+    rxoff_cmd[i++] = AND(7) ;
+    rxoff_cmd[i++] = WR(0x58) ;
+
+    //EN_CBPF & EN_RVGA
+    rxoff_cmd[i++] = RD(0x4c) ;
+    rxoff_cmd[i++] = AND(27) ;
+    rxoff_cmd[i++] = AND(6) ;
+    rxoff_cmd[i++] = AND(7) ;
+    rxoff_cmd[i++] = WR(0x4c) ;
+
+    //EN_PKDET
+    rxoff_cmd[i++] = RD(0x50) ;
+    rxoff_cmd[i++] = AND(0) ;
+    rxoff_cmd[i++] = AND(1) ;
+    rxoff_cmd[i++] = AND(2) ;
+    rxoff_cmd[i++] = AND(3) ;
+    rxoff_cmd[i++] = WR(0x50) ;
+    //END
+    rxoff_cmd[i++] = END ;
+    if (i % 2)
+    {
+        rxoff_cmd[i++] = END ;
+    }
+    rxoff_cmd_num = i;
+
+    //}}}
+
+    //----------------Polar Mod TXON CMD----------------------{{{
+    i = 0;
+    //VDDPSW/RFBG_EN/LO_IARY_EN
+    //txon_cmd[i++] = RD( 0x10 ) ;
+    txon_cmd[i++] = RD(0x10) ;
+    txon_cmd[i++] = OR(16) ;
+    txon_cmd[i++] = OR(17) ;
+    txon_cmd[i++] = OR(18) ;
+    txon_cmd[i++] = WR(0x10) ;
+
+    //wait 2us
+    txon_cmd[i++] = WAIT(6) ;
+
+    //VCO5G_EN
+    txon_cmd[i++] = RD(0x0) ;
+    txon_cmd[i++] = OR(12) ;
+    txon_cmd[i++] = WR(0x0) ;
+
+    //FBDV_EN
+    txon_cmd[i++] = RD(0x14) ;
+    txon_cmd[i++] = OR(12) ;
+    txon_cmd[i++] = WR(0x14) ;
+
+    //PFDCP_EN&PFDCP_CSD_EN
+    txon_cmd[i++] = RD(0x1C) ;
+    txon_cmd[i++] = OR(19) ;
+    //txon_cmd[i++] = OR( 4 ) ;
+    txon_cmd[i++] = WR(0x1C) ;
+
+    //PA_BUF_PU for normal tx
+    txon_cmd[i++] = RD(0x34) ;
+    txon_cmd[i++] = OR(22) ;
+    txon_cmd[i++] = WR(0x34) ;
+
+    ////ATTEN EN for dc est
+    //txon_cmd[i++] = RD( 0x28 ) ;
+    //txon_cmd[i++] = OR( 4 ) ;
+    //txon_cmd[i++] = WR( 0x28 ) ;
+
+    //EDR_IARRAY_EN
+    txon_cmd[i++] = RD(0x3c) ;
+    txon_cmd[i++] = OR(20) ;
+    txon_cmd[i++] = WR(0x3c) ;
+
+    //TRF REG
+    txon_cmd[i++] = RD_POLAR(0x764) ;
+    txon_cmd[i++] = WR(0x38) ;
+
+    //EDR_XFMR_SG
+    txon_cmd[i++] = RD(0x40) ;
+    txon_cmd[i++] = AND(11) ;
+    txon_cmd[i++] = WR(0x40) ;
+
+    //wait 4us
+    txon_cmd[i++] = WAIT(12) ;
+
+    //LODIST_BLETX_EN
+    txon_cmd[i++] = RD(0x10) ;
+    txon_cmd[i++] = OR(8) ;
+    txon_cmd[i++] = WR(0x10) ;
+
+    //PA_OUT_PU & TRF_SIG_EN
+    txon_cmd[i++] = RD(0x34) ;
+    txon_cmd[i++] = OR(16) ;
+    txon_cmd[i++] = OR(21) ;   //pa_out_pu for normal tx
+    //txon_cmd[i++] = OR( 16 ) ; //no pa_out_pu for dc est tx
+    txon_cmd[i++] = WR(0x34) ;
+
+    //RD FULCAL
+    txon_cmd[i++] = RD_FULCAL ;
+    txon_cmd[i++] = WR(0x8) ;
+
+    //wait 6us
+    txon_cmd[i++] = WAIT(18) ;
+
+    //FBDV_RSTB
+    txon_cmd[i++] = RD(0x14) ;
+    txon_cmd[i++] = AND(0x7) ;
+    txon_cmd[i++] = WR(0x14) ;
+
+    //wait 30us for lo lock
+    txon_cmd[i++] = WAIT(90) ;
+    //START INCCAL
+    txon_cmd[i++] = RD(0x74) ;   //inccal start
+    txon_cmd[i++] = OR(29) ;
+    txon_cmd[i++] = WR(0x74) ;
+    txon_cmd[i++] = WAIT(30) ;
+
+    //END
+    txon_cmd[i++] = END ;
+    if (i % 2)
+    {
+        txon_cmd[i++] = END ;
+    }
+    txon_cmd_num = i ;
+    //}}}
+
+    //----------------Polar Mod TXOFF CMD----------------------{{{
+    i = 0;
+    //VDDPSW/RFBG_EN/LODIST_BLETX_EN/LO_IARY_EN
+    txoff_cmd[i++] = RD(0x10) ;
+    //txoff_cmd[i++] = END ;
+    txoff_cmd[i++] = AND(8) ;
+    txoff_cmd[i++] = AND(16) ;
+    txoff_cmd[i++] = AND(17) ;
+    txoff_cmd[i++] = AND(18) ;
+    txoff_cmd[i++] = WR(0x10) ;
+    //VCO5G_EN
+    txoff_cmd[i++] = RD(0x0) ;
+    txoff_cmd[i++] = AND(12) ;
+    txoff_cmd[i++] = WR(0x0) ;
+    //FBDV_EN
+    txoff_cmd[i++] = RD(0x14) ;
+    txoff_cmd[i++] = AND(12) ;
+    //FBDV_RSTB
+    txoff_cmd[i++] = OR(7) ;
+    txoff_cmd[i++] = WR(0x14) ;
+    //PFDCP_EN
+    txoff_cmd[i++] = RD(0x1C) ;
+    txoff_cmd[i++] = AND(19) ;
+    txoff_cmd[i++] = WR(0x1C) ;
+
+    //PA_BUF_PU & PA_OUT_PU & TRF_SIG_EN
+    txoff_cmd[i++] = RD(0x34) ;
+    txoff_cmd[i++] = AND(22) ;
+    txoff_cmd[i++] = AND(16) ;
+    txoff_cmd[i++] = AND(21) ;
+    txoff_cmd[i++] = WR(0x34) ;
+
+    //TRF_EDR_IARRAY_EN
+    txoff_cmd[i++] = RD(0x3c) ;
+    txoff_cmd[i++] = AND(20) ;
+    txoff_cmd[i++] = WR(0x3c) ;
+
+    //EDR_XFMR_SG
+    txoff_cmd[i++] = RD(0x40) ;
+    txoff_cmd[i++] = OR(11) ;
+    txoff_cmd[i++] = WR(0x40) ;
+
+    //END
+    txoff_cmd[i++] = END ;
+    if (i % 2)
+    {
+        txoff_cmd[i++] = END ;
+    }
+    txoff_cmd_num = i ;
+
+    //}}}
+
+    //----------------IQ Mod TXON CMD----------------------{{{
+    i = 0;
+    //VDDPSW/RFBG_EN/LO_IARY_EN
+    bt_txon_cmd[i++] = RD(0x10) ;
+    bt_txon_cmd[i++] = OR(16) ;
+    bt_txon_cmd[i++] = OR(17) ;
+    bt_txon_cmd[i++] = OR(18) ;
+    if (EDR_LO5G)bt_txon_cmd[i++] = OR(5) ;    //LODISTEDR_TX_SEL
+    if (EDR_LO5G)bt_txon_cmd[i++] = OR(7) ;    //LODIST5G_EDRTX_EN
+    bt_txon_cmd[i++] = OR(0) ;  //LODISTEDR_EN
+    bt_txon_cmd[i++] = WR(0x10) ;
+
+    //wait 2us
+    bt_txon_cmd[i++] = WAIT(6) ;
+
+    // VCO3G_EN /VCO5G_EN
+    bt_txon_cmd[i++] = RD(0x0) ;
+    if (EDR_LO5G)bt_txon_cmd[i++] = OR(12) ;
+    if (EDR_LO3G)bt_txon_cmd[i++] = OR(13) ;
+    bt_txon_cmd[i++] = WR(0x0) ;
+
+    //FBDV_EN
+    bt_txon_cmd[i++] = RD(0x14) ;
+    bt_txon_cmd[i++] = OR(12) ;
+    if (EDR_LO3G)bt_txon_cmd[i++] = AND(3) ;    //SDM_CLK_SEL
+    if (EDR_LO3G)bt_txon_cmd[i++] = OR(4) ;    //MOD_STG[0]
+    if (EDR_LO3G)bt_txon_cmd[i++] = AND(5) ;   //MOD_STG[1]
+    bt_txon_cmd[i++] = WR(0x14) ;
+
+    //PFDCP_EN&PFDCP_CSD_EN
+    bt_txon_cmd[i++] = RD(0x1C) ;
+    bt_txon_cmd[i++] = OR(19) ;
+    //txon_cmd[i++] = OR( 4 ) ;
+    bt_txon_cmd[i++] = WR(0x1C) ;
+
+    //OSLO for 3G
+    if (EDR_LO3G)bt_txon_cmd[i++] = RD(0x28) ;
+    if (EDR_LO3G)bt_txon_cmd[i++] = OR(11) ;
+    if (EDR_LO3G)bt_txon_cmd[i++] = WR(0x28) ;
+
+    //EN_TBB_IARRY & EN_LDO_DAC_AVDD & EN_LDO_DAC_DVDD & EN_DAC
+    bt_txon_cmd[i++] = RD(0x64) ;
+    bt_txon_cmd[i++] = OR(8) ;
+    bt_txon_cmd[i++] = OR(9) ;
+    bt_txon_cmd[i++] = OR(10) ;
+    bt_txon_cmd[i++] = OR(11) ;
+    bt_txon_cmd[i++] = WR(0x64) ;
+
+    //TRF_EDR_IARRAY_EN
+    bt_txon_cmd[i++] = RD(0x3c) ;
+    bt_txon_cmd[i++] = OR(20) ;
+    bt_txon_cmd[i++] = WR(0x3c) ;
+
+    //EDR_PACAP_EN/EDR_PA_XFMR_SG
+    bt_txon_cmd[i++] = RD(0x40) ;
+    bt_txon_cmd[i++] = OR(11) ;
+    bt_txon_cmd[i++] = OR(17) ;
+    bt_txon_cmd[i++] = WR(0x40) ;
+
+    //RD FULCAL
+    bt_txon_cmd[i++] = RD_FULCAL ;
+    bt_txon_cmd[i++] = WR(0x24) ;
+    bt_txon_cmd[i++] = RD_FULCAL + 0x800 ;
+    bt_txon_cmd[i++] = WR(0x8) ;
+    //RD DCCAL
+    //bt_txon_cmd[i++] = RD_DCCAL1 ;
+    //bt_txon_cmd[i++] = WR( 0xA8 ) ;
+    //bt_txon_cmd[i++] = RD_DCCAL2 ;
+    //bt_txon_cmd[i++] = WR( 0xAC ) ;
+
+    bt_txon_cmd[i++] = RD_FACTOR(0x784);
+    bt_txon_cmd[i++] = WR(0xA8) ;
+    //wait 6us
+    bt_txon_cmd[i++] = WAIT(18) ;
+
+    //EDR_TMXBUF_PU EDR_TMX_PU
+    bt_txon_cmd[i++] = RD(0x3c) ;
+    bt_txon_cmd[i++] = OR(12) ;
+    bt_txon_cmd[i++] = OR(19) ;
+    bt_txon_cmd[i++] = WR(0x3c) ;
+
+    //wait 5us
+    bt_txon_cmd[i++] = WAIT(15) ;
+
+    //DAC_START
+    bt_txon_cmd[i++] = RD(0x64) ;
+    bt_txon_cmd[i++] = OR(12) ;
+    bt_txon_cmd[i++] = WR(0x64) ;
+
+    //EDR_PA_PU
+    bt_txon_cmd[i++] = RD(0x3c) ;
+    bt_txon_cmd[i++] = OR(2) ;
+    bt_txon_cmd[i++] = WR(0x3c) ;
+
+    //VCO_FLT_EN
+    //bt_txon_cmd[i++] = RD( 0x0 ) ;
+    //bt_txon_cmd[i++] = OR( 7 ) ;
+    //bt_txon_cmd[i++] = WR( 0x0 ) ;
+
+    //FBDV_RSTB
+    bt_txon_cmd[i++] = RD(0x14) ;
+    bt_txon_cmd[i++] = AND(0x7) ;
+    bt_txon_cmd[i++] = WR(0x14) ;
+
+    //wait 30us for lo lock
+    bt_txon_cmd[i++] = WAIT(90) ;
+    //START INCCAL
+    bt_txon_cmd[i++] = RD(0x74) ;   //inccal start
+    bt_txon_cmd[i++] = OR(29) ;
+    bt_txon_cmd[i++] = WR(0x74) ;
+    bt_txon_cmd[i++] = WAIT(30) ;
+
+    //END
+    bt_txon_cmd[i++] = END ;
+    if (i % 2)
+    {
+        bt_txon_cmd[i++] = END ;
+    }
+    bt_txon_cmd_num = i ;
+    //}}}
+
+    //----------------IQ Mod TXOFF CMD----------------------{{{
+    i = 0;
+
+
+    //VCO_EN
+    bt_txoff_cmd[i++] = RD(0x0) ;
+    if (EDR_LO5G)bt_txoff_cmd[i++] = AND(12) ;
+    if (EDR_LO3G)bt_txoff_cmd[i++] = AND(13) ;
+    bt_txoff_cmd[i++] = WR(0x0) ;
+
+    //OSLO for 3G
+    if (EDR_LO3G)bt_txoff_cmd[i++] = RD(0x28) ;
+    if (EDR_LO3G)bt_txoff_cmd[i++] = AND(11) ;
+    if (EDR_LO3G)bt_txoff_cmd[i++] = WR(0x28) ;
+
+    //VDDPSW/RFBG_EN/LODIST_BLETX_EN/LO_IARY_EN
+    bt_txoff_cmd[i++] = RD(0x10) ;
+    bt_txoff_cmd[i++] = AND(16) ;
+    bt_txoff_cmd[i++] = AND(17) ;
+    bt_txoff_cmd[i++] = AND(18) ;
+    if (EDR_LO5G)bt_txoff_cmd[i++] = AND(5) ;    //LODISTEDR_TX_SEL
+    if (EDR_LO5G)bt_txoff_cmd[i++] = AND(7) ;    //LODIST5G_EDRTX_EN
+    bt_txoff_cmd[i++] = AND(0) ;  //LODISTEDR_EN
+    bt_txoff_cmd[i++] = WR(0x10) ;
+    //FBDV_EN
+    bt_txoff_cmd[i++] = RD(0x14) ;
+    bt_txoff_cmd[i++] = AND(12) ;
+    if (EDR_LO3G)bt_txoff_cmd[i++] = OR(3) ;    //SDM_CLK_SEL
+    if (EDR_LO3G)bt_txoff_cmd[i++] = AND(4) ;    //MOD_STG[0]
+    if (EDR_LO3G)bt_txoff_cmd[i++] = OR(5) ;   //MOD_STG[1]
+    //FBDV_RSTB
+    bt_txoff_cmd[i++] = OR(7) ;
+    bt_txoff_cmd[i++] = WR(0x14) ;
+    //PFDCP_EN
+    bt_txoff_cmd[i++] = RD(0x1C) ;
+    bt_txoff_cmd[i++] = AND(19) ;
+    bt_txoff_cmd[i++] = WR(0x1C) ;
+
+    //DAC_START
+    //EN_TBB_IARRY & EN_LDO_DAC_AVDD & EN_LDO_DAC_DVDD & EN_DAC
+    bt_txoff_cmd[i++] = RD(0x64) ;
+    bt_txoff_cmd[i++] = AND(8) ;
+    bt_txoff_cmd[i++] = AND(9) ;
+    bt_txoff_cmd[i++] = AND(10) ;
+    bt_txoff_cmd[i++] = AND(11) ;
+    bt_txoff_cmd[i++] = AND(12) ;
+    bt_txoff_cmd[i++] = WR(0x64) ;
+
+    //EDR_PA_PU
+    //TRF_EDR_IARRAY_EN
+    //EDR_TMXBUF_PU EDR_TMX_PU
+    bt_txoff_cmd[i++] = RD(0x3c) ;
+    bt_txoff_cmd[i++] = AND(2) ;
+    bt_txoff_cmd[i++] = AND(12) ;
+    bt_txoff_cmd[i++] = AND(19) ;
+    bt_txoff_cmd[i++] = AND(20) ;
+    bt_txoff_cmd[i++] = WR(0x3c) ;
+
+    //EDR_PACAP_EN / EDR_PA_XFMR_SG
+    bt_txoff_cmd[i++] = RD(0x40) ;
+    bt_txoff_cmd[i++] = AND(11) ;
+    bt_txoff_cmd[i++] = AND(17) ;
+    bt_txoff_cmd[i++] = WR(0x40) ;
+
+    //END
+    bt_txoff_cmd[i++] = END ;
+    if (i % 2)
+    {
+        bt_txoff_cmd[i++] = END ;
+    }
+    bt_txoff_cmd_num = i ;
+
+    //}}}
+
+    //printf("BLE rf rxon inccal init start\n");
+    rxon_addr = reg_addr + 4;
+    hwp_bt_rfc->CU_ADDR_REG1 = 0;
+    hwp_bt_rfc->CU_ADDR_REG1 = rxon_addr;
+    for (i = 0; i < rxon_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",rxon_addr );
+        //printf("rxon_cmd[%d] = %x\n",i*2+1,rxon_cmd[i*2+1]);
+        //printf("rxon_cmd[%d] = %x\n",i*2,rxon_cmd[i*2]);
+        cmd = rxon_cmd[i * 2] + (rxon_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + rxon_addr, cmd);
+        rxon_addr += 4;
+    }
+    //printf("BLE rf rxoff inccal init start\n");
+    //rxoff_addr = BT_RFC_BASE + 0x298;//0x41040198;
+    rxoff_addr = rxon_addr + 4 ;
+    hwp_bt_rfc->CU_ADDR_REG1 += (rxoff_addr << 16);
+    for (i = 0; i < rxoff_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",rxoff_addr );
+        //printf("rxoff_cmd[%d] = %x\n",i*2+1,rxoff_cmd[i*2+1]);
+        //printf("rxoff_cmd[%d] = %x\n",i*2,rxoff_cmd[i*2]);
+        cmd = rxoff_cmd[i * 2] + (rxoff_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + rxoff_addr, cmd);
+        rxoff_addr += 4 ;
+    }
+
+    //txon_addr = BT_RFC_BASE + 0x304;//0x41040204;
+    txon_addr = rxoff_addr + 0x4;
+    hwp_bt_rfc->CU_ADDR_REG2 = 0;
+    hwp_bt_rfc->CU_ADDR_REG2 = txon_addr ;
+    for (i = 0; i < txon_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",txon_addr );
+        //printf("txon_cmd[%d] = %x\n",i*2+1,txon_cmd[i*2+1]);
+        //printf("txon_cmd[%d] = %x\n",i*2,txon_cmd[i*2]);
+        cmd = txon_cmd[i * 2] + (txon_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + txon_addr, cmd);
+        txon_addr += 4;
+    }
+    //printf("BLE rf rxoff inccal init start\n");
+    txoff_addr = txon_addr + 0x4;//0x4104025C;
+    hwp_bt_rfc->CU_ADDR_REG2 += (txoff_addr << 16);
+    for (i = 0; i < txoff_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",txoff_addr );
+        //printf("txoff_cmd[%d] = %x\n",i*2+1,txoff_cmd[i*2+1]);
+        //printf("txoff_cmd[%d] = %x\n",i*2,txoff_cmd[i*2]);
+        cmd = txoff_cmd[i * 2] + (txoff_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + txoff_addr, cmd);
+        txoff_addr += 4 ;
+    }
+
+    bt_txon_addr = txoff_addr + 0x4;
+    hwp_bt_rfc->CU_ADDR_REG3 = 0;
+    hwp_bt_rfc->CU_ADDR_REG3 = bt_txon_addr ;
+    for (i = 0; i < bt_txon_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",txon_addr );
+        //printf("txon_cmd[%d] = %x\n",i*2+1,txon_cmd[i*2+1]);
+        //printf("txon_cmd[%d] = %x\n",i*2,txon_cmd[i*2]);
+        cmd = bt_txon_cmd[i * 2] + (bt_txon_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + bt_txon_addr, cmd);
+        bt_txon_addr += 4;
+    }
+    //printf("BLE rf rxoff inccal init start\n");
+    bt_txoff_addr = bt_txon_addr + 0x4;//0x4104025C;
+    hwp_bt_rfc->CU_ADDR_REG3 += (bt_txoff_addr << 16);
+    for (i = 0; i < bt_txoff_cmd_num / 2; i = i + 1)
+    {
+        //printf("cmd_addr = %x\n",txoff_addr );
+        //printf("txoff_cmd[%d] = %x\n",i*2+1,txoff_cmd[i*2+1]);
+        //printf("txoff_cmd[%d] = %x\n",i*2,txoff_cmd[i*2]);
+        cmd = bt_txoff_cmd[i * 2] + (bt_txoff_cmd[i * 2 + 1] << 16) ;
+        write_memory(BT_RFC_MEM_BASE + bt_txoff_addr, cmd);
+        bt_txoff_addr += 4 ;
+    }
+    //printf("cmd_addr = %x\n",bt_txoff_addr );
+}
+
+rf_power_inf_t *rf_power_env;
+uint32_t *rf_power_field_base;
+rf_power_inf_t *rf_get_base_inf(void)
+{
+    return rf_power_env;
+}
+
+void rf_power_env_init(void)
+{
+    rf_power_env = (rf_power_inf_t *)LCPU_RF_CONFIG_START_ADDR;
+    rf_power_env->magic_num = 0x57;
+    rf_power_env->ver_id = 0;
+    rf_power_env->start_offset = 4;
+    rf_power_field_base = (uint32_t *)rf_power_env + rf_power_env->start_offset;
+}
+
+void rf_power_field_set(uint8_t index, uint32_t value)
+{
+    uint32_t *pt_power;
+
+    pt_power = (rf_power_field_base + index);
+
+    *pt_power = value;
+
+}
+#define FPGA_RFTEST_CASE2
+#ifdef FPGA_RFTEST_CASE0 //case 0 //fix power
+void rf_power_config(void)
+{
+    rf_power_env_init();
+
+    rf_power_env->max_ble_pwr = 7;
+    rf_power_env->max_br_pwr = 7;
+    rf_power_env->max_edr_pwr = 7;
+    rf_power_env->min_ble_pwr = 7;
+    rf_power_env->min_br_pwr = 7;
+    rf_power_env->min_edr_pwr = 7;
+    rf_power_env->max_ble_index = 0;
+    rf_power_env->max_br_index = 0;
+    rf_power_env->max_edr_index = 0;
+    rf_power_env->min_ble_index = 0;
+    rf_power_env->min_br_index = 0;
+    rf_power_env->min_edr_index = 0;
+
+    uint32_t power0 = 0;
+    rf_power_field_t *pt_pwr = (rf_power_field_t *)&power0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+
+    rf_power_field_set(0, power0);
+}
+#endif
+#ifdef FPGA_RFTEST_CASE1
+void rf_power_config(void)
+{
+    rf_power_env_init();
+
+    rf_power_env->min_br_pwr = 7;
+    rf_power_env->max_br_pwr = 7;
+    rf_power_env->min_edr_pwr = 7;
+    rf_power_env->max_edr_pwr = 7;
+    rf_power_env->min_ble_pwr = 7;
+    rf_power_env->max_ble_pwr = 7;
+
+    rf_power_env->min_br_index = 0;
+    rf_power_env->max_br_index = 0;
+    rf_power_env->min_edr_index = 1;
+    rf_power_env->max_edr_index = 1;
+    rf_power_env->min_ble_index = 2;
+    rf_power_env->max_ble_index = 2;
+
+    uint32_t power0 = 0;
+    rf_power_field_t *pt_pwr = (rf_power_field_t *)&power0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 1;
+    pt_pwr->br_iq_pwr = 1;
+    pt_pwr->polar_level = 3;
+    pt_pwr->polar_pwr = 6;
+    rf_power_field_set(0, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->edr_iq_level = 5;
+    pt_pwr->edr_iq_pwr = 0;
+    rf_power_field_set(1, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 2;
+    pt_pwr->br_iq_pwr = 2;
+    pt_pwr->polar_level = 4;
+    pt_pwr->polar_pwr = 7;
+    rf_power_field_set(2, power0);
+}
+#endif
+#ifdef FPGA_RFTEST_CASE2
+void rf_power_config(void)
+{
+    rf_power_env_init();
+
+    rf_power_env->min_br_pwr = 3;
+    rf_power_env->max_br_pwr = 9;
+    rf_power_env->min_edr_pwr = 3;
+    rf_power_env->max_edr_pwr = 9;
+    rf_power_env->min_ble_pwr = 3;
+    rf_power_env->max_ble_pwr = 10;
+
+    rf_power_env->min_br_index = 0;
+    rf_power_env->max_br_index = 2;
+    rf_power_env->min_edr_index = 0;
+    rf_power_env->max_edr_index = 2;
+    rf_power_env->min_ble_index = 3;
+    rf_power_env->max_ble_index = 5;
+
+    uint32_t power0 = 0;
+    rf_power_field_t *pt_pwr = (rf_power_field_t *)&power0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 1;
+    pt_pwr->br_iq_pwr = 3;
+    pt_pwr->polar_level = 2;
+    pt_pwr->polar_pwr = 2;
+    pt_pwr->edr_iq_level = 3;
+    pt_pwr->edr_iq_pwr = 2;
+    pt_pwr->pwr_dbm = 3;
+    rf_power_field_set(0, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 2;
+    pt_pwr->br_iq_pwr = 2;
+    pt_pwr->polar_level = 3;
+    pt_pwr->polar_pwr = 1;
+    pt_pwr->edr_iq_level = 4;
+    pt_pwr->edr_iq_pwr = 1;
+    pt_pwr->pwr_dbm = 6;
+    rf_power_field_set(1, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 3;
+    pt_pwr->br_iq_pwr = 1;
+    pt_pwr->polar_level = 4;
+    pt_pwr->polar_pwr = 0;
+    pt_pwr->edr_iq_level = 5;
+    pt_pwr->edr_iq_pwr = 0;
+    pt_pwr->pwr_dbm = 9;
+    rf_power_field_set(2, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 4;
+    pt_pwr->br_iq_pwr = 2;
+    pt_pwr->polar_level = 5;
+    pt_pwr->polar_pwr = 4;
+    pt_pwr->pwr_dbm = 3;
+    rf_power_field_set(3, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 5;
+    pt_pwr->br_iq_pwr = 1;
+    pt_pwr->polar_level = 6;
+    pt_pwr->polar_pwr = 5;
+    pt_pwr->pwr_dbm = 6;
+    rf_power_field_set(4, power0);
+
+    power0 = 0;
+    pt_pwr->mod_cntl = 1;//IQ  0-->MAX POWER
+    pt_pwr->br_iq_level = 7;
+    pt_pwr->br_iq_pwr = 0;
+    pt_pwr->polar_level = 7;
+    pt_pwr->polar_pwr = 15;
+    pt_pwr->pwr_dbm = 10;
+    rf_power_field_set(5, power0);
+}
+#endif
+
 void bt_rf_cal_9364(void)
 {
+    bt_rfc_init();
     ad9364_calibration();
     ad9364_bt_cfg();
 
+    rf_power_config();
 }
 

@@ -212,6 +212,18 @@ typedef struct
 
 } hal_lcpu_bluetooth_actmove_config_t;
 
+typedef struct
+{
+    uint8_t bit_valid0;
+    uint8_t bit_valid1;
+    uint8_t bit_value;
+    uint8_t sco_evm_thr;
+    uint8_t ble_ch_map_period;//in 200ms unit
+    uint8_t ble_ch_class_min_spacing;//in 200ms unit
+    uint8_t ble_ch_class_max_delay;// in 200ms unit
+    uint8_t rssi_avg_coeff;
+    uint8_t ch_scan_inv;//in 12.5ms unit
+} hal_lcpu_bluetooth_afh_config_t;
 /**
   * @} LPCONFIG_exported_constants
 */

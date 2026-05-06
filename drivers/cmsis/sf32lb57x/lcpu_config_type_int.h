@@ -1,48 +1,8 @@
-/**
-  ******************************************************************************
-  * @file   lcpu_config_type_int.h
-  * @author Sifli software development team
-  ******************************************************************************
-*/
-/**
- * @attention
- * Copyright (c) 2025 - 2025,  Sifli Technology
+/*
+ * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
  *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form, except as embedded into a Sifli integrated circuit
- *    in a product or a software update for such product, must reproduce the above
- *    copyright notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Sifli nor the names of its contributors may be used to endorse
- *    or promote products derived from this software without specific prior written permission.
- *
- * 4. This software, with or without modification, must only be used with a
- *    Sifli integrated circuit.
- *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
- *
- * THIS SOFTWARE IS PROVIDED BY SIFLI TECHNOLOGY "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL SIFLI TECHNOLOGY OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
-*/
-
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef __LCPU_CONFIG_TYPE_INT_H
 #define __LCPU_CONFIG_TYPE_INT_H
@@ -69,13 +29,22 @@ typedef struct
 } LCPU_CONFIG_TYPE_T;
 */
 
-#define LCPU_CONFIG_START_ADDR 0x2040FDC0
+#ifdef LCPU_ROM_CONFIG_START_ADDR
+    #define LCPU_CONFIG_START_ADDR LCPU_ROM_CONFIG_START_ADDR
+#else
+    #define LCPU_CONFIG_START_ADDR 0x2040FDC0
+#endif
+
 #define LPCU_CONFIG_MAGIC_NUM 0x45457878
 
 #define LCPU_ASSERT_INFO_ADDR  0x2040FDBC
 #define LPCU_ASSERT_OVER_FLAG  0xa5a5a5a5
 
-#define LCPU_CONFIG_ROM_SIZE 0x40
+#ifdef LCPU_ROM_CONFIG_SIZE
+    #define LCPU_CONFIG_ROM_SIZE LCPU_ROM_CONFIG_SIZE
+#else
+    #define LCPU_CONFIG_ROM_SIZE 0x40
+#endif
 #define LCPU_CONFIG_ROM_A4_SIZE 0xCC
 
 
@@ -123,6 +92,44 @@ typedef struct
 
 #define LCPU_CONFIG_HCPU_IPC_ADDR_OFFSET 200
 #define LCPU_CONFIG_HCPU_IPC_ADDR_LENGTH 4
+
+#define LCPU_CONFIG_BLE_FLUSH_CONFIG_OFFSET 204
+#define HAL_LCPU_CONFIG_BLE_FLUSH_CONFIG_LENGTH 1
+
+#define LCPU_CONFIG_AFH_CONFIG_OFFSET 205
+#define HAL_LCPU_CONFIG_AFH_CONFIG_LENGTH 9
+
+typedef struct
+{
+    uint8_t magic_num;
+    uint8_t ver_id;
+    uint8_t start_offset;
+    uint8_t max_br_pwr;
+    uint8_t min_br_pwr;
+    uint8_t max_edr_pwr;
+    uint8_t min_edr_pwr;
+    uint8_t max_ble_pwr;
+    uint8_t min_ble_pwr;
+    uint8_t min_br_index;
+    uint8_t max_br_index;
+    uint8_t min_edr_index;
+    uint8_t max_edr_index;
+    uint8_t min_ble_index;
+    uint8_t max_ble_index;
+    uint8_t is_bqb;
+} rf_power_inf_t;
+
+typedef struct
+{
+    uint32_t mod_cntl: 1;
+    uint32_t polar_level: 3;
+    uint32_t polar_pwr: 8;
+    uint32_t br_iq_level: 3;
+    uint32_t br_iq_pwr: 4;
+    uint32_t edr_iq_level: 3;
+    uint32_t edr_iq_pwr: 4;
+    int32_t pwr_dbm : 6;
+} rf_power_field_t;
 
 #endif // __LCPU_CONFIG_TYPE_INT_H
 
