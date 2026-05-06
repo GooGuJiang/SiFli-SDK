@@ -754,6 +754,14 @@ def _collect_ptab_v3_split_partitions(ptab_obj, core: str, ptab_module):
     return out
 
 
+def _uses_ptab_v3_standard_artifacts(rtconfig, ptab_obj) -> bool:
+    return bool(
+        ptab_obj
+        and ptab_obj.is_v3()
+        and getattr(rtconfig, 'PLATFORM', None) in ('gcc', 'armcc')
+    )
+
+
 def IsPtabV3ArtifactStampPath(path: str) -> bool:
     """Return True when path is a synthetic ptab v3 artifact stamp."""
     name = os.path.basename(str(path))
@@ -917,7 +925,7 @@ def _cleanup_ptab_v3_output_dir(out_dir: str, ext: str, stamp_name: str) -> None
         _remove_file_or_dir(out_dir)
     os.makedirs(out_dir, exist_ok=True)
     for name in os.listdir(out_dir):
-        if name == stamp_name or name.lower().endswith(ext.lower()):
+        if name == stamp_name or name == 'int_res' or name.lower().endswith(ext.lower()):
             _remove_file_or_dir(os.path.join(out_dir, name))
 
 
@@ -957,6 +965,96 @@ def _validate_ptab_v3_artifact_names(base_name: str, split_entries, out_dir: str
         seen[key] = "partition '{}'".format(name)
 
 
+def _ptab_v3_fromelf_key(path: str, ext: str) -> str:
+    name = os.path.basename(str(path)).strip()
+    if name.lower().endswith(ext.lower()):
+        name = name[:-len(ext)]
+    return name.lower()
+
+
+def _ptab_v3_fromelf_region_aliases(region_name: str):
+    upper = str(region_name or '').strip().upper()
+    if not upper:
+        return set()
+    base = upper[3:] if upper.startswith(('ER_', 'LR_')) else upper
+    return {upper.lower(), base.lower(), 'er_{}'.format(base).lower(), 'lr_{}'.format(base).lower()}
+
+
+def _ptab_v3_fromelf_entries(export_path: str, ext: str):
+    if os.path.isfile(export_path):
+        return [{'path': export_path, 'key': _ptab_v3_fromelf_key(export_path, ext)}]
+    if not os.path.isdir(export_path):
+        return []
+
+    entries = []
+    for name in sorted(os.listdir(export_path)):
+        path = os.path.join(export_path, name)
+        if os.path.isfile(path):
+            entries.append({'path': path, 'key': _ptab_v3_fromelf_key(path, ext)})
+    return entries
+
+
+def _find_ptab_v3_fromelf_entry(entries, aliases, used_paths, ext: str):
+    for entry in entries:
+        path = entry['path']
+        if path in used_paths:
+            continue
+        if entry['key'] in aliases and _ptab_v3_artifact_has_payload(path, ext):
+            return entry
+    return None
+
+
+def _select_ptab_v3_fromelf_code_entry(entries, used_paths, ext: str):
+    candidates = [
+        entry for entry in entries
+        if entry['path'] not in used_paths and _ptab_v3_artifact_has_payload(entry['path'], ext)
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    return _find_ptab_v3_fromelf_entry(candidates, _ptab_v3_fromelf_region_aliases('IROM1'), set(), ext)
+
+
+def _build_ptab_v3_keil_artifacts(program_file: str, out_dir: str, base_name: str,
+                                  ext: str, split_entries, stamp_path: str) -> str:
+    """Export Keil ptab v3 artifacts and normalize fromelf region names."""
+    export_path = os.path.join(out_dir, '.fromelf_{}{}'.format(base_name, ext))
+    _remove_file_or_dir(export_path)
+    fromelf_mode = '--bin' if ext.lower() == '.bin' else '--i32'
+    subprocess.run(['fromelf', fromelf_mode, program_file, '--output', export_path], check=True)
+    entries = _ptab_v3_fromelf_entries(export_path, ext)
+    used_paths = set()
+    used_resources = []
+
+    for entry in split_entries:
+        name = entry['name']
+        aliases = _ptab_v3_fromelf_region_aliases(name)
+        src = _find_ptab_v3_fromelf_entry(entries, aliases, used_paths, ext)
+        if not src:
+            continue
+        out_file = GetPtabV3ArtifactPath(out_dir, base_name, ext, name)
+        used_paths.add(src['path'])
+        _remove_file_or_dir(out_file)
+        shutil.move(src['path'], out_file)
+        used_resources.append(name)
+
+    code_entry = _select_ptab_v3_fromelf_code_entry(entries, used_paths, ext)
+    if not code_entry:
+        _remove_file_or_dir(export_path)
+        return ''
+
+    code_path = GetPtabV3ArtifactPath(
+        out_dir,
+        base_name,
+        ext,
+        'app' if used_resources else None,
+    )
+    _remove_file_or_dir(code_path)
+    shutil.move(code_entry['path'], code_path)
+    _write_ptab_v3_artifact_stamp(stamp_path, code_path)
+    _remove_file_or_dir(export_path)
+    return code_path
+
+
 def ModifyProgramBinaryTargets(target, source, env):
     import ptab as ptab_module
     import rtconfig
@@ -965,7 +1063,7 @@ def ModifyProgramBinaryTargets(target, source, env):
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
+    if _uses_ptab_v3_standard_artifacts(rtconfig, ptab_obj):
         elf_path = str(source[0]) if source else ''
         out_dir = GetPtabV3ArtifactOutputDir(elf_path)
         target = [os.path.join(out_dir, PTAB_V3_PROGRAM_BINARY_STAMP)]
@@ -980,7 +1078,7 @@ def ModifyProgramHexTargets(target, source, env):
     if ptab_obj is None and 'PARTITION_TABLE' in env:
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
-    if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
+    if _uses_ptab_v3_standard_artifacts(rtconfig, ptab_obj):
         elf_path = str(source[0]) if source else ''
         out_dir = GetPtabV3ArtifactOutputDir(elf_path)
         target = [os.path.join(out_dir, PTAB_V3_PROGRAM_HEX_STAMP)]
@@ -1039,7 +1137,7 @@ def ProgramBinaryBuild(target, source, env):
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
     core = _infer_build_core(env, getattr(rtconfig, 'CORE', 'HCPU'))
-    # ptab v3 (gcc): embedded LCPU keeps ER_IROMN sections, but uses the same
+    # ptab v3: embedded LCPU keeps ER_IROMN sections, but uses the same
     # output naming rule as other multi-artifact projects: <base>.ER_IROMN.ext.
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3() and core == 'LCPU' and env.get('IMG_EMBEDDED'):
         base_name = GetPtabV3ArtifactBaseName(env, program_file)
@@ -1054,7 +1152,7 @@ def ProgramBinaryBuild(target, source, env):
         _write_ptab_v3_artifact_stamp(stamp_path, code_bin_path)
         return
 
-    # ptab v3 (gcc): split app/ex sections and emit final artifacts into `output/`
+    # ptab v3: split app/ex sections and emit final artifacts into `output/`
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
         base_name = GetPtabV3ArtifactBaseName(env, program_file)
         stamp_path = code_bin_path
@@ -1101,6 +1199,26 @@ def ProgramBinaryBuild(target, source, env):
         else:
             res.check_returncode()
         _write_ptab_v3_artifact_stamp(stamp_path, code_bin_path)
+        return
+
+    if rtconfig.PLATFORM == 'armcc' and ptab_obj and ptab_obj.is_v3():
+        base_name = GetPtabV3ArtifactBaseName(env, program_file)
+        stamp_path = code_bin_path
+        out_dir = os.path.dirname(stamp_path)
+        _cleanup_ptab_v3_output_dir(out_dir, '.bin', PTAB_V3_PROGRAM_BINARY_STAMP)
+        _cleanup_ptab_v3_legacy_artifacts(program_file, '.bin')
+
+        split_entries = _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module)
+        _validate_ptab_v3_artifact_names(base_name, split_entries, out_dir)
+        _build_ptab_v3_keil_artifacts(
+            program_file,
+            out_dir,
+            base_name,
+            '.bin',
+            split_entries,
+            stamp_path,
+        )
+        subprocess.run(['fromelf', '-z', str(source[0])], check=True)
         return
 
     if os.path.exists(whole_bin_path):
@@ -1163,7 +1281,7 @@ def ProgramHexBuild(target, source, env):
         ptab_obj = ptab_module.load_ptab(env['PARTITION_TABLE'], fatal=False)
 
     core = _infer_build_core(env, getattr(rtconfig, 'CORE', 'HCPU'))
-    # ptab v3 (gcc): embedded LCPU keeps ER_IROMN sections, but uses the same
+    # ptab v3: embedded LCPU keeps ER_IROMN sections, but uses the same
     # output naming rule as other multi-artifact projects: <base>.ER_IROMN.ext.
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3() and core == 'LCPU' and env.get('IMG_EMBEDDED'):
         base_name = GetPtabV3ArtifactBaseName(env, program_file)
@@ -1176,7 +1294,7 @@ def ProgramHexBuild(target, source, env):
         _write_ptab_v3_artifact_stamp(stamp_path, code_hex_path)
         return
 
-    # ptab v3 (gcc): split app/ex sections and emit final artifacts into `output/`
+    # ptab v3: split app/ex sections and emit final artifacts into `output/`
     if rtconfig.PLATFORM == 'gcc' and ptab_obj and ptab_obj.is_v3():
         base_name = GetPtabV3ArtifactBaseName(env, program_file)
         stamp_path = code_hex_path
@@ -1223,6 +1341,25 @@ def ProgramHexBuild(target, source, env):
         else:
             res.check_returncode()
         _write_ptab_v3_artifact_stamp(stamp_path, code_hex_path)
+        return
+
+    if rtconfig.PLATFORM == 'armcc' and ptab_obj and ptab_obj.is_v3():
+        base_name = GetPtabV3ArtifactBaseName(env, program_file)
+        stamp_path = code_hex_path
+        out_dir = os.path.dirname(stamp_path)
+        _cleanup_ptab_v3_output_dir(out_dir, '.hex', PTAB_V3_PROGRAM_HEX_STAMP)
+        _cleanup_ptab_v3_legacy_artifacts(program_file, '.hex')
+
+        split_entries = _collect_ptab_v3_split_partitions(ptab_obj, core, ptab_module)
+        _validate_ptab_v3_artifact_names(base_name, split_entries, out_dir)
+        _build_ptab_v3_keil_artifacts(
+            program_file,
+            out_dir,
+            base_name,
+            '.hex',
+            split_entries,
+            stamp_path,
+        )
         return
 
     if os.path.exists(whole_hex_path):
