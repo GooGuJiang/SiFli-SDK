@@ -164,7 +164,7 @@ void tc_vglite_glyphs(int argc, char **argv)
     /* Save PNG file.*/
     //vg_lite_save_png("plyhs2_1.png", fb);
 
-    tc_vg_send_data_to_lcd(fb->memory, fb->width, fb->height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
+    tc_vg_send_data_to_lcd(fb->memory, fb->width, fb->stride / 2, fb->height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
     rt_thread_mdelay(5000);
 
     /*Draw frame 2, scale a character*/
@@ -192,7 +192,7 @@ void tc_vglite_glyphs(int argc, char **argv)
     vg_lite_clear_path(&path);
     //vg_lite_save_png("plyhs2_2.png", fb);
 
-    tc_vg_send_data_to_lcd(fb->memory, fb->width, fb->height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
+    tc_vg_send_data_to_lcd(fb->memory, fb->width, fb->stride / 2, fb->height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
     rt_thread_mdelay(5000);
 
 ErrorHandler:

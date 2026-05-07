@@ -80,19 +80,12 @@ void tc_vglite_linear_grad(int argc, char **argv)
 {
     vg_lite_filter_t filter;
     vg_lite_linear_gradient_t grad;
-    uint32_t ramps[] = {0xff000000, 0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffffff};
-    uint32_t stops[] = {0, 66, 122, 200, 255};
+    vg_lite_uint32_t ramps[] = {0xff000000, 0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffffff};
+    vg_lite_uint32_t stops[] = {0, 66, 122, 200, 255};
     vg_lite_matrix_t *matGrad;
     vg_lite_matrix_t matPath;
     int fcount = 0;
-    rt_device_t lcd_device;
-    uint16_t cf = RTGRAPHIC_PIXEL_FORMAT_RGB565;
 
-    lcd_device = rt_device_find("lcd");
-
-    RT_ASSERT(lcd_device);
-
-    rt_device_open(lcd_device, RT_DEVICE_OFLAG_RDWR);
 
 
     /* Initialize vg_lite engine. */
@@ -110,7 +103,7 @@ void tc_vglite_linear_grad(int argc, char **argv)
     TC_VGLITE_CHECK_ERROR(vg_lite_allocate(&buffer));
     fb = &buffer;
 
-    printf("Render size: %d x %d, %x\n", fb_width, fb_height, buffer.memory);
+    printf("Render buffer size: %d x %d, %x, stride=%d\n", fb_width, fb_height, buffer.memory, buffer.stride);
     frames = 10;
     while (frames > 0)
     {
@@ -141,9 +134,7 @@ void tc_vglite_linear_grad(int argc, char **argv)
         vg_lite_clear_grad(&grad);
         frames--;
         printf("frame %d done\n", fcount++);
-        rt_graphix_ops(lcd_device)->set_window(0, 0, fb_width - 1, fb_height - 1);
-        rt_device_control(lcd_device, RTGRAPHIC_CTRL_SET_BUF_FORMAT, &cf);
-        rt_graphix_ops(lcd_device)->draw_rect((const char *)fb->memory, 0, 0, fb_width - 1, fb_height - 1);
+        tc_vg_send_data_to_lcd((const char *)fb->memory, fb_width, buffer.stride / 2, fb_height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
         rt_thread_mdelay(2000);
     }
 
@@ -153,7 +144,6 @@ void tc_vglite_linear_grad(int argc, char **argv)
 ErrorHandler:
     // Cleanup.
     cleanup();
-    rt_device_close(lcd_device);
 }
 
 UTEST_TC_EXPORT(tc_vglite_linear_grad, "tc_vglite_0_0", tc_vglite_init, tc_vglite_cleanup, 10);
