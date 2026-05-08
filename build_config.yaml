@@ -108,11 +108,13 @@ after_55x_boards: &after_55x_boards
 
 525_devkit_lcd_boards: &525_devkit_lcd_boards
   - sf32lb52-lcd_n16r8 
+  - sf32lb52-lcd_a128r16 
   - sf32lb52-nano_a128r16
   - sf32lb52-nano_n16r16
 
 devkit_lcd_boards: &devkit_lcd_boards
   - sf32lb52-lcd_n16r8 
+  - sf32lb52-lcd_a128r16 
   - sf32lb52-nano_a128r16
   - sf32lb52-nano_n16r16
   - sf32lb56-lcd_a128r12n1
@@ -270,6 +272,11 @@ common_projects:
 
   - path: example/get-started/dualcore/project/hcpu
     boards: *devkit-boards
+
+  - path: example/get-started/dualcore/project/hcpu
+    boards: 
+      - eh-lb551_hcpu
+      - eh-lb555_hcpu
 
   - path: example/get-started/hello_world/no-os/project
     boards: *default_boards
