@@ -74,8 +74,8 @@ static int total_channels = 0;
 static int is_raw = 0;
 
 audio_client_t client = NULL;
-static long data_raw_len = 0;
-static long anyka_out_len = 0;
+static uint32_t data_raw_len = 0;
+static uint32_t anyka_out_len = 0;
 static int fd_dump = 0;
 static int fd_output = 0;
 L2_RET_BSS_SECT_BEGIN(data2)
@@ -203,6 +203,7 @@ static int mp3_callback_func(audio_server_callback_cmt_t cmd, void *callback_use
     {
         pdm_status = 0;
     }
+    return 0;
 }
 
 void write_data_to_file(int fd, uint8_t *data, uint32_t data_len)
