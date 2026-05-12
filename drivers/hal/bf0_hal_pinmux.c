@@ -24,6 +24,7 @@
     #define HAL_PINMUX_EXT_ENABLED
 #endif /* SF32LB56X || SF32LB52X */
 
+#ifdef HAL_PINMUX_SUPPORT_ARBITRARY_FUNCTION
 static inline void PIN_UpdateFselAndPUPD(__IO uint32_t *pin, uint32_t fsel, uint32_t pupd)
 {
     uint32_t val;
@@ -39,7 +40,7 @@ static inline void PIN_UpdateFselAndPUPD(__IO uint32_t *pin, uint32_t fsel, uint
     */
     *pin = val | fsel | pupd | HPSYS_PINMUX_PAD_PA00_IE_Msk;
 }
-
+#endif /* HAL_PINMUX_SUPPORT_ARBITRARY_FUNCTION */
 
 /**
   * @brief  Get pin base.
