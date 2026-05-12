@@ -37,11 +37,14 @@ static void statisttics_end(void);
 
 extern void EPIC_GetRotatedArea(EPIC_AreaTypeDef *output, uint16_t w, uint16_t h, int16_t angle,
                                 const EPIC_PointTypeDef *pivot);
-
-
+/* Keep the render list pool in retention memory so sleep/resume does not
+ * randomize the in-flight bookkeeping state.
+ */
+L1_RET_BSS_SECT_BEGIN(drv_epic_render_list_pool)
+L1_RET_BSS_SECT(drv_epic_render_list_pool, ALIGN(RT_ALIGN_SIZE) static priv_render_list_t drv_epic_render_list_pool[render_list_pool_max]);
+L1_RET_BSS_SECT_END
 
 L1_NON_RET_BSS_SECT_BEGIN(drv_epic_stack)
-L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static priv_render_list_t drv_epic_render_list_pool[render_list_pool_max]);
 L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t drv_epic_mask_buf_pool[mask_buf_max_bytes]);
 L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static uint8_t drv_epic_mask_buf2_pool[mask_buf2_max_bytes]);
 L1_NON_RET_BSS_SECT(drv_epic_stack, ALIGN(RT_ALIGN_SIZE) static drv_epic_letter_type_t drv_epic_letter_pool[letter_pool_max * render_list_pool_max]);
