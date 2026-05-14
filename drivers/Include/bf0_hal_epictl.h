@@ -1,11 +1,3 @@
-/**
-  ******************************************************************************
-  * @file   bf0_hal_epictl.h
-  * @author Sifli software development team
-  * @brief   Header file of EPICTL HAL module.
-  * @attention
-  ******************************************************************************
-*/
 /*
  * SPDX-FileCopyrightText: 2019-2025 SiFli Technologies(Nanjing) Co., Ltd
  *
