@@ -186,7 +186,7 @@ common_projects:
     boards: *after_55x_boards
 
   - path: example/ble/talkback/project
-    boards: *default_boards
+    boards: *after_55x_boards
 
   - path: example/ble/throughput/project
     boards: *default_boards
@@ -273,12 +273,22 @@ common_projects:
     boards: *default_boards
 
   - path: example/get-started/dualcore/project/hcpu
-    boards: *devkit-boards
-
-  - path: example/get-started/dualcore/project/hcpu
     boards: 
       - eh-lb551_hcpu
       - eh-lb555_hcpu
+      - ec-lb567_hcpu
+      - eh-lb563_hcpu
+      - eh-lb561_hcpu
+      - eh-lb525_hcpu
+      - ec-lb585_hcpu
+      - sf32lb52-lcd_n16r8 
+      - sf32lb52-lcd_a128r16 
+      - sf32lb52-nano_a128r16
+      - sf32lb52-nano_n16r16
+      - sf32lb56-lcd_a128r12n1
+      - sf32lb56-lcd_n16r12n1
+      - sf32lb58-lcd_a128r32n1_qspi
+      - sf32lb58-lcd_n16r32n1_qspi
 
   - path: example/get-started/hello_world/no-os/project
     boards: *default_boards
@@ -434,7 +444,7 @@ common_projects:
     boards: 
       - sf32lb52-lchspi-ulp
 
-  - path: example/multimedia/audio/opus/project
+  - path: example/multimedia/audio/opus/project/hcpu
     boards: *after_55x_boards
 
   - path: example/multimedia/audio/record/project
@@ -461,8 +471,8 @@ common_projects:
   - path: example/multimedia/lvgl/lvgl_v8_examples/project
     boards: *default_boards
     
-  - path: example/multimedia/lvgl/lvgl_v8_lottie/project
-    boards: *devkit_lcd_boards      
+  # - path: example/multimedia/lvgl/lvgl_v8_lottie/project
+  #   boards: *devkit_lcd_boards      
 
   # - path: example/multimedia/lvgl/lvgl_v8_media/project
   #   boards: *after_55x_boards
@@ -518,12 +528,9 @@ common_projects:
       - eh-lb563_hcpu
       - eh-lb561_hcpu
       - eh-lb525_hcpu
-      - eh-lb523_hcpu
-      - ec-lb587_hcpu
-      - ec-lb587_a2_hcpu
       - ec-lb585_hcpu
-      - ec-lb583_hcpu
       - sf32lb52-lcd_n16r8 
+      - sf32lb52-lcd_a128r16 
       - sf32lb52-nano_a128r16
       - sf32lb52-nano_n16r16
       - sf32lb56-lcd_a128r12n1
@@ -539,13 +546,9 @@ common_projects:
       - ec-lb567_hcpu
       - eh-lb563_hcpu
       - eh-lb561_hcpu
-      - eh-lb525_hcpu
-      - eh-lb523_hcpu
-      - ec-lb587_hcpu
-      - ec-lb587_a2_hcpu
       - ec-lb585_hcpu
-      - ec-lb583_hcpu
       - sf32lb52-lcd_n16r8 
+      - sf32lb52-lcd_a128r16
       - sf32lb56-lcd_a128r12n1
       - sf32lb56-lcd_n16r12n1
       - sf32lb58-lcd_a128r32n1_qspi
