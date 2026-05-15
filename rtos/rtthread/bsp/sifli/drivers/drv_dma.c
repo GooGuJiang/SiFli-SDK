@@ -29,7 +29,7 @@
     ((((uint32_t)(addr) & 0xFFFFF) + (size)) > 0x100000)
 
 
-void *dma_free_in_1m(void *p)
+void dma_free_in_1m(void *p)
 {
     if (p)
         free(p);

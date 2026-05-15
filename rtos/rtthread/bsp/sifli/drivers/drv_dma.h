@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 void *dma_malloc_in_1m(uint32_t size);
-void *dma_free_in_1m(void *p);
+void dma_free_in_1m(void *p);
 
 #ifdef __cplusplus
 }
