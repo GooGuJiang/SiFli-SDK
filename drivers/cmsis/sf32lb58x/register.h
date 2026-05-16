@@ -856,7 +856,7 @@ typedef enum
 
 #define IS_LPUART_INSTANCE(INSTANCE)    (0)
 
-#define HCPU_IS_SRAM_ADDR(addr)  (((uint32_t)(addr) >= HPSYS_RAM0_BASE) && ((uint32_t)(addr) < HPSYS_RAM_END))
+#define HCPU_IS_SRAM_ADDR(addr)  (((uint32_t)(addr) >= HPSYS_RAM0_BASE) && ((uint32_t)(addr) < (HPSYS_RAM_END+ACPU_RAM_SIZE)))
 /**
   * @brief  Convert HCPU SRAM address which can be used by LCPU
   * @param  addr HCPU SRAM address
