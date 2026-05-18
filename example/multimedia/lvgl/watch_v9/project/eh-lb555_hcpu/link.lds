@@ -634,6 +634,7 @@ SECTIONS
   {
     *(.ROM1_IMG)
     *(.ROM3_IMG*.*)
+    *(.font_data)
   } > ROM2
 
   .rom3 :
