@@ -134,12 +134,22 @@ class NewBoardRenderTests(unittest.TestCase):
         )
         return rendered[self.output_root / spec.board_name / "ptab.yaml"]
 
+    def render_top_ptab_data(self, spec: Spec, variant: Optional[ChipVariant] = None) -> dict[str, Any]:
+        return yaml.safe_load(self.render_top_ptab(spec, variant=variant))
+
     def render_ptab_offsets(self, spec: Spec, variant: ChipVariant) -> dict[str, int]:
-        data = yaml.safe_load(self.render_top_ptab(spec, variant=variant))
+        data = self.render_top_ptab_data(spec, variant=variant)
         return {
             str(part["name"]): self.parse_int(part["offset"])
             for part in data["partitions"]
         }
+
+    def find_ptab_partition(self, spec: Spec, variant: ChipVariant, name: str) -> dict[str, Any]:
+        data = self.render_top_ptab_data(spec, variant=variant)
+        for part in data["partitions"]:
+            if str(part.get("name") or "") == name:
+                return part
+        self.fail(f"Partition not found: {name}")
 
     @staticmethod
     def parse_int(value: Any) -> int:
@@ -294,6 +304,69 @@ class NewBoardRenderTests(unittest.TestCase):
         self.assertIn("CONFIG_SD_MAX_FREQ=48000000\n", board_conf)
         self.assertNotIn("CONFIG_BSP_USING_SDMMC2=y\n", board_conf)
         self.assertIn("JLINK_DEVICE = 'SF32LB58X_SD_TYPE1'\n", rtconfig)
+
+    def test_52_nand_ptab_reserves_factory_data(self) -> None:
+        self.make_existing_base(self.output_root / "shared_base")
+        variant = ChipVariant(
+            series="52",
+            chip_dir="SF32LB52x",
+            model_id="SF32LB52X",
+            part_number="SF32LB52X",
+            memory=(MemoryEntry("mpi1", "psram", 16 * MB),),
+        )
+        spec = self.make_spec(
+            "shared_base",
+            series="52",
+            chip_model="SF32LB52X",
+            storage_type="nand",
+            storage_size_mb=16,
+        )
+
+        factory_data = self.find_ptab_partition(spec, variant, "factory_data")
+        hcpu_flash_code = self.find_ptab_partition(spec, variant, "hcpu_flash_code")
+
+        self.assertEqual(factory_data["type"], "data")
+        self.assertEqual(factory_data["subtype"], "raw")
+        self.assertEqual(factory_data["region"], "mpi2")
+        self.assertEqual(self.parse_int(factory_data["offset"]), 0x00040000)
+        self.assertEqual(self.parse_int(factory_data["size"]), 0x00020000)
+        self.assertEqual(factory_data["aliases"], ["FACTORY_DATA"])
+        self.assertEqual(self.parse_int(hcpu_flash_code["offset"]), 0x000A0000)
+
+    def test_52_sdmmc_ptab_reserves_mbr_and_factory_data(self) -> None:
+        self.make_existing_base(self.output_root / "shared_base")
+        variant = ChipVariant(
+            series="52",
+            chip_dir="SF32LB52x",
+            model_id="SF32LB52X",
+            part_number="SF32LB52X",
+            memory=(MemoryEntry("mpi1", "psram", 16 * MB),),
+        )
+        spec = self.make_spec(
+            "shared_base",
+            series="52",
+            chip_model="SF32LB52X",
+            storage_type="sdmmc",
+            storage_size_mb=16,
+        )
+
+        mbr = self.find_ptab_partition(spec, variant, "mbr")
+        factory_data = self.find_ptab_partition(spec, variant, "factory_data")
+        hcpu_flash_code = self.find_ptab_partition(spec, variant, "hcpu_flash_code")
+
+        self.assertEqual(mbr["type"], "data")
+        self.assertEqual(mbr["subtype"], "raw")
+        self.assertEqual(mbr["region"], "sdmmc1")
+        self.assertEqual(self.parse_int(mbr["offset"]), 0x00000000)
+        self.assertEqual(self.parse_int(mbr["size"]), 0x00001000)
+        self.assertEqual(mbr["aliases"], ["MBR"])
+        self.assertEqual(factory_data["type"], "data")
+        self.assertEqual(factory_data["subtype"], "raw")
+        self.assertEqual(factory_data["region"], "sdmmc1")
+        self.assertEqual(self.parse_int(factory_data["offset"]), 0x00041000)
+        self.assertEqual(self.parse_int(factory_data["size"]), 0x00020000)
+        self.assertEqual(factory_data["aliases"], ["FACTORY_DATA"])
+        self.assertEqual(self.parse_int(hcpu_flash_code["offset"]), 0x00061000)
 
     def test_nand_ptab_offsets_are_128k_aligned(self) -> None:
         self.make_existing_base(self.output_root / "shared_base")

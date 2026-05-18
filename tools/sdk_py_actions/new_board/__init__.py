@@ -44,7 +44,7 @@ FIXED_PARTITION_LAYOUTS = {
         'ble': (0x00CA4000, 0x00004000),
     },
     ('52', 'sdmmc'): {
-        'hcpu_flash_code': (0x00021000, 0x00700000),
+        'hcpu_flash_code': (0x00061000, 0x00700000),
         'fs_region': (0x008A1000, 0x00400000),
         'dfu': (0x00CA1000, 0x00004000),
         'ble': (0x00CA5000, 0x00004000),
@@ -1021,7 +1021,9 @@ def build_fixed_partitions(
     fs_offset, fs_size = aligned_layout['fs_region']
     dfu_offset, _ = aligned_layout['dfu']
     ble_offset, _ = aligned_layout['ble']
-    partitions = [
+
+    partitions = build_reserved_storage_partitions(spec, region)
+    partitions.extend([
         Partition(
             'hcpu_flash_code',
             'app',
@@ -1037,8 +1039,50 @@ def build_fixed_partitions(
         Partition('fs_region', 'data', region, fs_offset, fs_size, subtype='filesystem'),
         Partition('dfu', 'data', region, dfu_offset, KV_PART_SIZE, subtype='flashdb_kv'),
         Partition('ble', 'data', region, ble_offset, KV_PART_SIZE, subtype='flashdb_kv'),
-    ]
+    ])
     return partitions
+
+
+def build_reserved_storage_partitions(spec: Spec, region: str) -> List[Partition]:
+    if spec.series != '52':
+        return []
+
+    if spec.storage_type == 'nand':
+        return [
+            Partition(
+                'factory_data',
+                'data',
+                region,
+                0x00040000,
+                0x00020000,
+                subtype='raw',
+                aliases=('FACTORY_DATA',),
+            ),
+        ]
+
+    if spec.storage_type == 'sdmmc':
+        return [
+            Partition(
+                'mbr',
+                'data',
+                region,
+                0x00000000,
+                0x00001000,
+                subtype='raw',
+                aliases=('MBR',),
+            ),
+            Partition(
+                'factory_data',
+                'data',
+                region,
+                0x00041000,
+                0x00020000,
+                subtype='raw',
+                aliases=('FACTORY_DATA',),
+            ),
+        ]
+
+    return []
 
 
 def build_none_storage_partitions(

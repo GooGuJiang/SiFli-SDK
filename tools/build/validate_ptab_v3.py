@@ -53,6 +53,84 @@ def _auto_fal_region_supported(region: str) -> bool:
     return region in ('sdmmc1', 'sdmmc2')
 
 
+def _region_memory_type(region: str, chip_config: dict) -> str:
+    try:
+        return str(ptab_module._get_region_memory_type(region, chip_config) or '').strip().lower()
+    except Exception:
+        return ''
+
+
+def _partition_tags(partition: Dict[str, Any]) -> set[str]:
+    tags = set()
+    name = str(partition.get('name') or '').strip()
+    if name:
+        tags.add(name.upper())
+    for alias in partition.get('aliases') or []:
+        alias = str(alias or '').strip()
+        if alias:
+            tags.add(alias.upper())
+    return tags
+
+
+def _format_layouts(layouts: List[Tuple[int, int]]) -> str:
+    return ', '.join(f'offset=0x{offset:X}, size=0x{size:X}' for offset, size in layouts)
+
+
+def _validate_reserved_partition(
+    partitions: List[dict],
+    region: str,
+    tag: str,
+    layouts: List[Tuple[int, int]],
+) -> List[ValidationError]:
+    errors: List[ValidationError] = []
+    candidates = [
+        p for p in partitions
+        if str(p.get('region') or '').strip() == region and tag in _partition_tags(p)
+    ]
+
+    if not candidates:
+        errors.append(ValidationError(
+            f"SF32LB52 region '{region}' must define reserved partition '{tag}' as type='data', subtype='raw' "
+            f"with {_format_layouts(layouts)}"
+        ))
+        return errors
+
+    raw_candidates = [
+        p for p in candidates
+        if p.get('type') == 'data' and p.get('subtype') == 'raw'
+    ]
+    if not raw_candidates:
+        names = ', '.join(str(p.get('name') or '?') for p in candidates)
+        errors.append(ValidationError(
+            f"SF32LB52 reserved partition '{tag}' in region '{region}' must use type='data', subtype='raw' "
+            f"(found: {names})"
+        ))
+        return errors
+
+    for partition in raw_candidates:
+        try:
+            offset = ptab_module.parse_size(partition.get('offset', 0))
+            size = ptab_module.parse_size(partition.get('size', 0))
+        except (ValueError, TypeError):
+            continue
+        if (offset, size) in layouts:
+            return errors
+
+    actual = []
+    for partition in raw_candidates:
+        try:
+            offset = ptab_module.parse_size(partition.get('offset', 0))
+            size = ptab_module.parse_size(partition.get('size', 0))
+            actual.append(f"{partition.get('name', '?')}: offset=0x{offset:X}, size=0x{size:X}")
+        except (ValueError, TypeError):
+            actual.append(f"{partition.get('name', '?')}: invalid offset/size")
+    errors.append(ValidationError(
+        f"SF32LB52 reserved partition '{tag}' in region '{region}' has invalid placement; "
+        f"expected {_format_layouts(layouts)}; found {', '.join(actual)}"
+    ))
+    return errors
+
+
 def validate_name(name: str, partition_idx: int) -> List[ValidationError]:
     """Validate partition name format"""
     errors = []
@@ -398,6 +476,50 @@ def validate_rom_index_deprecation(partitions: List[dict]) -> List[ValidationErr
     return errors
 
 
+def validate_sf32lb52_storage_reservations(ptab_obj, partitions: List[dict], chip_config: dict) -> List[ValidationError]:
+    errors: List[ValidationError] = []
+    if str(getattr(ptab_obj, 'chip_series', '') or '').strip().lower() != 'sf32lb52':
+        return errors
+
+    storage_regions: Dict[str, str] = {}
+    for partition in partitions:
+        region = str(partition.get('region') or '').strip()
+        if not region:
+            continue
+        ptype = str(partition.get('type') or '').strip()
+        subtype = str(partition.get('subtype') or '').strip()
+        if ptype not in ('ftab', 'bootloader', 'app') and not (ptype == 'data' and subtype in ('filesystem', 'flashdb_kv')):
+            continue
+
+        mem_type = _region_memory_type(region, chip_config)
+        if mem_type in ('nand', 'sd'):
+            storage_regions.setdefault(region, mem_type)
+
+    for region, mem_type in sorted(storage_regions.items()):
+        if mem_type == 'nand':
+            errors.extend(_validate_reserved_partition(
+                partitions,
+                region,
+                'FACTORY_DATA',
+                [(0x00040000, 0x00020000), (0x00080000, 0x00040000)],
+            ))
+        elif mem_type == 'sd':
+            errors.extend(_validate_reserved_partition(
+                partitions,
+                region,
+                'MBR',
+                [(0x00000000, 0x00001000)],
+            ))
+            errors.extend(_validate_reserved_partition(
+                partitions,
+                region,
+                'FACTORY_DATA',
+                [(0x00041000, 0x00020000)],
+            ))
+
+    return errors
+
+
 def validate_ptab_v3(ptab_obj) -> List[ValidationError]:
     """Run all validations on a ptab v3 object"""
     errors = []
@@ -459,6 +581,7 @@ def validate_ptab_v3(ptab_obj) -> List[ValidationError]:
     errors.extend(validate_bootloader_unique(partitions))
     errors.extend(validate_ftab_unique(partitions))
     errors.extend(validate_factory_unique_by_core(partitions))
+    errors.extend(validate_sf32lb52_storage_reservations(ptab_obj, partitions, chip_config))
 
     # Bootloader must have exec (execution address)
     bootloaders = [p for p in partitions if p.get('type') == 'bootloader']
