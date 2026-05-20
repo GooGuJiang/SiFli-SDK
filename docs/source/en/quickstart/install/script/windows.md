@@ -147,6 +147,48 @@ The command above records Keil for the current SDK environment. To update the cu
 .\install.ps1 update --keil C:\Keil_v5
 ```
 
+### Clean Old Environments and Cache (Optional)
+
+After SDK updates, you can remove old environments that are no longer needed:
+
+```powershell
+.\install.ps1 uninstall
+```
+
+This command deletes old environments for the current profile immediately, while keeping the environment that matches the current SDK and any environment still selected by another SDK checkout. To preview the cleanup without deleting anything, run:
+
+```powershell
+.\install.ps1 uninstall --dry-run
+```
+
+To clean old environments for all profiles when they are not selected by any SDK checkout, run:
+
+```powershell
+.\install.ps1 uninstall --all
+```
+
+You can preview the all-profile cleanup first:
+
+```powershell
+.\install.ps1 uninstall --all --dry-run
+```
+
+To remove every SDK-managed environment, including the current environment and environments still selected in the state file, run:
+
+```powershell
+.\install.ps1 uninstall --all --force
+```
+
+`--all --force` makes every SDK environment invalid and clears environment selections in the state file. Run `.\install.ps1` again before exporting. “Still in use” is based on the state file under `SIFLI_SDK_TOOLS_PATH`; open shells or running processes are not detected.
+
+To also clean download cache files and leftover staging directories, add `--cache`:
+
+```powershell
+.\install.ps1 uninstall --cache
+```
+
+`--cache` keeps tool archives and the Conan config package required by the current SDK, and it does not remove installed tool directories. If you use a custom `SIFLI_SDK_TOOLS_PATH`, set the same variable before running cleanup.
+
 ````{note}
 Domestic users in China can use the following commands to enable the bundled China mirror preset and avoid slow downloads from default sources. Note that if you choose to execute the following commands, you do not need to execute the commands in the above code block.
 

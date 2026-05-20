@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import urllib.error
 import urllib.request
@@ -73,6 +74,8 @@ CHINA_MIRROR_PRESET = {
 
 POSIX_SHELLS = {"bash", "zsh", "sh"}
 POWERSHELL_SHELLS = {"powershell", "pwsh"}
+STAGING_CLEANUP_MIN_AGE_SECONDS = 60 * 60
+STAGING_DIR_RE = re.compile(r"^.+-.+-[0-9a-f]{32}$")
 
 
 class SDKEnvError(RuntimeError):
@@ -82,6 +85,11 @@ class SDKEnvError(RuntimeError):
 class InstallIntent(StrEnum):
     CREATE = "create"
     UPDATE = "update"
+
+
+class InstallAction(StrEnum):
+    INSTALL = "install"
+    UNINSTALL = "uninstall"
 
 
 RICH_THEME = Theme(
@@ -405,6 +413,14 @@ class EnvironmentInstallDecision:
     previous_env_key: Optional[str]
     prune_env_keys: Tuple[str, ...]
     reason: str
+
+
+@dataclass(frozen=True)
+class UninstallPlan:
+    env_keys: Tuple[str, ...]
+    env_dirs: Tuple[str, ...]
+    cache_files: Tuple[str, ...]
+    staging_paths: Tuple[str, ...]
 
 
 def repo_root() -> str:
@@ -952,6 +968,54 @@ def conan_home_path(config: RuntimeConfig, lock: ProfileLock, compat_sha: str) -
     return os.path.join(env_instance_root(config, lock.profile, compat_sha), "conan")
 
 
+def envs_root(config: RuntimeConfig) -> str:
+    return os.path.join(config.install_root, "envs")
+
+
+def env_profile_root(config: RuntimeConfig, profile: str) -> str:
+    return os.path.join(envs_root(config), profile)
+
+
+def split_env_key(env_key_value: str) -> Optional[tuple[str, str]]:
+    if "|" not in env_key_value:
+        return None
+    profile, compat_sha = env_key_value.split("|", 1)
+    profile = profile.strip()
+    compat_sha = compat_sha.strip()
+    if not profile or not compat_sha:
+        return None
+    return profile, compat_sha
+
+
+def direct_child_path(parent: str, child_name: str) -> str:
+    parent_real = os.path.realpath(parent)
+    child_real = os.path.realpath(os.path.join(parent_real, child_name))
+    if os.path.dirname(child_real) != parent_real:
+        raise SDKEnvError(f"refusing to operate outside managed directory: {child_real}")
+    return child_real
+
+
+def managed_env_root_from_recorded_path(
+    config: RuntimeConfig,
+    profile: str,
+    path: Optional[str],
+) -> Optional[str]:
+    if not path:
+        return None
+    profile_root = os.path.realpath(env_profile_root(config, profile))
+    path_real = os.path.realpath(path)
+    try:
+        rel = os.path.relpath(path_real, profile_root)
+    except ValueError:
+        return None
+    if rel == os.curdir or rel.startswith(os.pardir + os.sep) or rel == os.pardir:
+        return None
+    env_name = rel.split(os.sep, 1)[0]
+    if not env_name:
+        return None
+    return direct_child_path(profile_root, env_name)
+
+
 def repo_tools_dir(root: str) -> str:
     return os.path.join(root, "tools")
 
@@ -1161,6 +1225,18 @@ def install_tool_plan(
 
 def conan_archive_name(config_id: str) -> str:
     return f"{config_id}.zip" if not config_id.endswith(".zip") else config_id
+
+
+def cache_filenames_for_current_lock(lock: ProfileLock, plans: Sequence[ToolPlan]) -> set[str]:
+    filenames = {conan_archive_name(lock.conan_config_id)}
+    for plan in plans:
+        if not plan.required:
+            continue
+        download_obj = plan.tool.versions[plan.version].get_download_for_platform(legacy_tools.PYTHON_PLATFORM)
+        if download_obj is None:
+            continue
+        filenames.add(download_obj.rename_dist or os.path.basename(download_obj.url))
+    return filenames
 
 
 def ensure_conan_config_archive(
@@ -1606,6 +1682,13 @@ def parse_install_intent_and_targets(
     return install_intent, parse_install_targets(lock, cli_targets, remaining_args)
 
 
+def parse_install_action(compat_args: Sequence[str]) -> tuple[InstallAction, List[str]]:
+    remaining_args = list(compat_args)
+    if remaining_args and remaining_args[0].strip().lower() == InstallAction.UNINSTALL.value:
+        return InstallAction.UNINSTALL, remaining_args[1:]
+    return InstallAction.INSTALL, remaining_args
+
+
 def merge_managed_paths(current_path: str, old_managed_paths: Sequence[str], new_managed_paths: Sequence[str]) -> str:
     current_items = [item for item in current_path.split(os.pathsep) if item]
     old_set = {normalize_path(item) for item in old_managed_paths if item}
@@ -2037,6 +2120,299 @@ def perform_install(
     return installed_state
 
 
+def managed_roots_from_env_state(
+    config: RuntimeConfig,
+    profile: str,
+    env_key_value: str,
+    env_state: Optional[Dict[str, Any]],
+    *,
+    strict: bool,
+) -> List[str]:
+    roots: List[str] = []
+    outside_paths: List[str] = []
+    for label, path in (
+        ("python env", recorded_python_env_path(env_state)),
+        ("conan home", recorded_conan_home(env_state)),
+    ):
+        if not path:
+            continue
+        root = managed_env_root_from_recorded_path(config, profile, path)
+        if root is None:
+            outside_paths.append(f"{label}: {path}")
+        else:
+            roots.append(root)
+
+    if outside_paths and strict:
+        raise SDKEnvError(
+            f"environment {env_key_value} records paths outside managed env root "
+            f"{env_profile_root(config, profile)}: {', '.join(outside_paths)}"
+        )
+    return sorted(set(roots))
+
+
+def env_dir_for_state_cleanup(
+    config: RuntimeConfig,
+    profile: str,
+    env_key_value: str,
+    env_state: Dict[str, Any],
+) -> str:
+    parsed = split_env_key(env_key_value)
+    if parsed is None:
+        raise SDKEnvError(f"invalid environment key in state: {env_key_value}")
+    key_profile, compat_sha = parsed
+    if key_profile != profile:
+        raise SDKEnvError(f"environment key {env_key_value} does not belong to profile '{profile}'")
+
+    expected_root = direct_child_path(env_profile_root(config, profile), compat_sha)
+    roots = managed_roots_from_env_state(
+        config,
+        profile,
+        env_key_value,
+        env_state,
+        strict=True,
+    )
+    if not roots:
+        return expected_root
+    if len(roots) > 1:
+        raise SDKEnvError(
+            f"environment {env_key_value} records paths in multiple managed env directories: "
+            + ", ".join(roots)
+        )
+    return roots[0]
+
+
+def protected_env_roots(config: RuntimeConfig, state_doc: Dict[str, Any], protected_keys: set[str]) -> set[str]:
+    protected_roots: set[str] = set()
+    envs = state_envs(state_doc)
+    for env_key_value in protected_keys:
+        parsed = split_env_key(env_key_value)
+        if parsed is None:
+            continue
+        profile, compat_sha = parsed
+        try:
+            protected_roots.add(direct_child_path(env_profile_root(config, profile), compat_sha))
+        except SDKEnvError:
+            continue
+        env_state = envs.get(env_key_value)
+        if isinstance(env_state, dict):
+            protected_roots.update(
+                managed_roots_from_env_state(
+                    config,
+                    profile,
+                    env_key_value,
+                    env_state,
+                    strict=False,
+                )
+            )
+    return protected_roots
+
+
+def direct_children(path: str) -> List[str]:
+    if not os.path.isdir(path):
+        return []
+    return [direct_child_path(path, name) for name in sorted(os.listdir(path))]
+
+
+def is_stale_sdk_staging_path(path: str, now: Optional[float] = None) -> bool:
+    if not os.path.isdir(path) or os.path.islink(path):
+        return False
+    if not STAGING_DIR_RE.match(os.path.basename(path)):
+        return False
+    try:
+        modified_at = os.path.getmtime(path)
+    except OSError:
+        return False
+    current_time = time.time() if now is None else now
+    return current_time - modified_at >= STAGING_CLEANUP_MIN_AGE_SECONDS
+
+
+def build_uninstall_plan(
+    config: RuntimeConfig,
+    lock: ProfileLock,
+    state_doc: Dict[str, Any],
+    resolved_env: ResolvedEnvInstance,
+    include_cache: bool,
+    plans: Sequence[ToolPlan],
+    all_profiles: bool = False,
+    force: bool = False,
+) -> UninstallPlan:
+    protected_keys = set() if force else set(iter_selected_env_keys(state_doc))
+    if not force:
+        protected_keys.add(resolved_env.key)
+    protected_roots = protected_env_roots(config, state_doc, protected_keys)
+
+    env_keys: List[str] = []
+    env_dirs: set[str] = set()
+    envs = state_envs(state_doc)
+    for env_key_value in sorted(envs):
+        parsed = split_env_key(env_key_value)
+        if parsed is None:
+            if force:
+                env_keys.append(env_key_value)
+            continue
+        if not all_profiles and parsed[0] != lock.profile:
+            continue
+        if not force and env_key_value in protected_keys:
+            continue
+        env_state = envs.get(env_key_value)
+        if force:
+            env_keys.append(env_key_value)
+            continue
+        if not isinstance(env_state, dict):
+            continue
+        env_dir = env_dir_for_state_cleanup(config, parsed[0], env_key_value, env_state)
+        env_keys.append(env_key_value)
+        if env_dir not in protected_roots and os.path.isdir(env_dir):
+            env_dirs.add(env_dir)
+
+    profiles = {lock.profile}
+    if all_profiles:
+        for key in envs:
+            parsed = split_env_key(key)
+            if parsed is not None:
+                profiles.add(parsed[0])
+        for profile_dir in direct_children(envs_root(config)):
+            if os.path.isdir(profile_dir):
+                profiles.add(os.path.basename(profile_dir))
+
+    for profile in sorted(profiles):
+        profile_root = env_profile_root(config, profile)
+        for env_dir in direct_children(profile_root):
+            if not os.path.isdir(env_dir):
+                continue
+            env_key_value = env_key(profile, os.path.basename(env_dir))
+            if not force and (env_key_value in protected_keys or env_dir in protected_roots):
+                continue
+            env_dirs.add(env_dir)
+
+    if force:
+        for env_key_value in sorted(envs):
+            if env_key_value not in env_keys:
+                env_keys.append(env_key_value)
+
+    if not all_profiles:
+        filtered_keys: List[str] = []
+        for env_key_value in env_keys:
+            parsed = split_env_key(env_key_value)
+            if parsed is not None and parsed[0] == lock.profile:
+                filtered_keys.append(env_key_value)
+        env_keys = filtered_keys
+
+    cache_files: Tuple[str, ...] = ()
+    staging_paths: Tuple[str, ...] = ()
+    if include_cache:
+        keep_cache = cache_filenames_for_current_lock(lock, plans)
+        dist_path = os.path.join(config.cache_root, "dist")
+        cache_files = tuple(
+            path
+            for path in direct_children(dist_path)
+            if os.path.isfile(path)
+            and not os.path.basename(path).endswith(".tmp")
+            and os.path.basename(path) not in keep_cache
+        )
+        staging_paths = tuple(
+            path for path in direct_children(config.staging_root) if is_stale_sdk_staging_path(path)
+        )
+
+    return UninstallPlan(
+        env_keys=tuple(env_keys),
+        env_dirs=tuple(sorted(env_dirs)),
+        cache_files=tuple(sorted(cache_files)),
+        staging_paths=tuple(sorted(staging_paths)),
+    )
+
+
+def remove_path(path: str) -> None:
+    try:
+        if os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path)
+        else:
+            os.unlink(path)
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise SDKEnvError(f"failed to remove {path}: {exc}") from exc
+
+
+def remove_env_keys_from_state(path: str, env_keys: Sequence[str], force: bool = False) -> None:
+    if not env_keys and not force:
+        return
+    state_doc = load_state(path)
+    envs = state_envs(state_doc)
+    if force:
+        repos = state_doc.get("repos")
+        if isinstance(repos, dict):
+            for repo_entry in repos.values():
+                if not isinstance(repo_entry, dict):
+                    continue
+                profiles = repo_entry.get("profiles")
+                if not isinstance(profiles, dict):
+                    continue
+                for profile_state in profiles.values():
+                    if isinstance(profile_state, dict):
+                        profile_state["selected_env_key"] = None
+    else:
+        for env_key_value in env_keys:
+            if env_reference_count(state_doc, env_key_value) > 0:
+                raise SDKEnvError(f"refusing to remove environment still selected by a profile: {env_key_value}")
+    for env_key_value in env_keys:
+        envs.pop(env_key_value, None)
+    atomic_write_json(path, state_doc)
+    log_ok(f"Updated state file {path}")
+
+
+def describe_uninstall_plan(plan: UninstallPlan, dry_run: bool) -> None:
+    prefix = "Would remove" if dry_run else "Removing"
+    for env_key_value in plan.env_keys:
+        log_info(f"{prefix} environment state {env_key_value}")
+    for path in plan.env_dirs:
+        log_info(f"{prefix} environment directory {path}")
+    for path in plan.cache_files:
+        log_info(f"{prefix} cached artifact {path}")
+    for path in plan.staging_paths:
+        log_info(f"{prefix} staging path {path}")
+
+
+def perform_uninstall(args: argparse.Namespace, config: RuntimeConfig, lock: ProfileLock) -> UninstallPlan:
+    all_profiles = getattr(args, "all_profiles", False)
+    force = getattr(args, "force", False)
+    target = "all profiles" if all_profiles else f"profile '{lock.profile}'"
+    log_step(f"Starting uninstall for {target}")
+    clean_cache = getattr(args, "clean_cache", False)
+    dry_run = getattr(args, "dry_run", False)
+    plans = load_tool_plans(repo_root(), config, lock, lock.default_targets) if clean_cache else []
+    state_doc = load_state(config.state_path)
+    resolved_env = resolve_env_instance(config, lock, state_doc)
+    plan = build_uninstall_plan(
+        config=config,
+        lock=lock,
+        state_doc=state_doc,
+        resolved_env=resolved_env,
+        include_cache=clean_cache,
+        plans=plans,
+        all_profiles=all_profiles,
+        force=force,
+    )
+    describe_uninstall_plan(plan, dry_run)
+    if dry_run:
+        log_ok(f"Uninstall dry-run completed for {target}")
+        return plan
+
+    remove_env_keys_from_state(config.state_path, plan.env_keys, force=force)
+    for path in plan.env_dirs:
+        remove_path(path)
+    for path in plan.cache_files:
+        remove_path(path)
+    for path in plan.staging_paths:
+        remove_path(path)
+
+    if not any((plan.env_keys, plan.env_dirs, plan.cache_files, plan.staging_paths)):
+        log_ok(f"No old environment or cache entries to remove for {target}")
+    else:
+        log_ok(f"Uninstall completed for {target}")
+    return plan
+
+
 def warn_non_blocking_drift(profile_state: Optional[Dict[str, Any]]) -> None:
     current_head = current_git_head(repo_root())
     recorded_head = None
@@ -2049,11 +2425,40 @@ def warn_non_blocking_drift(profile_state: Optional[Dict[str, Any]]) -> None:
 
 
 def handle_install(args: argparse.Namespace) -> int:
+    action, action_args = parse_install_action(args.compat_args)
+    if action == InstallAction.UNINSTALL:
+        if action_args:
+            raise SDKEnvError(f"unsupported uninstall arguments: {' '.join(action_args)}")
+        if getattr(args, "targets", None):
+            raise SDKEnvError("--targets is not supported with install uninstall")
+        if getattr(args, "keil", None):
+            raise SDKEnvError("--keil is not supported with install uninstall")
+        if getattr(args, "from_bundle", None):
+            raise SDKEnvError("--from-bundle is not supported with install uninstall")
+        if getattr(args, "force", False) and not getattr(args, "all_profiles", False):
+            raise SDKEnvError("--force requires install uninstall --all")
+        config = RuntimeConfig.load(args)
+        lock = ProfileLock.load(repo_root(), args.profile)
+        log_banner(
+            f"Cleaning SiFli-SDK {read_version_txt(repo_root())}",
+            f"profile={lock.profile}",
+        )
+        perform_uninstall(args, config, lock)
+        return 0
+
+    if (
+        getattr(args, "dry_run", False)
+        or getattr(args, "clean_cache", False)
+        or getattr(args, "all_profiles", False)
+        or getattr(args, "force", False)
+    ):
+        raise SDKEnvError("--dry-run, --cache, --all, and --force are only supported with install uninstall")
+
     keil_arg = getattr(args, "keil", None)
     keil_toolchain = validate_keil_toolchain(keil_arg) if keil_arg else None
     config = RuntimeConfig.load(args)
     lock = ProfileLock.load(repo_root(), args.profile)
-    install_intent, targets = parse_install_intent_and_targets(lock, args.targets, args.compat_args)
+    install_intent, targets = parse_install_intent_and_targets(lock, args.targets, action_args)
     log_banner(
         f"Installing SiFli-SDK {read_version_txt(repo_root())}",
         f"profile={lock.profile}",
@@ -2219,6 +2624,10 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("--mirror")
     install.add_argument("--offline", action="store_true")
     install.add_argument("--from-bundle")
+    install.add_argument("--dry-run", action="store_true", help="preview install uninstall cleanup without deleting")
+    install.add_argument("--cache", action="store_true", dest="clean_cache", help="also clean unused cache artifacts")
+    install.add_argument("--all", action="store_true", dest="all_profiles", help="clean old environments for all profiles")
+    install.add_argument("--force", action="store_true", help="with uninstall --all, remove all managed environments")
     install.add_argument("compat_args", nargs="*")
 
     export = subparsers.add_parser("export", help="Export shell environment for the current profile")

@@ -173,6 +173,48 @@ If that environment is also used by another SDK checkout, the script creates a n
 
 Keil/ARMCLANG path recording and `export -t keil` are Windows-only; the macOS and Linux scripts export the GCC toolchain by default.
 
+### Clean Old Environments and Cache (Optional)
+
+After SDK updates, you can remove old environments that are no longer needed:
+
+```bash
+./install.sh uninstall
+```
+
+This command deletes old environments for the current profile immediately, while keeping the environment that matches the current SDK and any environment still selected by another SDK checkout. To preview the cleanup without deleting anything, run:
+
+```bash
+./install.sh uninstall --dry-run
+```
+
+To clean old environments for all profiles when they are not selected by any SDK checkout, run:
+
+```bash
+./install.sh uninstall --all
+```
+
+You can preview the all-profile cleanup first:
+
+```bash
+./install.sh uninstall --all --dry-run
+```
+
+To remove every SDK-managed environment, including the current environment and environments still selected in the state file, run:
+
+```bash
+./install.sh uninstall --all --force
+```
+
+`--all --force` makes every SDK environment invalid and clears environment selections in the state file. Run `./install.sh` again before exporting. “Still in use” is based on the state file under `SIFLI_SDK_TOOLS_PATH`; open shells or running processes are not detected.
+
+To also clean download cache files and leftover staging directories, add `--cache`:
+
+```bash
+./install.sh uninstall --cache
+```
+
+`--cache` keeps tool archives and the Conan config package required by the current SDK, and it does not remove installed tool directories. If you use a custom `SIFLI_SDK_TOOLS_PATH`, export the same variable before running cleanup.
+
 For domestic users in China, you can enable the bundled China mirror preset with `SIFLI_SDK_MIRROR_CHINA`:
 
 ```bash

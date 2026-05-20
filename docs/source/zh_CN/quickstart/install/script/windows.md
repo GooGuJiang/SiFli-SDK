@@ -147,6 +147,48 @@ SDK 更新后，普通 `.\install.ps1` 会为更新后的 SDK 准备或切换到
 .\install.ps1 update --keil C:\Keil_v5
 ```
 
+### 清理旧环境和缓存（可选）
+
+如果 SDK 更新后不再需要旧环境，可以运行：
+
+```powershell
+.\install.ps1 uninstall
+```
+
+该命令会直接删除当前 profile 下不再被任何 SDK 工作目录使用的旧环境，并保留当前 SDK 匹配的环境和其他工作目录仍在使用的环境。若只想预览将删除的内容，可以运行：
+
+```powershell
+.\install.ps1 uninstall --dry-run
+```
+
+如果要清理所有 profile 下不再被任何 SDK 工作目录选中的旧环境，可以运行：
+
+```powershell
+.\install.ps1 uninstall --all
+```
+
+也可以先预览：
+
+```powershell
+.\install.ps1 uninstall --all --dry-run
+```
+
+如需删除所有由 SDK 管理的环境，包括当前环境和仍在状态文件中选中的环境，可以运行：
+
+```powershell
+.\install.ps1 uninstall --all --force
+```
+
+`--all --force` 会让所有 SDK 环境失效，并清空状态文件中的环境选择；之后需要重新运行 `.\install.ps1`。这里的“仍在使用”按 `SIFLI_SDK_TOOLS_PATH` 下的状态文件判断，不检测已经打开的 shell 或进程。
+
+如果还需要清理下载缓存和残留的 staging 临时目录，可以增加 `--cache`：
+
+```powershell
+.\install.ps1 uninstall --cache
+```
+
+`--cache` 会保留当前 SDK 仍需要的工具归档和 Conan 配置包，不会删除已经安装好的工具目录。若使用了自定义 `SIFLI_SDK_TOOLS_PATH`，清理前也必须先设置同一个环境变量。
+
 ````{note}
 国内用户可以改用下面的命令一键启用国内镜像预设，避免默认源下载速度慢。注意，选择执行下述命令的时候不需要再执行上述代码块中的命令。
 
