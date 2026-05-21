@@ -153,18 +153,20 @@ STORAGE_PINMUX_DETAILS = {
     },
     'sdmmc1': {
         'type0': (
-            'SD1_CLK=PAD_PA39',
-            'SD1_CMD=PAD_PA34',
-            'SD1_DIO0=PAD_PA41',
-            'SD1_DIO1=PAD_PA30',
-            'SD1_DIO2=PAD_PA36',
-            'SD1_DIO3=PAD_PA40',
-            'SD1_DIO4=PAD_PA38',
-            'SD1_DIO5=PAD_PA37',
-            'SD1_DIO6=PAD_PA35',
-            'SD1_DIO7=PAD_PA33',
-            'SD1_RESET=PAD_PA66',
-            'SD1_EN=PAD_PA64',
+            'SD1_CLK=PAD_PA09',
+            'SD1_CMD=PAD_PA10',
+            'SD1_DIO0=PAD_PA05',
+            'SD1_DIO1=PAD_PA04',
+            'SD1_DIO2=PAD_PA01',
+            'SD1_DIO3=PAD_PA06',
+            'SD1_DIO4=PAD_PA07',
+            'SD1_DIO5=PAD_PA03',
+            'SD1_DIO6=PAD_PA08',
+            'SD1_DIO7=PAD_PA00',
+            'SD1_EN=PAD_PA02',
+            'GPIO_A12=PAD_PA12',
+            'GPIO_A13=PAD_PA13',
+            'SD1_RESET=PAD_PA11',
         ),
         'type1': (
             'SD1_CLK=PAD_PA39',
@@ -926,11 +928,14 @@ def render_template(env: Any, template_name: str, context: Dict[str, Any]) -> st
 
 
 def use_new_board_base_template(spec: Spec, filename: str) -> bool:
-    if spec.series != '58' or filename != 'bsp_pinmux.c':
+    if spec.series != '58' or filename not in ('bsp_pinmux.c', 'bsp_power.c'):
         return False
-    if spec.storage_pinmux_type != 'type1':
+    if spec.storage_pinmux_type not in ('type0', 'type1'):
         return False
-    return storage_region_for_spec(spec) in ('mpi4', 'sdmmc1')
+    storage_region = storage_region_for_spec(spec)
+    if filename == 'bsp_pinmux.c':
+        return storage_region in ('mpi4', 'sdmmc1')
+    return storage_region in ('mpi4', 'sdmmc1') and spec.storage_pinmux_type == 'type0'
 
 
 def render_ptab_yaml(

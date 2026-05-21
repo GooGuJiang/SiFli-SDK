@@ -90,7 +90,7 @@ class NewBoardRenderTests(unittest.TestCase):
         base_dir = self.sdk_root / SAMPLE_BASE[series]
         base_dir.mkdir(parents=True)
         for name in BASE_TEMPLATE_FILES:
-            if real_pinmux and name == "bsp_pinmux.c":
+            if real_pinmux and name in {"bsp_pinmux.c", "bsp_power.c"}:
                 content = (Path(ROOT) / SAMPLE_BASE[series] / name).read_text(encoding="utf-8")
             else:
                 content = f"// {name}\n"
@@ -645,6 +645,131 @@ class NewBoardRenderTests(unittest.TestCase):
         self.assertNotIn("HAL_PIN_Set(PAD_PA09, MPI4_CLK, PIN_NOPULL, 1);", pinmux)
         self.assertNotIn("HAL_PIN_Set(PAD_PA66, GPIO_A66, PIN_PULLUP, 1);", pinmux)
         self.assertIn("JLINK_DEVICE = 'SF32LB58X_NAND'\n", rtconfig)
+
+    def test_generated_58_sdmmc1_type0_base_uses_reference_pinmux(self) -> None:
+        self.make_sample_base(series="58", real_pinmux=True)
+        variant = ChipVariant(
+            series="58",
+            chip_dir="SF32LB58x",
+            model_id="SF32LB58X",
+            part_number="SF32LB58X",
+            memory=(MemoryEntry("mpi1", "psram", 32 * MB),),
+        )
+        spec = self.make_spec(
+            "demo_board_base",
+            generate_base=True,
+            series="58",
+            chip_model="SF32LB58X",
+            storage_type="sdmmc",
+            storage_size_mb=128,
+            storage_port="sdmmc1",
+            storage_pinmux_type="type0",
+        )
+
+        rendered = render_board_files(
+            spec=spec,
+            variant=variant,
+            sdk_root=self.sdk_root,
+            output_root=self.output_root,
+            assets_root=ASSETS_ROOT,
+        )
+
+        pinmux = rendered[self.output_root / spec.base_name / "bsp_pinmux.c"]
+        power = rendered[self.output_root / spec.base_name / "bsp_power.c"]
+        rtconfig = rendered[self.output_root / spec.board_name / "hcpu" / "rtconfig.py"]
+        self.assertIn("HAL_PIN_Set(PAD_PA09, SD1_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA10, SD1_CMD, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA00, SD1_DIO7, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA02, GPIO_A2, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA12, GPIO_A12, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA13, GPIO_A13, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA11, GPIO_A11, PIN_PULLUP, 1);", pinmux)
+        self.assertNotIn("HAL_PIN_Set(PAD_PA39, SD1_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertNotIn("HAL_PIN_Set(PAD_PA66, GPIO_A66, PIN_PULLUP, 1);", pinmux)
+        self.assertNotIn("HAL_PIN_Set(PAD_PA49, GPIO_A49, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("#define SD1_RESET_PIN       (11)\n", power)
+        self.assertIn("#define SD1_EN_PIN          (2)\n", power)
+        self.assertNotIn("#define SD1_RESET_PIN       (49)\n", power)
+        self.assertNotIn("#define SD1_EN_PIN          (80)\n", power)
+        self.assertIn("JLINK_DEVICE = 'SF32LB58X_SD'\n", rtconfig)
+
+    def test_generated_58_mpi4_type0_base_keeps_sdmmc1_type0_pinmux(self) -> None:
+        self.make_sample_base(series="58", real_pinmux=True)
+        variant = ChipVariant(
+            series="58",
+            chip_dir="SF32LB58x",
+            model_id="SF32LB58X",
+            part_number="SF32LB58X",
+            memory=(MemoryEntry("mpi1", "psram", 32 * MB),),
+        )
+        spec = self.make_spec(
+            "demo_board_base",
+            generate_base=True,
+            series="58",
+            chip_model="SF32LB58X",
+            storage_type="nand",
+            storage_size_mb=128,
+            storage_port="mpi4",
+            storage_pinmux_type="type0",
+        )
+
+        rendered = render_board_files(
+            spec=spec,
+            variant=variant,
+            sdk_root=self.sdk_root,
+            output_root=self.output_root,
+            assets_root=ASSETS_ROOT,
+        )
+
+        pinmux = rendered[self.output_root / spec.base_name / "bsp_pinmux.c"]
+        power = rendered[self.output_root / spec.base_name / "bsp_power.c"]
+        self.assertIn("HAL_PIN_Set(PAD_PA09, MPI4_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA09, SD1_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA02, GPIO_A2, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("#define SD1_RESET_PIN       (11)\n", power)
+        self.assertIn("#define SD1_EN_PIN          (2)\n", power)
+
+    def test_generated_58_sdmmc1_type1_base_uses_reference_pinmux(self) -> None:
+        self.make_sample_base(series="58", real_pinmux=True)
+        variant = ChipVariant(
+            series="58",
+            chip_dir="SF32LB58x",
+            model_id="SF32LB58X",
+            part_number="SF32LB58X",
+            memory=(MemoryEntry("mpi1", "psram", 32 * MB),),
+        )
+        spec = self.make_spec(
+            "demo_board_base",
+            generate_base=True,
+            series="58",
+            chip_model="SF32LB58X",
+            storage_type="sdmmc",
+            storage_size_mb=128,
+            storage_port="sdmmc1",
+            storage_pinmux_type="type1",
+        )
+
+        rendered = render_board_files(
+            spec=spec,
+            variant=variant,
+            sdk_root=self.sdk_root,
+            output_root=self.output_root,
+            assets_root=ASSETS_ROOT,
+        )
+
+        pinmux = rendered[self.output_root / spec.base_name / "bsp_pinmux.c"]
+        power = rendered[self.output_root / spec.base_name / "bsp_power.c"]
+        rtconfig = rendered[self.output_root / spec.board_name / "hcpu" / "rtconfig.py"]
+        self.assertIn("HAL_PIN_Set(PAD_PA39, SD1_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA34, SD1_CMD, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA41, SD1_DIO0, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA80, GPIO_A80, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("HAL_PIN_Set(PAD_PA49, GPIO_A49, PIN_PULLUP, 1);", pinmux)
+        self.assertNotIn("HAL_PIN_Set(PAD_PA09, SD1_CLK, PIN_NOPULL, 1);", pinmux)
+        self.assertNotIn("HAL_PIN_Set(PAD_PA66, GPIO_A66, PIN_PULLUP, 1);", pinmux)
+        self.assertIn("#define SD1_RESET_PIN       (49)\n", power)
+        self.assertIn("#define SD1_EN_PIN          (80)\n", power)
+        self.assertIn("JLINK_DEVICE = 'SF32LB58X_SD_TYPE1'\n", rtconfig)
 
     def test_normalize_spec_allows_absolute_existing_base_path(self) -> None:
         external_base = self.root / "external" / "shared_base"
