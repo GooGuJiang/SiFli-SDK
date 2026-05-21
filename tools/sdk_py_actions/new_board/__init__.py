@@ -47,10 +47,10 @@ FIXED_PARTITION_LAYOUTS = {
         'ble': (0x00CA4000, 0x00004000),
     },
     ('52', 'sdmmc'): {
-        'hcpu_flash_code': (0x00061000, 0x00700000),
-        'fs_region': (0x008A1000, 0x00400000),
-        'dfu': (0x00CA1000, 0x00004000),
-        'ble': (0x00CA5000, 0x00004000),
+        'hcpu_flash_code': (0x00071000, 0x00700000),
+        'fs_region': (0x008F1000, 0x00400000),
+        'dfu': (0x00CF1000, 0x00004000),
+        'ble': (0x00CF5000, 0x00004000),
     },
     ('56', 'none'): {
         'hcpu_flash_code': (0x00040000, 0x00010000),
@@ -1068,7 +1068,7 @@ def build_fixed_partitions(
     dfu_offset, _ = aligned_layout['dfu']
     ble_offset, _ = aligned_layout['ble']
 
-    partitions.extend([
+    partitions.append(
         Partition(
             'hcpu_flash_code',
             'app',
@@ -1080,7 +1080,9 @@ def build_fixed_partitions(
             exec_region=exec_region,
             exec_offset=0 if exec_region else None,
             attrs=attrs,
-        ),
+        )
+    )
+    partitions.extend([
         Partition('fs_region', 'data', region, fs_offset, fs_size, subtype='filesystem'),
         Partition('dfu', 'data', region, dfu_offset, KV_PART_SIZE, subtype='flashdb_kv'),
         Partition('ble', 'data', region, ble_offset, KV_PART_SIZE, subtype='flashdb_kv'),

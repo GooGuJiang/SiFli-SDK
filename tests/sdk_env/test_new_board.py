@@ -400,6 +400,9 @@ class NewBoardRenderTests(unittest.TestCase):
         mbr = self.find_ptab_partition(spec, variant, "mbr")
         factory_data = self.find_ptab_partition(spec, variant, "factory_data")
         hcpu_flash_code = self.find_ptab_partition(spec, variant, "hcpu_flash_code")
+        fs_region = self.find_ptab_partition(spec, variant, "fs_region")
+        dfu = self.find_ptab_partition(spec, variant, "dfu")
+        ble = self.find_ptab_partition(spec, variant, "ble")
 
         self.assertEqual(mbr["type"], "data")
         self.assertEqual(mbr["subtype"], "raw")
@@ -413,7 +416,10 @@ class NewBoardRenderTests(unittest.TestCase):
         self.assertEqual(self.parse_int(factory_data["offset"]), 0x00041000)
         self.assertEqual(self.parse_int(factory_data["size"]), 0x00020000)
         self.assertEqual(factory_data["aliases"], ["FACTORY_DATA"])
-        self.assertEqual(self.parse_int(hcpu_flash_code["offset"]), 0x00061000)
+        self.assertEqual(self.parse_int(hcpu_flash_code["offset"]), 0x00071000)
+        self.assertEqual(self.parse_int(fs_region["offset"]), 0x008F1000)
+        self.assertEqual(self.parse_int(dfu["offset"]), 0x00CF1000)
+        self.assertEqual(self.parse_int(ble["offset"]), 0x00CF5000)
 
     def test_nand_ptab_offsets_are_128k_aligned(self) -> None:
         self.make_existing_base(self.output_root / "shared_base")

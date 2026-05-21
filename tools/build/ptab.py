@@ -883,7 +883,7 @@ _PTAB_V3_SERIES_DEFAULTS: Dict[str, Dict[str, int]] = {
         'factory_data_sd_size': 0x00020000,
         'bootloader_nor_offset': 0x00010000,
         'bootloader_nand_offset': 0x00080000,
-        'bootloader_sd_offset': 0x00011000,
+        'bootloader_sd_offset': 0x00061000,
         'bootloader_size': 0x00010000,
     },
     'sf32lb56': {
