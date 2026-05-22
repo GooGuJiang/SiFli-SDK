@@ -321,9 +321,9 @@ static rt_err_t spi_stop_circular_transfer(struct rt_spi_device *device, struct 
 }
 
 static rt_err_t spi_start_circular_transfer(struct rt_spi_device *device,
-                                            struct sifli_spi *spi_drv,
-                                            struct rt_spi_message *message,
-                                            rt_bool_t sw_cs)
+        struct sifli_spi *spi_drv,
+        struct rt_spi_message *message,
+        rt_bool_t sw_cs)
 {
     SPI_HandleTypeDef *hspi;
     rt_uint8_t direction;
@@ -1055,7 +1055,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
         /*Check return result*/
         if (state != HAL_OK)
         {
-            LOG_E("spi transfer errorA : %d, errcode=%x", state, HAL_SPI_GetError(spi_handle));
+            LOG_E("spi(%x) transfer errorA : %d, errcode=%x", spi_handle->Instance, state, HAL_SPI_GetError(spi_handle));
             spi_handle->State = HAL_SPI_STATE_READY;
             break;
         }
@@ -1096,7 +1096,7 @@ static rt_uint32_t spixfer(struct rt_spi_device *device, struct rt_spi_message *
 
         if (state != HAL_OK)
         {
-            LOG_E("spi transfer errorB : %d, errcode=%x", state, HAL_SPI_GetError(spi_handle));
+            LOG_E("spi(%x) transfer errorB : %d, errcode=%x", spi_handle->Instance, state, HAL_SPI_GetError(spi_handle));
             spi_handle->State = HAL_SPI_STATE_READY;
             break;
         }
@@ -1343,7 +1343,7 @@ __ROM_USED int rt_hw_spi_bus_init(struct sifli_spi *objs, struct sifli_spi_confi
             objs[i].dma.handle_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
             objs[i].dma.handle_rx.Init.Mode                = DMA_NORMAL;
             objs[i].dma.handle_rx.Init.Priority            = DMA_PRIORITY_HIGH;
-#ifdef DMA_LINK_LIST_SUPPORT                
+#ifdef DMA_LINK_LIST_SUPPORT
             objs[i].dma.handle_rx.Init.EndTrigger          = cfg[i].dma_rx->end_trigger;
 #endif /* DMA_LINK_LIST_SUPPORT */
             {
@@ -1372,9 +1372,9 @@ __ROM_USED int rt_hw_spi_bus_init(struct sifli_spi *objs, struct sifli_spi_confi
             objs[i].dma.handle_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
             objs[i].dma.handle_tx.Init.Mode                = DMA_NORMAL;
             objs[i].dma.handle_tx.Init.Priority            = DMA_PRIORITY_LOW;
-#ifdef DMA_LINK_LIST_SUPPORT                
+#ifdef DMA_LINK_LIST_SUPPORT
             objs[i].dma.handle_tx.Init.EndTrigger          = cfg[i].dma_tx->end_trigger;
-#endif /* DMA_LINK_LIST_SUPPORT */            
+#endif /* DMA_LINK_LIST_SUPPORT */
             {
                 rt_uint32_t tmpreg = 0x00U;
                 //SET_BIT(RCC->AHB1ENR, cfg[i].dma_tx->dma_rcc);

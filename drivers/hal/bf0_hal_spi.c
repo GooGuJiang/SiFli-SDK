@@ -345,6 +345,9 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_SPI_Init(SPI_HandleTypeDef *hspi)
     if (SPI_MODE_SLAVE == hspi->Init.Mode)
     {
         hspi->Instance->FIFO_CTRL |= 5 << SPI_FIFO_CTRL_TFT_Pos;
+
+        // SPI_FRAME_FORMAT_NM is not supported in slave mode
+        HAL_ASSERT(SPI_FRAME_FORMAT_NM != hspi->Init.FrameFormat);
     }
 
 
@@ -773,7 +776,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_SPI_Receive(SPI_HandleTypeDef *hspi, uint8_
             __HAL_SPI_DISABLE(hspi);
 
             /*Set Reverve-Only mode, for drive spi clock*/
-            SPI_RWOT_CCM(hspi, GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos) *Size);
+            SPI_RWOT_CCM(hspi, (1 + GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos)) *Size);
             SPI_SET_RWOT_RECEIVE_WITHOUT_TRANSMIT_MODE(hspi);
             SPI_RWOT_CYCEL_ENABLE(hspi);
             SPI_RWOT_SET_CYCEL(hspi);
@@ -1342,7 +1345,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_SPI_Receive_IT(SPI_HandleTypeDef *hspi, uin
             __HAL_SPI_DISABLE(hspi);
 
             /*Set Reverve-Only mode, for drive spi clock*/
-            SPI_RWOT_CCM(hspi, GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos) *Size);
+            SPI_RWOT_CCM(hspi, (1 + GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos)) *Size);
             SPI_SET_RWOT_RECEIVE_WITHOUT_TRANSMIT_MODE(hspi);
             SPI_RWOT_CYCEL_ENABLE(hspi);
             SPI_RWOT_SET_CYCEL(hspi);
@@ -1731,7 +1734,7 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_SPI_Receive_DMA(SPI_HandleTypeDef *hspi, ui
             __HAL_SPI_DISABLE(hspi);
 
             /*Set Reverve-Only mode, for drive spi clock*/
-            SPI_RWOT_CCM(hspi, GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos) *Size);
+            SPI_RWOT_CCM(hspi, (1 + GET_REG_VAL(hspi->Instance->TOP_CTRL, SPI_TOP_CTRL_DSS_Msk, SPI_TOP_CTRL_DSS_Pos)) *Size);
             SPI_SET_RWOT_RECEIVE_WITHOUT_TRANSMIT_MODE(hspi);
             SPI_RWOT_CYCEL_ENABLE(hspi);
             SPI_RWOT_SET_CYCEL(hspi);
@@ -1931,8 +1934,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_SPI_TransmitReceive_DMA(SPI_HandleTypeDef *
     hspi->hdmatx->XferAbortCallback    = NULL;
 
     __HAL_SPI_ENABLE_IT(hspi, (SPI_IT_TXE));
-    SET_BIT(hspi->Instance->FIFO_CTRL, SPI_FIFO_CTRL_TSRE 
-                                     | SPI_FIFO_CTRL_RXFIFO_AUTO_FULL_CTRL);
+    SET_BIT(hspi->Instance->FIFO_CTRL, SPI_FIFO_CTRL_TSRE
+            | SPI_FIFO_CTRL_RXFIFO_AUTO_FULL_CTRL);
     /* Enable the Tx DMA Stream/Channel  */
     HAL_DMA_Start_IT(hspi->hdmatx, (uint32_t)hspi->pTxBuffPtr, (uint32_t)&hspi->Instance->DATA, hspi->TxXferCount);
 
