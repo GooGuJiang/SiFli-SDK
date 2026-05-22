@@ -11,11 +11,11 @@ A USB CDC ACM to UART bridge driver based on CherryUSB that transparently forwar
 
 ## Hardware Connections
 
-### Supported Development Boards
+### Supported Chip Series and Development Boards
 
-- **SF32LB52_LCD_N16R8**: UART2 uses PA03(RX), PA04(TX)
-- **SF32LB56_LCD_A128R12N1 / SF32LB56_LCD_N16R12N1**: UART2 uses PA20(RX), PA27(TX)
-- **SF32LB58_LCD_N16R64N4**: UART2 uses PA29(RX), PA28(TX)
+- **SF32LB52X series** (for example, SF32LB52_LCD_N16R8, SF32LB52_LCD_A128R16): UART2 uses PA03(RX), PA04(TX)
+- **SF32LB56X series** (for example, SF32LB56_LCD_A128R12N1, SF32LB56_LCD_N16R12N1): UART2 uses PA20(RX), PA27(TX)
+- **SF32LB58X series** (for example, SF32LB58_LCD_N16R64N4, SF32LB58_LCD_A128R32N1): UART2 uses PA29(RX), PA28(TX)
 
 ## Compilation and Usage
 
