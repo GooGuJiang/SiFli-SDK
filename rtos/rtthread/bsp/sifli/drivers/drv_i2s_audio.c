@@ -660,6 +660,7 @@ static rt_err_t bf0_audio_i2s_start(struct bf0_i2s_audio *aud, int stream)
 {
     I2S_HandleTypeDef *hi2s = &aud->hi2s;
 
+#ifndef SF32LB55X
     if (stream == AUDIO_STREAM_REPLAY)
     {
         bf0_enable_pll(hi2s->Init.tx_cfg.sample_rate, 0);
@@ -668,6 +669,7 @@ static rt_err_t bf0_audio_i2s_start(struct bf0_i2s_audio *aud, int stream)
     {
         bf0_enable_pll(hi2s->Init.rx_cfg.sample_rate, 0);
     }
+#endif
 
 #ifdef SF32LB58X
 #ifndef SOC_BF0_HCPU
@@ -948,27 +950,10 @@ static rt_err_t bf0_audio_control(struct rt_audio_device *audio, int cmd, void *
     }
     case RT_DEVICE_CTRL_SUSPEND:
     {
-        for (int i = 0; i < sizeof(bf0_i2s_audio_obj) / sizeof(bf0_i2s_audio_obj[0]); i++)
-        {
-            if (bf0_i2s_audio_obj[i].i2s_handle != NULL)
-            {
-                I2S_HandleTypeDef *hi2s = &(h_i2s_audio[i].hi2s);
-                HAL_I2S_DeInit(hi2s);
-            }
-        }
-        set_pll_state(0);
         break;
     }
     case RT_DEVICE_CTRL_RESUME:
     {
-        for (int i = 0; i < sizeof(bf0_i2s_audio_obj) / sizeof(bf0_i2s_audio_obj[0]); i++)
-        {
-            if (bf0_i2s_audio_obj[i].i2s_handle != NULL)
-            {
-                I2S_HandleTypeDef *hi2s = &(h_i2s_audio[i].hi2s);
-                HAL_I2S_Init(hi2s);
-            }
-        }
         break;
     }
     case AUDIO_CTL_SET_TX_DMA_SIZE:

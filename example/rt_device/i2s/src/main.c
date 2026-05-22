@@ -488,7 +488,7 @@ static void i2s_config_rx(rt_uint32_t channels, rt_uint32_t sr, rt_uint32_t fmt)
     struct rt_audio_caps caps;
     caps.main_type = AUDIO_TYPE_INPUT;      // for I2S2, configure RX will configure RX+TX
     caps.sub_type = AUDIO_DSP_PARAM;
-    caps.udata.config.channels   = 2;    /* i2s is always 2 */
+    caps.udata.config.channels   = channels;    /* i2s is always 2 */
     caps.udata.config.samplerate = sr;   /* sample rate */
     caps.udata.config.samplefmt = fmt;   /* depth */
     rt_device_control(g_i2s_dev, AUDIO_CTL_CONFIGURE, &caps);
@@ -629,7 +629,7 @@ static void i2s_config_tx(rt_uint32_t channels, rt_uint32_t sr, rt_uint32_t fmt)
     struct rt_audio_caps caps;
     caps.main_type = AUDIO_TYPE_INPUT;      // for I2S2, configure RX will configure RX+TX
     caps.sub_type = AUDIO_DSP_PARAM;
-    caps.udata.config.channels = 2;     /* for i2s, channels is always 2. */
+    caps.udata.config.channels = channels;
     caps.udata.config.samplefmt = fmt;  /* depth */
     caps.udata.config.samplerate = sr;  /* sample rate */
     rt_device_control(g_i2s_dev, AUDIO_CTL_CONFIGURE, &caps);
