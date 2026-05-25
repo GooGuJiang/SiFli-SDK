@@ -203,7 +203,6 @@ $env:SIFLI_SDK_MIRROR_CHINA="1"
 - `SIFLI_SDK_GITHUB_ASSETS="https://downloads.sifli.com/github_assets"`
 - `SIFLI_SDK_PYPI_DEFAULT_INDEX="https://mirrors.ustc.edu.cn/pypi/simple"`
 - `UV_PYTHON_DOWNLOADS_JSON_URL="https://uv.agentsmirror.com/metadata/python-downloads.json"`
-- `UV_PYPY_INSTALL_MIRROR="https://uv.agentsmirror.com/pypy"`
 
 如果不想使用整组预设，也可以继续手工设置这些细粒度变量。
 
