@@ -376,6 +376,51 @@
       ]
     },
     {
+      "description": "Ninja build system",
+      "export_paths": [
+        [
+          ""
+        ]
+      ],
+      "export_vars": {},
+      "info_url": "https://github.com/ninja-build/ninja",
+      "install": "never",
+      "license": "Apache-2.0",
+      "name": "ninja",
+      "platform_overrides": [
+        {
+          "install": "always",
+          "platforms": [
+            "win32",
+            "win64"
+          ]
+        }
+      ],
+      "supported_targets": [
+        "all"
+      ],
+      "version_cmd": [
+        "ninja",
+        "--version"
+      ],
+      "version_regex": "([0-9.]+)",
+      "versions": [
+        {
+          "name": "1.13.2",
+          "win32": {
+            "sha256": "07FC8261B42B20E71D1720B39068C2E14FFCEE6396B76FB7A795FB460B78DC65",
+            "size": 291570,
+            "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip"
+          },
+          "win64": {
+            "sha256": "07FC8261B42B20E71D1720B39068C2E14FFCEE6396B76FB7A795FB460B78DC65",
+            "size": 291570,
+            "url": "https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip"
+          }
+        }
+      ]
+    },
+    {
       "description": "Toolchain for 32-bit Arm based on GCC",
       "export_paths": [
         [
