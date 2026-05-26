@@ -87,7 +87,7 @@ static rt_bool_t tc_vglite_lcd_is_ready(void)
     return (status == LCD_STATUS_INITIALIZED) || (status == LCD_STATUS_DISPLAY_ON);
 }
 
-void tc_vg_send_data_to_lcd(uint8_t *data, uint32_t width, uint32_t stride, uint32_t height, uint16_t color_fmt)
+void tc_vg_send_data_to_lcd(const uint8_t *data, uint32_t width, uint32_t stride, uint32_t height, uint16_t color_fmt)
 {
     rt_err_t err;
     struct rt_device_graphic_info lcd_info;

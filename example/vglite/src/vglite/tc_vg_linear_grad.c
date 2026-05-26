@@ -152,7 +152,7 @@ void tc_vglite_linear_grad_entry(void)
         vg_lite_clear_grad(&grad);
         frames--;
         printf("frame %d done\n", fcount++);
-        tc_vg_send_data_to_lcd((const char *)fb->memory, fb_width, buffer.stride / 2, fb_height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
+        tc_vg_send_data_to_lcd(fb->memory, fb_width, buffer.stride / 2, fb_height, RTGRAPHIC_PIXEL_FORMAT_RGB565);
         if (!demo_delay_ms(2000))
         {
             goto ErrorHandler;
