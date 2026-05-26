@@ -78,7 +78,7 @@ MSH_CMD_EXPORT(ulog_test, ulog test.);
 
 ## ulog Configuration Options
 
-Enter `menuconfig` from the build configuration menu, and configure under `RT-Thread Components → Utilities → Enable ulog`:
+Enter `sdk.py menuconfig` from the build configuration menu, and configure under `RT-Thread Components → Utilities → Enable ulog`:
 
 | Configuration Option | Description |
 |---------------------|-------------|

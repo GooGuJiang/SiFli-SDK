@@ -78,7 +78,7 @@ MSH_CMD_EXPORT(ulog_test, ulog test.);
 
 ## ulog 配置选项说明
 
-在编译界面输入 `menuconfig` 进入，在 `RT-Thread Components → Utilities → Enable ulog` 下配置：
+在编译界面输入 `sdk.py menuconfig` 进入，在 `RT-Thread Components → Utilities → Enable ulog` 下配置：
 
 | 配置项 | 说明 |
 |--------|------|
