@@ -1,4 +1,9 @@
-﻿
+﻿/*
+ * SPDX-FileCopyrightText: 2020-2026 SiFli Technologies(Nanjing) Co., Ltd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef __SD_PARAM_FACTORY_H__
 #define __SD_PARAM_FACTORY_H__
 
