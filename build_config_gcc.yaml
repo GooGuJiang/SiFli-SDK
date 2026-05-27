@@ -239,6 +239,8 @@ common_projects:
   - path: example/cherryusb/device/msc/nor_flash_disk/project
     boards: 
       - sf32lb56-lcd_n16r12n1
+      - sf32lb58-lcd_n16r32n1_qspi
+      - sf32lb52-lcd_n16r8
 
   - path: example/cherryusb/device/msc/ram_disk/project
     boards: *devkit-boards
