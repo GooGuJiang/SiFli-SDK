@@ -14,8 +14,9 @@
     #if defined(FPGA)
         extern void bt_rf_cal_9364();
         #define bt_rf_cal() bt_rf_cal_9364()
+    #else
+        extern void bt_rf_cal(void);
     #endif
-    // extern void bt_rf_cal(void);
 #endif
 
 

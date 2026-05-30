@@ -10,7 +10,7 @@
 
 #include "rtconfig.h"
 
-void bt_rf_cal_index(void)
+void bt_rf_cal(void)
 {
 
 }
