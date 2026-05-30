@@ -311,6 +311,99 @@ typedef enum
     LCDC_IF28,
     LCDC_IF29,
 
+    LCDC1_JDI_SCS     = 131,
+    LCDC1_JDI_SCLK,
+    LCDC1_JDI_SO,
+    LCDC1_JDI_DISP,
+    LCDC1_JDI_EXTCOMIN,
+
+    LCDC1_JDI_VCK     = 139,
+    LCDC1_JDI_XRST,
+    LCDC1_JDI_HCK,
+    LCDC1_JDI_HST,
+    LCDC1_JDI_ENB,
+    LCDC1_JDI_VST,
+    LCDC1_JDI_R1,
+    LCDC1_JDI_G1,
+    LCDC1_JDI_B1,
+    LCDC1_JDI_R2,
+    LCDC1_JDI_G2,
+    LCDC1_JDI_B2,
+
+    LCDC1_TCON_GDSP     = 121,
+    LCDC1_TCON_GDCLK,
+    LCDC1_TCON_SDCLK,
+    LCDC1_TCON_SDSTL,
+    LCDC1_TCON_SDOE,
+    LCDC1_TCON_SDAT0,
+    LCDC1_TCON_SDAT1,
+    LCDC1_TCON_SDAT2,
+    LCDC1_TCON_SDAT3,
+    LCDC1_TCON_SDAT4,
+    LCDC1_TCON_SDAT5,
+    LCDC1_TCON_SDAT6,
+    LCDC1_TCON_SDAT7,
+    LCDC1_TCON_SDAT9,
+    LCDC1_TCON_SDAT10,
+    LCDC1_TCON_SDAT11,
+    LCDC1_TCON_SDAT12,
+    LCDC1_TCON_SDAT13,
+    LCDC1_TCON_SDAT14,
+    LCDC1_TCON_SDAT15,
+
+    LCDC1_8080_TE      = 121,
+    LCDC1_8080_RSTB,
+    LCDC1_8080_CS,
+    LCDC1_8080_WR,
+    LCDC1_8080_RD,
+    LCDC1_8080_DC,
+    LCDC1_8080_DIO0,
+    LCDC1_8080_DIO1,
+    LCDC1_8080_DIO2,
+    LCDC1_8080_DIO3,
+    LCDC1_8080_DIO4,
+    LCDC1_8080_DIO5,
+    LCDC1_8080_DIO6,
+    LCDC1_8080_DIO7,
+    LCDC1_8080_DIO8,
+    LCDC1_8080_DIO9,
+    LCDC1_8080_DIO10,
+    LCDC1_8080_DIO11,
+    LCDC1_8080_DIO12,
+    LCDC1_8080_DIO13,
+    LCDC1_8080_DIO14,
+    LCDC1_8080_DIO15,
+
+    LCDC1_DPI_CLK      = 121,
+    LCDC1_DPI_HSYNC,
+    LCDC1_DPI_VSYNC,
+    LCDC1_DPI_DE,
+    LCDC1_DPI_SD,
+    LCDC1_DPI_CM,
+    LCDC1_DPI_R0,
+    LCDC1_DPI_R1,
+    LCDC1_DPI_R2,
+    LCDC1_DPI_R3,
+    LCDC1_DPI_R4,
+    LCDC1_DPI_R5,
+    LCDC1_DPI_R6,
+    LCDC1_DPI_R7,
+    LCDC1_DPI_G0,
+    LCDC1_DPI_G1,
+    LCDC1_DPI_G2,
+    LCDC1_DPI_G3,
+    LCDC1_DPI_G4,
+    LCDC1_DPI_G5,
+    LCDC1_DPI_G6,
+    LCDC1_DPI_G7,
+    LCDC1_DPI_B0,
+    LCDC1_DPI_B1,
+    LCDC1_DPI_B2,
+    LCDC1_DPI_B3,
+    LCDC1_DPI_B4,
+    LCDC1_DPI_B5,
+    LCDC1_DPI_B6,
+    LCDC1_DPI_B7,
 
     /** PDM1_CLK */
     PDM1_CLK           = 151,
@@ -572,174 +665,9 @@ typedef enum
     LCDC1_SPI_RSTB,
     /** LCDC1_SPI_TE */
     LCDC1_SPI_TE,
-    /** LCDC1_8080_WR */
-    LCDC1_8080_WR,
-    /** LCDC1_8080_CS */
-    LCDC1_8080_CS,
-    /** LCDC1_8080_DIO0 */
-    LCDC1_8080_DIO0,
-    /** LCDC1_8080_DIO1 */
-    LCDC1_8080_DIO1,
-    /** LCDC1_8080_DIO2 */
-    LCDC1_8080_DIO2,
-    /** LCDC1_8080_DIO3 */
-    LCDC1_8080_DIO3,
-    /** LCDC1_8080_DIO4 */
-    LCDC1_8080_DIO4,
-    /** LCDC1_8080_DIO5 */
-    LCDC1_8080_DIO5,
-    /** LCDC1_8080_DIO6 */
-    LCDC1_8080_DIO6,
-    /** LCDC1_8080_DIO7 */
-    LCDC1_8080_DIO7,
-    /** LCDC1_8080_RD */
-    LCDC1_8080_RD,
-    /** LCDC1_8080_DC */
-    LCDC1_8080_DC,
-    /** LCDC1_8080_RSTB */
-    LCDC1_8080_RSTB,
-    /** LCDC1_8080_TE */
-    LCDC1_8080_TE,
-    /** LCDC1_DPI_CLK */
-    LCDC1_DPI_CLK,
-    /** LCDC1_DPI_DE */
-    LCDC1_DPI_DE,
-    /** LCDC1_DPI_SD */
-    LCDC1_DPI_SD,
-    /** LCDC1_DPI_CM */
-    LCDC1_DPI_CM,
-    /** LCDC1_DPI_HSYNC */
-    LCDC1_DPI_HSYNC,
-    /** LCDC1_DPI_VSYNC */
-    LCDC1_DPI_VSYNC,
-    /** LCDC1_DPI_R7 */
-    LCDC1_DPI_R7,
-    /** LCDC1_DPI_R6 */
-    LCDC1_DPI_R6,
-    /** LCDC1_DPI_R5 */
-    LCDC1_DPI_R5,
-    /** LCDC1_DPI_R4 */
-    LCDC1_DPI_R4,
-    /** LCDC1_DPI_R3 */
-    LCDC1_DPI_R3,
-    /** LCDC1_DPI_R2 */
-    LCDC1_DPI_R2,
-    /** LCDC1_DPI_R1 */
-    LCDC1_DPI_R1,
-    /** LCDC1_DPI_R0 */
-    LCDC1_DPI_R0,
-    /** LCDC1_DPI_G7 */
-    LCDC1_DPI_G7,
-    /** LCDC1_DPI_G6 */
-    LCDC1_DPI_G6,
-    /** LCDC1_DPI_G5 */
-    LCDC1_DPI_G5,
-    /** LCDC1_DPI_G4 */
-    LCDC1_DPI_G4,
-    /** LCDC1_DPI_G3 */
-    LCDC1_DPI_G3,
-    /** LCDC1_DPI_G2 */
-    LCDC1_DPI_G2,
-    /** LCDC1_DPI_G1 */
-    LCDC1_DPI_G1,
-    /** LCDC1_DPI_G0 */
-    LCDC1_DPI_G0,
-    /** LCDC1_DPI_B7 */
-    LCDC1_DPI_B7,
-    /** LCDC1_DPI_B6 */
-    LCDC1_DPI_B6,
-    /** LCDC1_DPI_B5 */
-    LCDC1_DPI_B5,
-    /** LCDC1_DPI_B4 */
-    LCDC1_DPI_B4,
-    /** LCDC1_DPI_B3 */
-    LCDC1_DPI_B3,
-    /** LCDC1_DPI_B2 */
-    LCDC1_DPI_B2,
-    /** LCDC1_DPI_B1 */
-    LCDC1_DPI_B1,
-    /** LCDC1_DPI_B0 */
-    LCDC1_DPI_B0,
-    /** LCDC1_JDI_SCLK */
-    LCDC1_JDI_SCLK,
-    /** LCDC1_JDI_SCS */
-    LCDC1_JDI_SCS,
-    /** LCDC1_JDI_SO */
-    LCDC1_JDI_SO,
-    /** LCDC1_JDI_DISP */
-    LCDC1_JDI_DISP,
-    /** LCDC1_JDI_EXTCOMIN */
-    LCDC1_JDI_EXTCOMIN,
-    /** LCDC1_JDI_XRST */
-    LCDC1_JDI_XRST,
-    /** LCDC1_JDI_VCK */
-    LCDC1_JDI_VCK,
-    /** LCDC1_JDI_VST */
-    LCDC1_JDI_VST,
-    /** LCDC1_JDI_ENB */
-    LCDC1_JDI_ENB,
-    /** LCDC1_JDI_HCK */
-    LCDC1_JDI_HCK,
-    /** LCDC1_JDI_HST */
-    LCDC1_JDI_HST,
-    /** LCDC1_JDI_R1 */
-    LCDC1_JDI_R1,
-    /** LCDC1_JDI_R2 */
-    LCDC1_JDI_R2,
-    /** LCDC1_JDI_G1 */
-    LCDC1_JDI_G1,
-    /** LCDC1_JDI_G2 */
-    LCDC1_JDI_G2,
-    /** LCDC1_JDI_B1 */
-    LCDC1_JDI_B1,
-    /** LCDC1_JDI_B2 */
-    LCDC1_JDI_B2,
-    /** LCDC1_JDI_FRP */
-    LCDC1_JDI_FRP,
-    /** LCDC1_JDI_XFRP */
-    LCDC1_JDI_XFRP,
+
     /** LCDC1_JDI_VCOM */
     LCDC1_JDI_VCOM,
-    /** LCDC2_JDI_SCLK */
-    LCDC2_JDI_SCLK,
-    /** LCDC2_JDI_SCS */
-    LCDC2_JDI_SCS,
-    /** LCDC2_JDI_SO */
-    LCDC2_JDI_SO,
-    /** LCDC2_JDI_DISP */
-    LCDC2_JDI_DISP,
-    /** LCDC2_JDI_EXTCOMIN */
-    LCDC2_JDI_EXTCOMIN,
-    /** LCDC2_JDI_XRST */
-    LCDC2_JDI_XRST,
-    /** LCDC2_JDI_VCK */
-    LCDC2_JDI_VCK,
-    /** LCDC2_JDI_VST */
-    LCDC2_JDI_VST,
-    /** LCDC2_JDI_ENB */
-    LCDC2_JDI_ENB,
-    /** LCDC2_JDI_HCK */
-    LCDC2_JDI_HCK,
-    /** LCDC2_JDI_HST */
-    LCDC2_JDI_HST,
-    /** LCDC2_JDI_R1 */
-    LCDC2_JDI_R1,
-    /** LCDC2_JDI_R2 */
-    LCDC2_JDI_R2,
-    /** LCDC2_JDI_G1 */
-    LCDC2_JDI_G1,
-    /** LCDC2_JDI_G2 */
-    LCDC2_JDI_G2,
-    /** LCDC2_JDI_B1 */
-    LCDC2_JDI_B1,
-    /** LCDC2_JDI_B2 */
-    LCDC2_JDI_B2,
-    /** LCDC2_JDI_FRP */
-    LCDC2_JDI_FRP,
-    /** LCDC2_JDI_XFRP */
-    LCDC2_JDI_XFRP,
-    /** LCDC2_JDI_VCOM */
-    LCDC2_JDI_VCOM,
     /** SD1_CLK */
     SD1_CLK,
     /** SD1_CLKIN */
