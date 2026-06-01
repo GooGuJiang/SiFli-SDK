@@ -1526,10 +1526,6 @@ int rt_hw_sdio_init(void)
 
     HAL_NVIC_SetPriority(SDIO_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(SDIO_IRQn);
-#ifdef RT_USING_PM
-    //sifli_sdio_pm_register();
-    rt_sdio_register_rt_device();
-#endif
     //HAL_SD_MspInit(&hsd);
 #ifdef SDIO_USING_DMA
     LOG_I("SDIO USING DMA MODE !\n");
