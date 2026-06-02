@@ -2311,7 +2311,10 @@ void HAL_RCC_Init(void)
     HAL_RCC_HCPU_SetDeepWFIDiv(12, 0, 1);
 
     /* select RC48 as clock source, RC48 has been calibrated */
+#ifndef SF32LB57X
+    /* TODO: RC48 doesn't work on 57x yet */
     HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_HP_PERI, RCC_CLK_PERI_HRC48);
+#endif /* SF32LB57X */
 #endif /* SF32LB52X || SF32LB57X */
 
 #else
