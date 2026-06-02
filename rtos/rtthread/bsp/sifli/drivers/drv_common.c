@@ -435,18 +435,28 @@ __ROM_USED void rt_hw_console_output(const char *str)
 
 
 #ifndef SF32LB55X
-int8_t bt_rf_get_max_tx_pwr(void)
+/* Weak overridable TX power getters — app can override to customize power at boot */
+__WEAK int8_t bt_tx_pwr_max_override(void)
 {
     return BT_TX_POWER_VAL_MAX;
+}
+__WEAK int8_t bt_tx_pwr_min_override(void)
+{
+    return BT_TX_POWER_VAL_MIN;
+}
+
+int8_t bt_rf_get_max_tx_pwr(void)
+{
+    return bt_tx_pwr_max_override();
 }
 
 int8_t bt_rf_get_min_tx_pwr(void)
 {
-    return BT_TX_POWER_VAL_MIN;
+    return bt_tx_pwr_min_override();
 }
 #endif // !SF32LB55X
 
-int8_t bt_rf_get_init_tx_pwr(void)
+__WEAK int8_t bt_tx_pwr_init_override(void)
 {
     int8_t pwr;
 #ifdef SF32LB55X
@@ -455,6 +465,11 @@ int8_t bt_rf_get_init_tx_pwr(void)
     pwr = BT_TX_POWER_VAL_INIT;
 #endif
     return pwr;
+}
+
+int8_t bt_rf_get_init_tx_pwr(void)
+{
+    return bt_tx_pwr_init_override();
 }
 
 /**
