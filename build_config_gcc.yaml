@@ -187,6 +187,11 @@ common_projects:
   - path: example/ble/peripheral_with_ota/project
     boards: *after_55x_boards
 
+  - path: example/ble/peripheral_with_ota/project
+    boards:
+      - eh-lb551
+      - eh-lb555
+
   - path: example/ble/talkback/project
     boards: *after_55x_boards
 
