@@ -37,6 +37,7 @@ static int cache_full;
 static int pcm_file;
 static struct rt_thread thread;
 static int thread_running;
+static int opus_ready;      
 static uint8_t drop_noise_frame_cnt;
 
 static struct rt_semaphore loopback_sem;
@@ -441,6 +442,12 @@ int opus(int argc, char *argv[])
     OpusDecoder *decoder = NULL;
     audio_client_t client = NULL;
 
+    if (!opus_ready)
+    {
+        rt_kprintf("system not ready yet, please wait...\n");
+        return -1;
+    }
+
     if (thread_running)
     {
         rt_kprintf("opus thread is already running, please wait for it to exit\n");
@@ -488,6 +495,7 @@ int main(void)
 
     rt_thread_init(&thread, "opus", opus_test, NULL, opus_stack, OPUS_STACK_SIZE, RT_THREAD_PRIORITY_HIGH, 10);
     rt_thread_startup(&thread);
+    opus_ready = 1;
 
     /* Infinite loop */
     while (1)
