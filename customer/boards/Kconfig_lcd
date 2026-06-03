@@ -345,6 +345,14 @@ if BSP_USING_BUILTIN_LCD
             select LCD_USING_PWM_AS_BACKLIGHT
             depends on BSP_SUPPORT_DPI
 
+        config LCD_USING_HTM_H070A20_RGB_A02
+            bool "7.0 rect RGB 800x480 LCD(800x480-HTM-H070A20-RGB-A01)"
+            select TSC_USING_GT911 if BSP_USING_TOUCHD
+            select LCD_USING_HTM_H070A20
+            select BSP_LCDC_USING_DPI
+            select LCD_USING_PWM_AS_BACKLIGHT
+            depends on BSP_SUPPORT_DPI
+
         config LCD_USING_TFT_GC9A01A
             bool "1.28 rect SPI LCD(240x240 TFT-GC9A01A)"
             select LCD_USING_GC9A01A
@@ -523,6 +531,7 @@ if BSP_USING_BUILTIN_LCD
         default 1024 if LCD_USING_JD9165A_DPI
         default 800 if LCD_USING_TFT_H080A11HDIFT4C30_V0_1
         default 1024 if LCD_USING_HTM_H070A20_RGB_A01
+        default 800 if LCD_USING_HTM_H070A20_RGB_A02
         default 240 if  LCD_USING_TFT_GC9A01A
         default 720 if LCD_USING_TFT_NV3052C
         default 390 if LCD_USING_TFT_CO5300
@@ -573,6 +582,7 @@ if BSP_USING_BUILTIN_LCD
         default 272 if LCD_USING_TFT_NV3041A
         default 600 if LCD_USING_JD9165A_DPI
         default 600 if LCD_USING_HTM_H070A20_RGB_A01
+        default 480 if LCD_USING_HTM_H070A20_RGB_A02
         default 240 if LCD_USING_TFT_GC9A01A
         default 1280 if LCD_USING_TFT_H080A11HDIFT4C30_V0_1
         default 720 if LCD_USING_TFT_NV3052C
@@ -623,6 +633,7 @@ if BSP_USING_BUILTIN_LCD
         default 315 if LCD_USING_TFT_NV3041A
         default 315 if LCD_USING_JD9165A_DPI
         default 315 if LCD_USING_HTM_H070A20_RGB_A01
+        default 200 if LCD_USING_HTM_H070A20_RGB_A02
         default 240 if LCD_USING_TFT_GC9A01A
         default 235 if LCD_USING_TFT_H080A11HDIFT4C30_V0_1
         default 315 if LCD_USING_TFT_NV3052C

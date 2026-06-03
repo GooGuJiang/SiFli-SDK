@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 SiFli Technologies(Nanjing) Co., Ltd
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <rtthread.h>
 #include "string.h"
 #include "board.h"
@@ -21,7 +27,38 @@
   */
 #define  LCD_IC_PIXEL_WIDTH    (1024)
 #define  LCD_IC_PIXEL_HEIGHT   (600)
+#ifdef LCD_USING_HTM_H070A20_RGB_A02 //800x480
+static LCDC_InitTypeDef lcdc_int_cfg =
+{
+    .lcd_itf = AUTO_SELECTED_DPI_INTFACE,
+    .freq = 30 * 1000 * 1000,
+    .color_mode = LCDC_PIXEL_FORMAT_RGB888,
 
+    .cfg = {
+        .dpi = {
+            .PCLK_polarity = 1,
+            .DE_polarity   = 0,
+            .VS_polarity   = 1,
+            .HS_polarity   = 1,
+            .PCLK_force_on = 0,
+
+            .VS_width      = 13,    //VLW
+            .HS_width      = 30,   //HLW
+
+            .VBP = 10,   //VBP
+            .VAH = LCD_VER_RES_MAX,
+            .VFP = 22,   //VFP
+
+            .HBP = 16,  //HBP
+            .HAW = LCD_HOR_RES_MAX,
+            .HFP = 210,  //HFP
+
+            .interrupt_line_num = 1,
+        },
+    },
+
+};
+#else
 static LCDC_InitTypeDef lcdc_int_cfg =
 {
     .lcd_itf = AUTO_SELECTED_DPI_INTFACE,
@@ -52,7 +89,7 @@ static LCDC_InitTypeDef lcdc_int_cfg =
     },
 
 };
-
+#endif
 
 /**
   * @brief  Power on the LCD.
