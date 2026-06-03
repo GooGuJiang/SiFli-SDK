@@ -399,19 +399,11 @@ __HAL_ROM_USED float HAL_LPTIM_GetFreq()
 {
     if (HAL_LXT_DISABLED())
     {
-#ifndef SF32LB57X
         uint32_t cycle = HAL_RC_CAL_get_average_cycle_on_48M();
         if (cycle == 0)
             return 9700;
         else
             return (48000000UL / (float)cycle * HAL_RC_CAL_GetLPCycle());
-#else
-        float cycle;
-        uint16_t len = 4;
-        HAL_StatusTypeDef ret = HAL_LCPU_CONFIG_get(HAL_LCPU_CONFIG_LPCYCLE_CURR, (uint8_t *)&cycle, &len);
-        HAL_ASSERT(ret == HAL_OK);
-        return cycle;
-#endif
     }
     else
     {
