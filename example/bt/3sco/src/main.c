@@ -271,7 +271,6 @@ int main(void)
 {
     LOG_I("now only 58x is support 3sco!\r\n");
     g_bt_app_mb = rt_mb_create("bt_app", 8, RT_IPC_FLAG_FIFO);
-    bt_interface_acl_accept_role_set(HCI_SLAVE);
     sifli_ble_enable();
 
 
