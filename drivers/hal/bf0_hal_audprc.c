@@ -684,11 +684,10 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_AUDPRC_Config_ADCPath(AUDPRC_HandleTypeDef 
             | AUDPRC_ADC_PATH_CFG0_RX2TX_LOOPBACK_Msk);
 
     value &= mask;
-//TODO:
+
 #ifdef AUDPRC_ADC_PATH_CFG0_DATA_SWAP_Msk
     value |= MAKE_REG_VAL(cfg->data_swap, AUDPRC_ADC_PATH_CFG0_DATA_SWAP_Msk, AUDPRC_ADC_PATH_CFG0_DATA_SWAP_Pos)
 #else
-    HAL_ASSERT(0);
     value = value
 #endif
 #ifdef SF32LB58X
@@ -1069,6 +1068,9 @@ static void AUDPRC_DMAHalfRxCplt(DMA_HandleTypeDef *hdma)
   */
 static void AUDPRC_DMAError(DMA_HandleTypeDef *hdma)
 {
+    void rt_kprintf(const char *fmt, ...);
+    rt_kprintf("audpr dma error\n");
+#if 0
     AUDPRC_HandleTypeDef *aprc = (AUDPRC_HandleTypeDef *)((DMA_HandleTypeDef *)hdma)->Parent;
     int i;
     for (i = 0; i < HAL_AUDPRC_INSTANC_CNT; i++)
@@ -1079,6 +1081,7 @@ static void AUDPRC_DMAError(DMA_HandleTypeDef *hdma)
 
     aprc->State[i] = HAL_AUDPRC_STATE_READY;
     HAL_AUDPRC_ErrorCallback(aprc, i);
+#endif
 }
 
 #endif /* HAL_AUDPRC_MODULE_ENABLED */
