@@ -336,6 +336,8 @@ common_projects:
     boards: 
       - eh-lb551
       - eh-lb555
+      - sf32lb58-lcd_a128r32n1_a1_dsi
+      - sf32lb58-lcd_n16r32n1_a1_dsi
 
   - path: example/hal/ezip/project
     boards: *devkit_lcd_boards
@@ -651,7 +653,7 @@ common_projects:
   #     - eh-lb520s
 
   - path: example/rt_device/adc/adc_battery/project
-    boards: *525_devkit_lcd_boards
+    boards: *devkit_lcd_boards
 
   - path: example/rt_device/audprc/project
     boards: *after_55x_boards
@@ -733,6 +735,7 @@ common_projects:
   - path: example/rt_device/usb/usb_mstorage/project/nor
     boards: 
       - sf32lb52-lcd_n16r8 
+      - sf32lb52-lcd_a128r16
       - sf32lb52-nano_n16r16
       - sf32lb56-lcd_n16r12n1
       - sf32lb58-lcd_n16r32n1_qspi  
