@@ -170,8 +170,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_OPI_PSRAM_Init(FLASH_HandleTypeDef *hflash,
         sck_dly = 15;
 #elif defined(SF32LB52X)
         /* solve bit flip */
-        dqs_dly = 20;
-        sck_dly = 20;
+        dqs_dly = 0x20;
+        sck_dly = 0x20;
 #endif /* SF32LB58X */
         hflash->ecc_en = 3;  //rdcyc
         hflash->buf_mode = 3;  //wdcyc
@@ -323,8 +323,8 @@ __HAL_ROM_USED HAL_StatusTypeDef HAL_LEGACY_PSRAM_Init(FLASH_HandleTypeDef *hfla
         trcmin = 3; // > 60ns
 #if defined(SF32LB52X)
         /* solve bit flip */
-        dqs_dly = 20;
-        sck_dly = 20;
+        dqs_dly = 0x20;
+        sck_dly = 0x20;
 #endif /* SF32LB52X */
     }
     else if (freq <= 120000000)         // 120M
