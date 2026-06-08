@@ -156,6 +156,8 @@ SECTIONS
   {
     . = ALIGN(4);
     __rw_retm_data_start__ = .;
+    __RW_IRAM_RET$$RO_start__ = .;
+
     * (.*l1_ret_text_*)
     * (.*l1_ret_rodata_*)
 
@@ -205,9 +207,20 @@ SECTIONS
     *bf0_hal_cortex.o (.text* .rodata*)
 #endif /* BSP_QSPI2_DUAL_MODE */
 
+    . = ALIGN(4);
+    __RW_IRAM_RET$$RO_end__ = .;    
+    
+    __nor_cfg_db_start__ = .;
+    KEEP(*(.nor_cfg_db))
+    __nor_cfg_db_end__ = .;
+
+    . = ALIGN(4);
+    __RW_IRAM_RET$$RW_start__ = .;
+
     *.o (.retm_data_*)
 
     . = ALIGN(4);
+    __RW_IRAM_RET$$RW_end__ = .;
     __rw_retm_data_end__ = .;
 
   } > RAM AT > ROM
@@ -314,6 +327,11 @@ SECTIONS
     __usbh_class_info_start__ = .;
     KEEP(*(.usbh_class_info))
     __usbh_class_info_end__ = .;
+
+    . = ALIGN(4);
+    __nand_cfg_db_start__ = .;
+    KEEP(*(.nand_cfg_db))
+    __nand_cfg_db_end__ = .;
 
     KEEP(*(.eh_frame*))
     _etext = ABSOLUTE(.);
