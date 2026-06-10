@@ -461,10 +461,7 @@ bool boot_device_init(void)
 
     HAL_PMU_EnableDLL(1);
     HAL_RCC_HCPU_ConfigHCLK(144);
-    //HAL_RCC_HCPU_EnableDLL1(240000000);
-    //HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_SYS, RCC_SYSCLK_DLL1);
-    // Reset sysclk used by HAL_Delay_us
-    HAL_Delay_us(0);
+    HAL_RCC_HCPU_EnableDLL2(288000000);
 #endif
 
     switch (board_boot_device)
@@ -474,7 +471,8 @@ bool boot_device_init(void)
 #ifdef CFG_BOOTROM
         BSP_SetFlash2DIV(2);    // rom use default rc48 / 2, 48/2 = 24
 #else
-        BSP_SetFlash2DIV(1);
+        BSP_SetFlash2DIV(6);
+        HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_FLASH2, RCC_CLK_FLASH_DLL2);
 #endif /* CFG_BOOTROM */
         g_config_addr = init_mpi2();
         boot_handle = (FLASH_HandleTypeDef *)&spi_flash_handle[1].handle;
@@ -486,7 +484,8 @@ bool boot_device_init(void)
 #ifdef CFG_BOOTROM
         BSP_SetFlash1DIV(2);    // rom use default rc48 / 2, 48/2 = 24
 #else
-        BSP_SetFlash1DIV(1);
+        BSP_SetFlash1DIV(6);
+        HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_FLASH1, RCC_CLK_FLASH_DLL2);
 #endif /* CFG_BOOTROM */
         g_config_addr = init_mpi1();
         boot_handle = (FLASH_HandleTypeDef *)&spi_flash_handle[0].handle;
@@ -498,7 +497,8 @@ bool boot_device_init(void)
 #ifdef CFG_BOOTROM
         BSP_SetFlash3DIV(2);    // rom use default rc48 / 2, 48/2 = 24
 #else
-        BSP_SetFlash3DIV(1);
+        BSP_SetFlash3DIV(6);
+        HAL_RCC_HCPU_ClockSelect(RCC_CLK_MOD_FLASH3, RCC_CLK_FLASH_DLL2);
 #endif /* CFG_BOOTROM */
         g_config_addr = init_mpi3(board_boot_device == BOARD_BOOT_DEVICE_MPI3_NOR ? 0 : 1);
         boot_handle = (FLASH_HandleTypeDef *)&spi_flash_handle[2].handle;
