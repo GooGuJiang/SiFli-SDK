@@ -73,17 +73,11 @@ void BSP_SetFlashExtDiv(uint16_t div)
 #endif /* BSP_QSPI2_DUAL_MODE */
 
 #ifdef SOC_BF0_HCPU
-#define HXT_DELAY_EXP_VAL 1000
 static void LRC_init(void)
 {
     HAL_PMU_RC10Kconfig();
 
     HAL_RC_CAL_update_reference_cycle_on_48M(LXT_LP_CYCLE);
-    uint32_t ref_cnt = HAL_RC_CAL_get_reference_cycle_on_48M();
-    uint32_t cycle_t = (uint32_t)ref_cnt / (48 * LXT_LP_CYCLE);
-
-    HAL_PMU_SET_HXT3_RDY_DELAY((HXT_DELAY_EXP_VAL / cycle_t + 1));
-
 }
 #endif
 
