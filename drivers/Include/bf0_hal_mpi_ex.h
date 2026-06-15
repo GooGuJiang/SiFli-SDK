@@ -1008,7 +1008,7 @@ int HAL_FLASH_NOP_CMD(FLASH_HandleTypeDef *handle);
 void HAL_QSPIEX_FLASH_RESET2(MPI_TypeDef *hmpi);
 
 
-#if defined(SF32LB56X) || defined(SF32LB52X)
+#if defined(SF32LB56X) || defined(SF32LB52X) || defined(SF32LB57X)
 
 /**
   * @brief  Force use new continue mode

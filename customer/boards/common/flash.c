@@ -1652,7 +1652,7 @@ int bsp_psram_auto_calib(char *name, uint8_t *sck, uint8_t *dqs)
     if (i < 0)
         return -1;
 
-#if defined(SF32LB56X) || defined(SF32LB52X)
+#if defined(SF32LB56X) || defined(SF32LB52X) || defined(SF32LB57X)
     HAL_MPI_OPSRAM_AUTO_CAL(&bf0_psram_handle[i].qspi_handle, sck, dqs);
 
     return 0;
