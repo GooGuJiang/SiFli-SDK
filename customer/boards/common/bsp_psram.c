@@ -140,6 +140,7 @@ HAL_RAM_RET_CODE_SECT(bsp_psram1_pinmux_init, int32_t bsp_psram1_pinmux_init(voi
     int32_t ret = 0;
     bsp_psram_info_t *info;
     uint8_t pinmap_mode;
+    uint32_t i;
 
     info = &bsp_psram_info[BSP_PSRAM1_INDEX];
     if (!info->valid)
@@ -199,6 +200,13 @@ HAL_RAM_RET_CODE_SECT(bsp_psram1_pinmux_init, int32_t bsp_psram1_pinmux_init(voi
     {
         ret  = -1;
     }
+    /* DS1=0, DS0=1 (8mA drive) */
+    for (i = 0; i < (PAD_SA12 - PAD_SA00 + 1); i++)
+    {
+        HAL_PIN_Set_DS0(PAD_SA00 + i, 1, 1);
+        HAL_PIN_Set_DS1(PAD_SA00 + i, 1, 0);
+    }
+
 
 __EXIT:
     return ret;
@@ -211,6 +219,7 @@ HAL_RAM_RET_CODE_SECT(bsp_psram2_pinmux_init, int32_t bsp_psram2_pinmux_init(voi
     int32_t ret = 0;
     bsp_psram_info_t *info;
     uint8_t pinmap_mode;
+    uint32_t i;
 
     info = &bsp_psram_info[BSP_PSRAM2_INDEX];
     if (!info->valid)
@@ -269,6 +278,13 @@ HAL_RAM_RET_CODE_SECT(bsp_psram2_pinmux_init, int32_t bsp_psram2_pinmux_init(voi
     else
     {
         ret  = -1;
+    }
+
+    /* DS1=0, DS0=1 (8mA drive) */
+    for (i = 0; i < (PAD_SB12 - PAD_SB00 + 1); i++)
+    {
+        HAL_PIN_Set_DS0(PAD_SB00 + i, 1, 1);
+        HAL_PIN_Set_DS1(PAD_SB00 + i, 1, 0);
     }
 
 __EXIT:
