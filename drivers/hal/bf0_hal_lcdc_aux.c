@@ -32,21 +32,25 @@ void SPI_AUX_HW_FSM_STOP(LCDC_HandleTypeDef *lcdc)
 HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_START(LCDC_HandleTypeDef *lcdc, uint32_t freq, uint32_t addr, uint32_t addr_len, uint32_t data_len)
 {
     HAL_ASSERT(0); //To be implemented
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef RAMLESS_HW_FSM_WRITE_DATAS_START(LCDC_HandleTypeDef *lcdc, uint32_t addr, uint32_t addr_len, uint8_t *p_data, uint32_t data_len)
 {
     HAL_ASSERT(0); //To be implemented
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef RAMLESS_HW_FSM_READ_DATAS_END(LCDC_HandleTypeDef *lcdc, uint8_t *p_data, uint32_t data_len)
 {
     HAL_ASSERT(0); //To be implemented
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef RAMLESS_HW_FSM_WRITE_DATAS_END(LCDC_HandleTypeDef *lcdc)
 {
     HAL_ASSERT(0); //To be implemented
+    return HAL_OK;
 }
 
 #ifdef LCDC_SUPPORT_DPI
@@ -260,7 +264,6 @@ void DPI_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     PTM_CODE = PTM_2_SET_IMMIDIATE16(p_DMACH->CNDTR, sram_buf_words); /* set DMA number and start dma */
     PTM_CODE = PTM_SET(PTM_Y, PTM_Y, OP_ADD, sram_buf_bytes); /* Y+= sram_buf_bytes */
     PTM_CODE = PTM_WAIT(PTC_DMACH_TC, 1, 0); /* wait dma done */
-
     PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
 
 
@@ -271,41 +274,43 @@ void DPI_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     PTM_CODE = PTM_3_SET_IMMIDIATE32(lcdc->Instance->DPI_IF_CONF1, vsh0_hsw_cfg1); //Disable vsync
     PTM_CODE = PTM_3_SET_IMMIDIATE32(lcdc->Instance->DPI_IF_CONF2, vah_conf2);
     PTM_CODE = PTM_3_SET_IMMIDIATE32(lcdc->Instance->DPI_IF_CONF3, vah_conf3);
-    PTM_CODE = PTM_SET(PTM_B, PTM_ZERO, OP_ADD, repeat_count); /* set loop counts*/
 
-    /** DMA copy Y to buffer 0  while DPI flush buffer 1 */
-    //DPI flush buffer 1
-    PTM_CODE = PTM_2_STM_MEM(hwp_lcdc1->LAYER0_SRC, lcdc->sram_buf1); /* set lcdc src to buffer 1 */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (1 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* start lcdc */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (0 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* stop lcdc */
+    /* for(B=repeat_count - 2; B!=0; B--) */
+    PTM_CODE = PTM_SET(PTM_B, PTM_ZERO, OP_ADD, repeat_count - 2);
+    {
+        /** DMA copy Y to buffer 0  while DPI flush buffer 1 */
+        //DPI flush buffer 1
+        PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
+        PTM_CODE = PTM_2_STM_MEM(hwp_lcdc1->LAYER0_SRC, lcdc->sram_buf1); /* set lcdc src to buffer 1 */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (1 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* start lcdc */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (0 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* stop lcdc */
 
-    //DMA copy y to buffer 0, and Y+= sram_buf_bytes
-    PTM_CODE = PTM_STM(PTM_Y, &(p_DMACH->CPAR)); /* set DMA src*/
-    PTM_CODE = PTM_2_STM_MEM(p_DMACH->CM0AR, lcdc->sram_buf0); /* set DMA dst to buffer 0 */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(p_DMACH->CNDTR, sram_buf_words); /* set DMA number and start dma */
-    PTM_CODE = PTM_SET(PTM_Y, PTM_Y, OP_ADD, sram_buf_bytes); /* Y+= sram_buf_bytes */
-
-    PTM_CODE = PTM_WAIT(PTC_DMACH_TC, 1, 0); /* wait dma done */
-    PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
-
-
-    /** DMA copy Yto buffer 1  while DPI flush buffer 0 */
-    //DPI flush buffer 0
-    PTM_CODE = PTM_2_STM_MEM(hwp_lcdc1->LAYER0_SRC, lcdc->sram_buf0); /* set lcdc src to buffer 0 */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (1 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* start lcdc */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (0 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* stop lcdc */
-
-    //DMA copy y to buffer 1, and Y+= sram_buf_bytes
-    PTM_CODE = PTM_STM(PTM_Y, &(p_DMACH->CPAR)); /* set DMA src*/
-    PTM_CODE = PTM_2_STM_MEM(p_DMACH->CM0AR, lcdc->sram_buf1); /* set DMA dst to buffer 1 */
-    PTM_CODE = PTM_2_SET_IMMIDIATE16(p_DMACH->CNDTR, sram_buf_words); /* set DMA number and start dma */
-    PTM_CODE = PTM_SET(PTM_Y, PTM_Y, OP_ADD, sram_buf_bytes); /* Y+= sram_buf_bytes */
+        //DMA copy y to buffer 0, and Y+= sram_buf_bytes
+        PTM_CODE = PTM_STM(PTM_Y, &(p_DMACH->CPAR)); /* set DMA src*/
+        PTM_CODE = PTM_2_STM_MEM(p_DMACH->CM0AR, lcdc->sram_buf0); /* set DMA dst to buffer 0 */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(p_DMACH->CNDTR, sram_buf_words); /* set DMA number and start dma */
+        PTM_CODE = PTM_SET(PTM_Y, PTM_Y, OP_ADD, sram_buf_bytes); /* Y+= sram_buf_bytes */
+        PTM_CODE = PTM_WAIT(PTC_DMACH_TC, 1, 0); /* wait dma done */
 
 
-    PTM_CODE = PTM_WAIT(PTC_DMACH_TC, 1, 0); /* wait dma done */
-    PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
 
-    PTM_CODE = PTM_JMP(-28, PTM_B, JMP_NEQDEC, PTM_ZERO, 0); /* loop */
+        /** DMA copy Yto buffer 1  while DPI flush buffer 0 */
+        //DPI flush buffer 0
+        PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
+        PTM_CODE = PTM_2_STM_MEM(hwp_lcdc1->LAYER0_SRC, lcdc->sram_buf0); /* set lcdc src to buffer 0 */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (1 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* start lcdc */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(hwp_lcdc1->DPI_CTRL, (0 << LCD_IF_DPI_CTRL_DPI_EN_Pos)); /* stop lcdc */
+
+        //DMA copy y to buffer 1, and Y+= sram_buf_bytes
+        PTM_CODE = PTM_STM(PTM_Y, &(p_DMACH->CPAR)); /* set DMA src*/
+        PTM_CODE = PTM_2_STM_MEM(p_DMACH->CM0AR, lcdc->sram_buf1); /* set DMA dst to buffer 1 */
+        PTM_CODE = PTM_2_SET_IMMIDIATE16(p_DMACH->CNDTR, sram_buf_words); /* set DMA number and start dma */
+        PTM_CODE = PTM_SET(PTM_Y, PTM_Y, OP_ADD, sram_buf_bytes); /* Y+= sram_buf_bytes */
+        PTM_CODE = PTM_WAIT(PTC_DMACH_TC, 1, 0); /* wait dma done */
+
+
+        PTM_CODE = PTM_JMP(-28, PTM_B, JMP_NEQDEC, PTM_ZERO, 0); /* loop then B-=1  */
+    }
     ////}VAH loop
     //////////////////////
 
@@ -313,6 +318,7 @@ void DPI_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     //////////////////////
     /////Part3 VAH+VFP
     //////////////////////
+    PTM_CODE = PTM_WAIT(PTC_HCPU_LCDC1_BUSY, 0, 0); /* wait lcdc busy 0 */
     PTM_CODE = PTM_3_SET_IMMIDIATE32(lcdc->Instance->DPI_IF_CONF2, vah_vfp_conf2);
     PTM_CODE = PTM_3_SET_IMMIDIATE32(lcdc->Instance->DPI_IF_CONF3, vah_vfp_conf3);
     //DPI flush buffer 0
@@ -340,8 +346,9 @@ void DPI_HW_FSM_START(LCDC_HandleTypeDef *lcdc)
     hwp_ptm1->CER = PTM_CER_RST0;
     hwp_ptm1->CCR0 = ((sizeof(core0_tcm_code) / 4 - 1) << PTM_CCR0_END0_Pos) |
                      (0 << PTM_CCR0_REP_Pos) ; //infinite repetition
-//Start!!!
-    hwp_ptm1->CER = PTM_IER_EVTIE0;
+
+    //Start!!!
+    hwp_ptm1->CER = PTM_CER_EN0;
 
 }
 

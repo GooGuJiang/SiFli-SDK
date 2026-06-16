@@ -856,7 +856,13 @@ int main(void)
     HAL_PIN_Set(PAD_PA03, I2S1_SDO, PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_PA02, I2S1_MCLK, PIN_NOPULL, 1);
 #elif defined(SOC_SF32LB56X)
-    HAL_PIN_Set(PAD_PA71, I2S1_LRCK, PIN_NOPULL, 1);
+    /*
+        After investigation, pins PA71 and PA40 are adjacent on the external PCB,
+        which may cause crosstalk between signals. Therefore,
+        the LRCK signal is reassigned to alternative pins
+    */
+    //HAL_PIN_Set(PAD_PA71, I2S1_LRCK, PIN_NOPULL, 1);
+    HAL_PIN_Set(PAD_PA41, I2S1_LRCK, PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_PA40, I2S1_BCK, PIN_NOPULL, 1);
     HAL_PIN_Set(PAD_PA38, I2S1_SDI, PIN_PULLDOWN, 1);
     HAL_PIN_Set(PAD_PA39, I2S1_SDO, PIN_NOPULL, 1);
@@ -874,8 +880,8 @@ int main(void)
 #error "Need to confirm I2S pin config."
 #endif
 
-    device_init();
 
+    device_init();
     /* Infinite loop */
     while (1)
     {
