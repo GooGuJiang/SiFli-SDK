@@ -554,6 +554,10 @@ __ROM_USED void ulog_voutput(rt_uint32_t level, const char *tag, rt_bool_t newli
 
     /* get log buffer */
     log_buf = get_log_buf();
+    if (log_buf == RT_NULL)
+    {
+        return;
+    }
 
     /* lock output */
     output_lock();
@@ -626,6 +630,10 @@ __ROM_USED void ulog_raw(const char *format, ...)
 
     /* get log buffer */
     log_buf = get_log_buf();
+    if (log_buf == RT_NULL)
+    {
+        return;
+    }
 
     /* lock output */
     output_lock();
@@ -668,6 +676,10 @@ __ROM_USED void ulog_vraw(const char *format, va_list args)
 
     /* get log buffer */
     log_buf = get_log_buf();
+    if (log_buf == RT_NULL)
+    {
+        return;
+    }
 
     /* lock output */
     output_lock();
@@ -740,6 +752,10 @@ __ROM_USED void ulog_hexdump(const char *tag, rt_size_t width, rt_uint8_t *buf, 
 
     /* get log buffer */
     log_buf = get_log_buf();
+    if (log_buf == RT_NULL)
+    {
+        return;
+    }
 
     /* lock output */
     output_lock();
