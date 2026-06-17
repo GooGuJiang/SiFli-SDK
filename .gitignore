@@ -29,3 +29,12 @@ tools/flash/**/flashdrv_version.h
 # Ignore build folder of mkfatimg
 tools/mkfatimg/mkfatimg/Release/
 tools/mkfatimg/mkfatimg_nand/Release/
+
+# Local captures and AssertDump outputs
+dump/
+AssertDump/
+assertdump/
+tools/AssertDump/
+tools/assertdump/
+**/AssertDump/
+**/assertdump/
