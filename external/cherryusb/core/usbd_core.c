@@ -699,6 +699,18 @@ static bool usbd_std_endpoint_req_handler(uint8_t busid, struct usb_setup_packet
             break;
         case USB_REQUEST_CLEAR_FEATURE:
             if (setup->wValue == USB_FEATURE_ENDPOINT_HALT) {
+                usbd_ep_is_stalled(busid, ep, &stalled);
+                if (!stalled) {
+                    USB_LOG_WRN("ep:%02x clear halt ignored, endpoint is not stalled\r\n", ep);
+                    if ((ep & 0x80) && g_usbd_core[busid].tx_msg[ep & 0x7f].cb) {
+                        g_usbd_core[busid].tx_msg[ep & 0x7f].cb(busid, ep, 0);
+                    } else if (!(ep & 0x80) && g_usbd_core[busid].rx_msg[ep & 0x7f].cb) {
+                        g_usbd_core[busid].rx_msg[ep & 0x7f].cb(busid, ep, 0);
+                    }
+                    *len = 0;
+                    break;
+                }
+
                 USB_LOG_ERR("ep:%02x clear halt\r\n", ep);
 
                 usbd_ep_clear_stall(busid, ep);
